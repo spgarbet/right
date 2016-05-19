@@ -4,7 +4,13 @@
 #
 # git config --global user.name "graveja0"
 # git config --global user.email "john.graves@vanderbilt.edu"
+# git remote add origin git@github.com:graveja0/right-simulation.ig
+# git push -u origin master
+
 ##################################################################################################################
+
+
+# Testing on GitHub
 
 ####
 ## Set Directories and Load Packages

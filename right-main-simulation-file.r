@@ -32,7 +32,7 @@ inputs$vDAPT.SecondLine  <- "Ticagrelor"
 
 #####
 ## Assign Initial Patient Attributes
-epsilon = 0.000001
+epsilon = 0.000000001
 end.of.model = 36500
 source("./simulation-files/initial-patient-attributes.r")
 source("./simulation-files/PGx-attributes.r")
@@ -62,11 +62,11 @@ source('./simulation-files/event_secular_death.R')
 ## Event Registry
 event_registry <- list(
   list(name          = "Secular Death",
-       attr          = "eSecularTime",
+       attr          = "aSecularDeathTime",
        time_to_event = days_till_death,
        func          = secular_death),
   list(name          = "DAPT Initialized",
-       attr          = "eDAPTInitialized",
+       attr          = "aTimeDAPTInitialized",
        time_to_event = days_till_dapt,
        func          = dapt) 
 )
@@ -77,7 +77,11 @@ counters <- c("Number Genotyped",
               "DAPT Initiated",
               "Switched.DAPT",
               "Secular Death",
-              "Clopidogrel","Prasugrel","Ticagrelor","Received Aspirin","Aspirin",
+              "Clopidogrel",
+              "Prasugrel",
+              "Ticagrelor",
+              "Aspirin",
+              "Initiated Aspirin",
               "aTimeInModel")
 
 exec <- function(traj, func)
@@ -93,14 +97,21 @@ print_attrs <- function(traj)
 
 ####
 ## Cleanup 
-cleanup_on_death <- function(traj)
+cleanup_on_death <- function(traj,attrs)
 {
   traj %>% 
     #print_attrs() %>%
     release("aTimeInModel") %>%
-      release("Aspirin") 
+      branch(
+        function(attrs) ifelse(attrs[["aAspirin"]]==1,1,2),
+        merge = c(TRUE,TRUE),
+        create_trajectory() %>% release("Aspirin"),
+        create_trajectory() %>% timeout(0)
+      )
 }
 
+# Note that simply releasing a resource will release it for everyone.  Therefore, we need
+# to have a branch that only releases it for folks with, for example, a drug.  
 
 ############################################################################################################################################################
 ####
@@ -108,7 +119,8 @@ cleanup_on_death <- function(traj)
 source('./simulation-files/event_main_loop.R')
 
 # Start the clock!
-N <- 1000
+source("./simulation-files/inputs-sensitivity.r")
+N <- 10000
 ptm <- proc.time()
 traj <- simulation(env, inputs)
 env %>% create_counters(counters) %>%
@@ -117,17 +129,14 @@ env %>% create_counters(counters) %>%
    wrap()
 (timer = proc.time() - ptm)
 
-# # Look at summary statistics
- arrivals <- get_mon_arrivals(env, per_resource = T)
 
-# # Look at Initial Atttributes
-  get.attributes = c("aGenotyped","aNumDAPT")
-  see.attr = spread(plot_attributes(env)$data,key,value) 
-#  head(see.attr[order(see.attr$name,see.attr$time),c("name","time",get.attributes)],n=10)
-#  see.attr[see.attr$name==pp,c("name","time",get.attributes)]
- 
- arrivals %>% count(resource)
- 
- # Number by Group
- dapt.initiated  = within(arrivals[arrivals$resource=="DAPT Initiated",],{num_dapt = ave(replication,name,FUN=sum)}); hist(dapt.initiated$num_dapt)
- 
+####
+## Get Data Files With Patient Attributes
+attributes <- arrange(get_mon_attributes(env),name,key,time)
+first.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(last = first(value)),key,last); first.attributes
+last.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(last = last(value)),key,last);  last.attributes
+
+####      
+## Look at summary statistics
+arrivals <- get_mon_arrivals(env, per_resource = T)
+arrivals %>% count(resource)

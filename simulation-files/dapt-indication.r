@@ -4,19 +4,19 @@
 # To Do: Seize and Release Drugs
 
 # Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
-vDAPTShape = 0.59  
-vDAPTScale = 60475.53
+inputs$vDAPTShape = 0.59  
+inputs$vDAPTScale = 60475.53
 
 # This parameter governs whether repeat DAPT therapy is more or less likely after having one.
-vRRRepeat.DAPT = 1.2#epsilon
+inputs$vRRRepeat.DAPT = epsilon
 
 # This paramter governs the maximum number of DAPT therapies an individual can have.  The relative risk of DAPT is 
 # set to epsilon (i.e., never re-occurs) once the patient has hit this maximum.
-vMaxDAPT = 4
+inputs$vMaxDAPT = 4
 
-vDAPT.Tx.Duration = 365
+inputs$vDAPT.Tx.Duration = 365
 
-vProbabilityDAPTSwitch = 0.85
+inputs$vProbabilityDAPTSwitch = 0.55 # Source: VUMC PREDICT DATA
 
 #################################################################################################################################
 
@@ -36,7 +36,7 @@ days_till_dapt <- function(attrs)
 {
   aRandUnif = runif(n=1,min=0,max=1) 
   aLPEvent = attrs[['aRRDAPT']]
-  vDAPTScale * (-log(aRandUnif)*exp(-log(aLPEvent)))^(1/vDAPTShape)
+  inputs$vDAPTScale * (-log(aRandUnif)*exp(-log(aLPEvent)))^(1/inputs$vDAPTShape)
 }
 
 # Sanity Check: Should be ~4%
@@ -50,17 +50,19 @@ days_till_dapt <- function(attrs)
 assign_DAPT_medication <- function(traj,inputs=list()) 
 {
   traj %>%
+    set_attribute("aDAPT.Rx",0) %>%
     set_attribute("aDAPT.SecondLine",
                   function() {
-                    if(inputs$vDAPT.SecondLine == "Ticagrelor")          {return(2)} else
+                    if(inputs$vDAPT.SecondLine == "Ticagrelor")       {return(2)} else
                     if(inputs$vDAPT.SecondLine == "Prasugrel")        {return(3)} 
                     # Something went very wrong
                     stop("Invalid Logic in assigning DAPT medication")
                   }) %>%
     branch(
       function(attrs) {
+        # Under the prospective genotyping scenario, the genotyped patients are switched with some probability.  
         if(inputs$Scenario == "PGx-Prospective" & attrs[['aGenotyped']]==1 & attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx.Hx']]==0 ) {
-          return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-vProbabilityDAPTSwitch,vProbabilityDAPTSwitch)))
+          return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-inputs$vProbabilityDAPTSwitch,inputs$vProbabilityDAPTSwitch)))
         } else 
         if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 
         return(1)
@@ -77,34 +79,27 @@ assign_DAPT_medication <- function(traj,inputs=list())
     ) %>%
     # Set DAPT Rx History to Whatever Drug You Were Put On
     set_attribute("aDAPT.Rx.Hx",function(attrs) attrs[['aDAPT.Rx']]) %>%
-    # Initiate Aspirin if Not Already Started
-    # TK Need to Seize Resource Until Death
-    branch(
-      function(attrs) ifelse(attrs[['aAspirin']]==1,1,2),
+    #Initiate Aspirin if Not Already Started
+    #TK Need to Seize Resource Until Death
+     branch(
+       function(attrs) ifelse(attrs[['aAspirin']]==1 & attrs[["aDAPT.Rx"]] %in% c(1,2,3) ,1,2),
       merge=c(TRUE,TRUE),
       create_trajectory() %>% timeout(0),
-      
-      #### Note that in the code below, all patients are given aspirin with the seize command,
-      # even those who never develop DAPT.  How can we fix this?
-      create_trajectory() %>%  seize("Aspirin")  %>% mark("Received Aspirin") %>% set_attribute("aAspirin",1) 
-    )
-
-    
-    
-}
+      create_trajectory() %>% mark("Initiated Aspirin") %>% seize("Aspirin") %>% set_attribute("aAspirin",1)
+     )
+  }
 
 dapt <- function(traj)
 {
   traj %>%
     branch( 
-      function(attrs) ifelse(attrs[['aNumDAPT']]<vMaxDAPT,1,2),
+      function(attrs) ifelse(attrs[['aNumDAPT']]<inputs$vMaxDAPT,1,2),
       merge = c(TRUE,TRUE),
       create_trajectory() %>%  
         mark("DAPT Initiated")  %>% 
-        set_attribute("aRRDAPT",vRRRepeat.DAPT)  %>% 
+        set_attribute("aRRDAPT",inputs$vRRRepeat.DAPT)  %>% 
         set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
         assign_DAPT_medication(inputs)
-        
       ,
       create_trajectory() %>% set_attribute("aRRDAPT",epsilon)
     ) 

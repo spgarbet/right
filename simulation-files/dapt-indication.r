@@ -83,6 +83,9 @@ assign_DAPT_medication <- function(traj,inputs=list())
       function(attrs) ifelse(attrs[['aAspirin']]==1,1,2),
       merge=c(TRUE,TRUE),
       create_trajectory() %>% timeout(0),
+      
+      #### Note that in the code below, all patients are given aspirin with the seize command,
+      # even those who never develop DAPT.  How can we fix this?
       create_trajectory() %>%  seize("Aspirin")  %>% mark("Received Aspirin") %>% set_attribute("aAspirin",1) 
     )
 

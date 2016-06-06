@@ -94,7 +94,14 @@ dapt <- function(traj)
         set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) %>%
         
         # Stent Thrombosis
-        set_attribute("aST",function(attrs) now(env) + time_to_ST(attrs))
+        set_attribute("aST",function(attrs) now(env) + time_to_ST(attrs)) %>%
+        
+        # Myocardial Infarction (Non-Fatal)
+        set_attribute("aMI",function(attrs) now(env) + time_to_MI(attrs)) %>%
+        
+        # Revascularizaiton
+        set_attribute("aRV",function(attrs) now(env) + time_to_RV(attrs))
+        
       ,
       create_trajectory() %>% set_attribute("aRRDAPT",epsilon)
     ) 
@@ -124,6 +131,12 @@ dapt_end <- function(traj)
 # Stent Thrombosis Events
 ##
 ####
+# From Annals Paper:
+# We assumed that all stent thromboses resulted in a myocardial infarction (MI), 
+# and 20% were fatal (Appendix Table). Based on expert opinion and a review of the literature, 
+# we assumed that 10% (range: 5-15%) of those who survived the episode of ST underwent emergent 
+# CABG, and, as a simplifying assumption, the others underwent a repeat PCI with a drug-eluting stent.
+
 
 time_to_ST = function(attrs) 
 {
@@ -137,10 +150,10 @@ time_to_ST = function(attrs)
       
     # Baseline Risk
     rates = c(inputs[["Clopidogrel"]]$vRiskST30,inputs[["Clopidogrel"]]$vRiskST365,inputs[["Clopidogrel"]]$vRiskSTgt365)
-    days = c(30,365-30,365*4-365)
+    days = c(30,365,365*4)
     
     # Convert To Probability 
-    rates2 = (- (log ( 1 - rates)) / days)*rr
+    rates2 = (- (log ( 1 - rates)*rr) / days)
     
     timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
     return(timeST)
@@ -167,11 +180,139 @@ ST_event = function(traj)
            #* TO DO: Add in Brief 14 Day Utility Decrement
            
            # Reset Tx Duration to 1 year if PCI
-           create_trajectory() %>% mark("PCI") %>%  set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) 
+           create_trajectory() %>%  
+             set_attribute("aRRDAPT",inputs[["Clopidogrel"]]$vRRRepeat.DAPT)  %>% 
+             set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
+             set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) 
            
            #* TO DO: Add in Brief 7 Day Utility Decrement
          )
      )
+}
+
+
+####
+##
+# Myocardial Infarction Events
+##
+####
+
+#Patients were also at risk for MI unrelated to stent thrombosis at a base-case rate of 3.5%/year
+#in the clopidogrel arm (16,19,62). Eight percent of these patients underwent coronary artery bypass 
+#grafting (CABG) and 55% underwent a percutaneous coronary intervention (PCI) during the index 
+#hospitalization for the nonfatal MI (17,72). Patients who had one or more nonfatal MIs experienced 
+#a 30% increase in long-term cardiovascular mortality and recurrent MI (72).
+
+time_to_MI = function(attrs) 
+{
+  if (attrs[["aOnDAPT"]]!=1) return(end.of.model+1) else
+  {
+    # Relative Risk
+    rr = attrs[["aRR.DAPT.MI"]]
+    if (attrs[['aDAPT.Rx']]==2) rr = inputs[["Clopidogrel"]]$vRR.MI.Ticagrelor 
+    if (attrs[['aDAPT.Rx']]==3) rr = inputs[["Clopidogrel"]]$vRR.MI.Prasugrel
+    if (attrs[['aDAPT.Rx']]==4) rr = inputs[["Clopidogrel"]]$vRR.MI.Aspirin
+    
+    # Baseline Risk
+    rates = rep(inputs[["Clopidogrel"]]$vRiskMI, 4)
+    days = c(365,365*2,365*3,365*4)
+    
+    # Convert To Probability 
+    rates2 = (- (log ( 1 - rates)*rr) / days)
+    
+    timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+  
+    return(timeST)
+    
+  }
+}
+
+
+
+MI_event = function(traj) 
+{
+  traj %>%  
+     create_trajectory() %>% mark("Non Fatal MI") %>%
+        branch(
+          function(attrs) sample(1:3,1,prob=c(inputs[["Clopidogrel"]]$vPrCABG.MI,
+                                              inputs[["Clopidogrel"]]$vPrPCI.MI,
+                                              1-inputs[["Clopidogrel"]]$vPrCABG.MI - inputs[["Clopidogrel"]]$vPrPCI.MI)),
+          merge= c(TRUE,TRUE,TRUE),
+          
+          # CABG
+          create_trajectory() %>% mark("CABG") %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+            #* TO DO: Add in Brief 14 Day Utility Decrement
+            #* TO DO: Confirm DAPT Therapy shut off with CABG. 
+          
+          # Repeat PCI
+          create_trajectory() %>%  
+            set_attribute("aRRDAPT",inputs[["Clopidogrel"]]$vRRRepeat.DAPT)  %>% 
+            set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
+            set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) , 
+            #* TO DO: Add in Brief 7 Day Utility Decrement
+          
+          create_trajectory() %>%  mark("MI: Medical Management")
+        )
+}
+
+
+
+####
+##
+# Revascularization
+##
+####
+
+# We estimated rates of repeat revascularization after PCI for acute coronary syndrome (ACS) 
+# from Medicare claims data (2001-2006; Appendix Table) (57, 58). Because we modeled revascularizations
+# related to stent thrombosis and MI separately, we subtracted these from the total observed revascularizations 
+# to avoid double counting.
+
+time_to_RV = function(attrs) 
+{
+  if (attrs[["aOnDAPT"]]!=1) return(end.of.model+1) else
+  {
+    # Relative Risk
+    rr = attrs[["aRR.DAPT.RV"]]
+
+    # Baseline Risk
+    rates = c(inputs[["Clopidogrel"]]$vRiskRV365,rep( inputs[["Clopidogrel"]]$vRiskRVgt365,3))
+    days = c(365,365*2,365*3,365*4)
+    
+    # Convert To Probability 
+    rates2 = (- (log ( 1 - rates)*rr) / days)
+    
+    timeRV = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    
+    return(timeRV)
+    
+  }
+}
+
+
+
+RV_event = function(traj) 
+{
+  traj %>%  
+    create_trajectory() %>% mark("Revascularization") %>%
+    branch(
+      function(attrs) sample(1:2,1,prob=c(inputs[["Clopidogrel"]]$vPrCABG.RV,
+                                          1-inputs[["Clopidogrel"]]$vPrCABG.RV)),
+      merge= c(TRUE,TRUE),
+      
+      # CABG
+      create_trajectory() %>% mark("CABG") %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+      #* TO DO: Add in Brief 14 Day Utility Decrement
+      #* TO DO: Confirm DAPT Therapy shut off with CABG. 
+      
+      # Repeat PCI
+      create_trajectory() %>%  
+        set_attribute("aRRDAPT",inputs[["Clopidogrel"]]$vRRRepeat.DAPT)  %>% 
+        set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
+        set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs))  
+      #* TO DO: Add in Brief 7 Day Utility Decrement
+
+    )
 }
 
 

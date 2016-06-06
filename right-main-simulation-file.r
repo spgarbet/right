@@ -85,27 +85,20 @@ event_registry <- list(
   list(name          = "Stent Thromb",
        attr          = "aST",
        time_to_event = time_to_ST,
-       func          = ST_event)
+       func          = ST_event),
+  list(name          = "Myocardial Infarction",
+       attr          = "aMI",
+       time_to_event = time_to_MI,
+       func          = MI_event) , 
+  list(name          = "Revascularization",
+       attr          = "aRV",
+       time_to_event = time_to_RV,
+       func          = RV_event)   
 )
 
 #####
 ## Counters
-counters <- c("Number Genotyped",
-
-              "DAPT Initiated",
-              "DAPT Ended",
-              "Switched.DAPT",
-              "Clopidogrel",
-              "Prasugrel",
-              "Ticagrelor",
-              "Aspirin",
-              "Initiated Aspirin",
-              "Stent Thrombosis",
-              "ST Case Fatality",
-              "CABG",
-              "PCI",
-              "Secular Death",
-              "aTimeInModel")
+source("./simulation-files/counters.r")
 
 exec <- function(traj, func)
 {
@@ -163,4 +156,4 @@ all.attributes <- spread(attributes %>% group_by(name,key,time) %>% summarize(fi
 ## Look at summary statistics
 arrivals <- get_mon_arrivals(env, per_resource = T)
 glimpse(last.attributes)
-arrivals %>% count(resource)
+arrivals %>% count(resource) 

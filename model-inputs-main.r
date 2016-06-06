@@ -55,7 +55,7 @@ inputs[["Clopidogrel"]]$vDAPT.Tx.Duration = 365
 inputs[["Clopidogrel"]]$vProbabilityDAPTSwitch = 0.55 # Source: VUMC PREDICT DATA
 
 
-# Event Rates and Relative Risks
+# Stent Thrombosis: Event Rates and Relative Risks
 inputs[["Clopidogrel"]]$vRiskST30 = 0.0150
 inputs[["Clopidogrel"]]$vRiskST365 = 0.0060
 inputs[["Clopidogrel"]]$vRiskSTgt365 = 0.0022
@@ -63,7 +63,23 @@ inputs[["Clopidogrel"]]$vRR.ST.Ticagrelor = 0.75
 inputs[["Clopidogrel"]]$vRR.ST.Prasugrel = 0.48
 inputs[["Clopidogrel"]]$vRR.ST.Aspirin = 1.79
 inputs[["Clopidogrel"]]$vSt.Case.Fatality = 0.20
-inputs[["Clopidogrel"]]$vPrCABG.ST = 0.25
+inputs[["Clopidogrel"]]$vPrCABG.ST = 0.10
+
+
+# Myocardial Infarction: Event Rates and Relative Risks
+inputs[["Clopidogrel"]]$vRiskMI = 0.035
+
+inputs[["Clopidogrel"]]$vRR.MI.Ticagrelor =0.84
+inputs[["Clopidogrel"]]$vRR.MI.Prasugrel = 0.76
+inputs[["Clopidogrel"]]$vRR.MI.Aspirin = 1.29
+inputs[["Clopidogrel"]]$vPrCABG.MI = 0.08
+inputs[["Clopidogrel"]]$vPrPCI.MI = 0.55
+
+# Revascularization
+inputs[["Clopidogrel"]]$vRiskRV365 = 0.10
+inputs[["Clopidogrel"]]$vRiskRVgt365 = 0.03
+inputs[["Clopidogrel"]]$vPrCABG.RV = .25
+
 
 
 

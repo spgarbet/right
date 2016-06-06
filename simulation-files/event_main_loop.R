@@ -86,7 +86,7 @@ process_events <- function(traj, env)
   
   # Age them by clock
   traj <- set_attribute(traj,'aAge',function(attrs) attrs[['aAgeInitial']]+(now(env)/365.0))
-
+  
   # Create a handler for every possible event, using their
   # list position as the branch number
   # This will determine the id of the next event

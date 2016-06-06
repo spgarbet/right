@@ -151,9 +151,28 @@ time_to_ST = function(attrs)
 ST_event = function(traj) 
 {
   traj %>%
-    create_trajectory()  %>% mark("Stent Thrombosis") 
+    create_trajectory()  %>% mark("Stent Thrombosis") %>%
+    # Case Fatatliy
+     branch(
+       function(attrs) sample(1:2,1,prob=c(inputs[["Clopidogrel"]]$vSt.Case.Fatality,1-inputs[["Clopidogrel"]]$vSt.Case.Fatality)),
+       merge=c(FALSE,TRUE),
+       create_trajectory() %>% mark("ST Case Fatality") %>% cleanup_on_death(),
+       create_trajectory() %>% 
+         branch(
+           function(attrs) sample(1:2,1,prob=c(inputs[["Clopidogrel"]]$vPrCABG.ST,1-inputs[["Clopidogrel"]]$vPrCABG.ST)),
+           merge= c(TRUE,TRUE),
+           # Discontinue DAPT Therapy if CABG, Continue With Aspirin
+           create_trajectory() %>% mark("CABG") %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+           
+           #* TO DO: Add in Brief 14 Day Utility Decrement
+           
+           # Reset Tx Duration to 1 year if PCI
+           create_trajectory() %>% mark("PCI") %>%  set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) 
+           
+           #* TO DO: Add in Brief 7 Day Utility Decrement
+         )
+     )
 }
-
 
 
 

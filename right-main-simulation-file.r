@@ -101,7 +101,9 @@ counters <- c("Number Genotyped",
               "Aspirin",
               "Initiated Aspirin",
               "Stent Thrombosis",
-              
+              "ST Case Fatality",
+              "CABG",
+              "PCI",
               "Secular Death",
               "aTimeInModel")
 
@@ -140,7 +142,7 @@ cleanup_on_death <- function(traj,attrs)
 source('./simulation-files/event_main_loop.R')
 
 set.seed(12345)
-N <- 1000
+N <- 10000
 ptm <- proc.time()
 traj <- simulation(env, inputs)
 env %>% create_counters(counters) %>%

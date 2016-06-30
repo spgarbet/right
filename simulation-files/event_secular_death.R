@@ -26,7 +26,7 @@ secular_death <- function(traj)
 {
   traj %>% branch(
     function() 1,
-    merge=c(FALSE), # False is patient death
+    continue=c(FALSE), # False is patient death
     create_trajectory("Secular Death") %>% mark("Secular Death") %>% cleanup_on_death()
   )
 }

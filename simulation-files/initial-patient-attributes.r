@@ -20,7 +20,11 @@ assign_initial_attributes <- function(traj,inputs=list())
     set_attribute("aOnDAPT",2) %>%
     set_attribute("aRR.DAPT.ST",1) %>%
     set_attribute("aRR.DAPT.MI",1) %>%
-    set_attribute("aRR.DAPT.RV",1)
+    set_attribute("aRR.DAPT.RV",1) %>%
+    set_attribute("aRR.DAPT.ExtBleed",1) %>%
+    set_attribute("aRR.DAPT.IntBleed",1) %>%
+    set_attribute("aRR.DAPT.TIMIMinor",1) %>%
+    set_attribute("aRR.DAPT.FatalBleed",1)
   }
 
 

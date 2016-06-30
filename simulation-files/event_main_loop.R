@@ -123,7 +123,7 @@ simulation <- function(env, inputs)
     assign_additional_attributes(inputs) %>%
     branch( # Used branch, to prevent rollback from looking inside event loop function
       function() 1,
-      merge=TRUE,
+      continue=TRUE,
       create_trajectory("main_loop") %>% process_events(env)
     ) %>% 
     rollback(amount=1, times=100) # Process up to 100 events per person

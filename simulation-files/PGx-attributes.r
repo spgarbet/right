@@ -16,13 +16,13 @@ assign_PGx_attributes <- function(traj,inputs=list())
     # If this is a Prospective Genotyping Arm, then the person is genotyped with some probability
     branch(
       function() sample(1:2, 1, prob=c(vPrGenotyped,1-vPrGenotyped)),
-        merge=c(TRUE, TRUE),
+        continue=c(TRUE, TRUE),
         create_trajectory() %>% set_attribute("aGenotyped",function(attrs) sample(1:2,1,prob=c(attrs[['aPrDAPT.Score.Eq1']],1-attrs[['aPrDAPT.Score.Eq1']]))),
         create_trajectory() %>% set_attribute("aGenotyped",2)
     )  %>%
     branch(
       function(attrs) ifelse(attrs[['aGenotyped']]==1,1,2),
-      merge=c(TRUE,TRUE),
+      continue=c(TRUE,TRUE),
       create_trajectory() %>% mark("Number Genotyped"),
       create_trajectory() %>% timeout(0)
     )
@@ -34,7 +34,7 @@ assign_CYP2C19_status <- function(traj,inputs=list())
   traj %>%
     branch(
     function() sample(1:4,1,prob=inputs[["Clopidogrel"]]$vCYP2C19.Probs),
-    merge= rep(TRUE,4),
+    continue= rep(TRUE,4),
     create_trajectory()  %>% set_attribute("aCYP2C19",1),
     create_trajectory() %>% set_attribute("aCYP2C19",2),
     create_trajectory()  %>% set_attribute("aCYP2C19",3),

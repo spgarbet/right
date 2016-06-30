@@ -5,9 +5,14 @@
 # git config --global user.name "graveja0"
 # git config --global user.email "john.graves@vanderbilt.edu"
 # from directory with this git repository....
-# git remote add origin git@github.com:graveja0/right-simulation.ig
+# git remote add origin git@github.com:graveja0/right-simulation.git
 # git push -u origin master
-
+#
+# To Do:
+#     Annals paper has a cardiovascular mortality outcome for 1 year post PCI.  Should we add in?  Or just 
+#       rely on the MACE outcome constructed elsewhere?
+#     New Outcome: Periprocedural death due to PCI ? 0.12% (0.10-1.00%)
+#     New Outcome: Periprocedural death due to CABG? 2.10% (1.0-10.0%)
 ##################################################################################################################
 
 ####
@@ -45,7 +50,7 @@ source("./model-inputs-main.r")
 
 source("./simulation-files/initial-patient-attributes.r")
 source("./simulation-files/PGx-attributes.r")
-source("./simulation-files/dapt-indication.r")
+source("./simulation-files/dapt-events.r")
 
 assign_attributes <- function(traj, inputs)
 {
@@ -93,7 +98,23 @@ event_registry <- list(
   list(name          = "Revascularization",
        attr          = "aRV",
        time_to_event = time_to_RV,
-       func          = RV_event)   
+       func          = RV_event) ,
+  list(name          = "Extracranial TIMI Non-Fatal",
+       attr          = "aExtBleed",
+       time_to_event = time_to_ExtBleed,
+       func          = ExtBleed_event) ,
+  list(name          = "Intracranial TIMI Major Nonfatal",
+       attr          = "aIntBleed",
+       time_to_event = time_to_IntBleed,
+       func          = IntBleed_event),
+  list(name          = "TIMI Minor",
+       attr          = "aTIMIMinor",
+       time_to_event = time_to_TIMIMinor,
+       func          = TIMIMinor_event) ,
+  list(name          = "Fatal Bleed",
+       attr          = "aFatalBleed",
+       time_to_event = time_to_FatalBleed,
+       func          = FatalBleed_event)  
 )
 
 #####
@@ -120,7 +141,7 @@ cleanup_on_death <- function(traj,attrs)
     release("aTimeInModel") %>%
       branch(
         function(attrs) ifelse(attrs[["aAspirin"]]==1,1,2),
-        merge = c(TRUE,TRUE),
+        continue = c(TRUE,TRUE),
         create_trajectory() %>% release("Aspirin"),
         create_trajectory() %>% timeout(0)
       )

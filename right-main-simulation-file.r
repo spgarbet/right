@@ -138,7 +138,7 @@ cleanup_on_death <- function(traj,attrs)
 {
   traj %>% 
     #print_attrs() %>%
-    release("aTimeInModel") %>%
+    release("NinModel") %>%
       branch(
         function(attrs) ifelse(attrs[["aAspirin"]]==1,1,2),
         continue = c(TRUE,TRUE),
@@ -156,7 +156,7 @@ cleanup_on_death <- function(traj,attrs)
 source('./simulation-files/event_main_loop.R')
 
 set.seed(12345)
-N <- 10000
+N <- 1000
 ptm <- proc.time()
 traj <- simulation(env, inputs)
 env %>% create_counters(counters) %>%

@@ -7,7 +7,7 @@
 
 ## Global Run Parameters
 
-epsilon = 0.000000001
+epsilon = 0.000000000001
 end.of.model = 36500
 
 inputs      <- list()
@@ -39,8 +39,8 @@ inputs[["Clopidogrel"]]$vCYP2C19.Probs = c(inputs[["Clopidogrel"]]$vCYP2C19.Poor
                                            1-inputs[["Clopidogrel"]]$vCYP2C19.Poor-inputs[["Clopidogrel"]]$vCYP2C19.Rapid-inputs[["Clopidogrel"]]$vCYP2C19.Unknown )
 
 # Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
-inputs[["Clopidogrel"]]$vDAPTShape = 0.59  
-inputs[["Clopidogrel"]]$vDAPTScale = 60475.53
+inputs[["Clopidogrel"]]$vDAPTShape = 1#0.59  
+inputs[["Clopidogrel"]]$vDAPTScale = 1#60475.53
 
 # This parameter governs whether repeat DAPT therapy is more or less likely after having one.
 inputs[["Clopidogrel"]]$vRRRepeat.DAPT = epsilon

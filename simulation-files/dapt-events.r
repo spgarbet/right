@@ -176,6 +176,10 @@ time_to_ST = function(attrs)
 ST_event = function(traj) 
 {
   traj %>%
+    branch(
+      function(attrs)
+        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      continue = c(TRUE, TRUE),
     create_trajectory()  %>% mark("Stent Thrombosis") %>%
     # Case Fatatliy
      branch(
@@ -199,7 +203,9 @@ ST_event = function(traj)
            
            #* TO DO: Add in Brief 7 Day Utility Decrement
          )
-     )
+     ),
+  create_trajectory() %>% mark("test")
+  )
 }
 
 
@@ -241,30 +247,45 @@ time_to_MI = function(attrs)
 
 
 
-MI_event = function(traj) 
+MI_event = function(traj)
 {
-  traj %>%  
-     create_trajectory() %>% mark("Non Fatal MI") %>%
+  traj %>%
+    branch(
+      function(attrs)
+        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      continue = c(TRUE, TRUE),
+      create_trajectory() %>% mark("Non Fatal MI") %>%
         branch(
-          function(attrs) sample(1:3,1,prob=c(inputs[["Clopidogrel"]]$vPrCABG.MI,
-                                              inputs[["Clopidogrel"]]$vPrPCI.MI,
-                                              1-inputs[["Clopidogrel"]]$vPrCABG.MI - inputs[["Clopidogrel"]]$vPrPCI.MI)),
-          continue= c(TRUE,TRUE,TRUE),
+          function(attrs)
+            sample(
+              1:3,
+              1,
+              prob = c(
+                inputs[["Clopidogrel"]]$vPrCABG.MI,
+                inputs[["Clopidogrel"]]$vPrPCI.MI,
+                1 - inputs[["Clopidogrel"]]$vPrCABG.MI - inputs[["Clopidogrel"]]$vPrPCI.MI
+              )
+            ),
+          continue = c(TRUE, TRUE, TRUE),
           
           # CABG
-          create_trajectory() %>% mark("CABG") %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
-            #* TO DO: Add in Brief 14 Day Utility Decrement
-            #* TO DO: Confirm DAPT Therapy shut off with CABG. 
+          create_trajectory() %>% mark("CABG") %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
+          #* TO DO: Add in Brief 14 Day Utility Decrement
+          #* TO DO: Confirm DAPT Therapy shut off with CABG.
           
           # Repeat PCI
-          create_trajectory() %>%  
-            set_attribute("aRRDAPT",inputs[["Clopidogrel"]]$vRRRepeat.DAPT)  %>% 
-            set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
-            set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) , 
-            #* TO DO: Add in Brief 7 Day Utility Decrement
+          create_trajectory() %>%
+            set_attribute("aRRDAPT", inputs[["Clopidogrel"]]$vRRRepeat.DAPT)  %>%
+            set_attribute("aNumDAPT", function(attrs)
+              attrs[['aNumDAPT']] + 1) %>%
+            set_attribute("aOnDAPT", 1) %>% set_attribute("aDAPTEnded", function(attrs)
+              now(env) + dapt_end_time(attrs)) ,
+          #* TO DO: Add in Brief 7 Day Utility Decrement
           
           create_trajectory() %>%  mark("MI: Medical Management")
-        )
+        ),
+      create_trajectory() %>% mark("test")
+    )
 }
 
 
@@ -305,7 +326,11 @@ time_to_RV = function(attrs)
 
 RV_event = function(traj) 
 {
-  traj %>%  
+  traj %>%
+    branch(
+      function(attrs)
+        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      continue = c(TRUE, TRUE),
     create_trajectory() %>% mark("Revascularization") %>%
     branch(
       function(attrs) sample(1:2,1,prob=c(inputs[["Clopidogrel"]]$vPrCABG.RV,
@@ -324,6 +349,8 @@ RV_event = function(traj)
         set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs))  
       #* TO DO: Add in Brief 7 Day Utility Decrement
 
+    ),
+    create_trajectory() %>% mark("test")
     )
 }
 

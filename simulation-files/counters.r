@@ -1,9 +1,10 @@
 counters.gen <- c(
               "Secular Death",
-              "aTimeInModel",
+              "NinModel",
               "Number Genotyped"
 )
 counters.dapt = c(
+  "test",
               "DAPT Initiated",
               "DAPT Ended",
               "Switched.DAPT",

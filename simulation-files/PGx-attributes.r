@@ -28,12 +28,16 @@ assign_PGx_attributes <- function(traj,inputs=list())
     )
     
 }
+vCYP2C19.Probs = c(inputs[["Clopidogrel"]]$vCYP2C19.Poor,
+                   inputs[["Clopidogrel"]]$vCYP2C19.Rapid,
+                   inputs[["Clopidogrel"]]$vCYP2C19.Unknown,
+                   1-inputs[["Clopidogrel"]]$vCYP2C19.Poor-inputs[["Clopidogrel"]]$vCYP2C19.Rapid-inputs[["Clopidogrel"]]$vCYP2C19.Unknown )
 
 assign_CYP2C19_status <- function(traj,inputs=list())
 {
   traj %>%
     branch(
-    function() sample(1:4,1,prob=inputs[["Clopidogrel"]]$vCYP2C19.Probs),
+    function() sample(1:4,1,prob=vCYP2C19.Probs),
     continue= rep(TRUE,4),
     create_trajectory()  %>% set_attribute("aCYP2C19",1),
     create_trajectory() %>% set_attribute("aCYP2C19",2),

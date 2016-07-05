@@ -205,7 +205,7 @@ ST_event = function(traj)
            #* TO DO: Add in Brief 7 Day Utility Decrement
          )
      ),
-  create_trajectory() %>% mark("test")
+  create_trajectory() %>% timeout(0)
   )
 }
 
@@ -285,7 +285,7 @@ MI_event = function(traj)
           
           create_trajectory() %>%  mark("MI: Medical Management")
         ),
-      create_trajectory() %>% mark("test")
+      create_trajectory() %>% timeout(0)
     )
 }
 
@@ -351,7 +351,7 @@ RV_event = function(traj)
       #* TO DO: Add in Brief 7 Day Utility Decrement
 
     ),
-    create_trajectory() %>% mark("test")
+    create_trajectory() %>% timeout(0)
     )
 }
 
@@ -403,7 +403,7 @@ ExtBleed_event = function(traj)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
         continue=c(TRUE,TRUE),
       create_trajectory() %>% mark("Extracranial TIMI Major Nonfatal"),
-      create_trajectory() %>% mark("test")
+      create_trajectory() %>% timeout(0)
     )  
 }
 
@@ -443,7 +443,7 @@ IntBleed_event = function(traj)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue=c(TRUE,TRUE),
     create_trajectory() %>% mark("Intracranial TIMI Major Nonfatal"),
-    create_trajectory() %>% mark("test")
+    create_trajectory() %>% timeout(0)
     )    # Make sure to add this to counters
 }
 
@@ -482,7 +482,7 @@ TIMIMinor_event = function(traj)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue=c(TRUE,TRUE),
     create_trajectory() %>% mark("TIMI Minor Nonfatal"),
-  create_trajectory() %>% mark("test")
+  create_trajectory() %>% timeout(0)
   )    # Make sure to add this to counters
 }
 

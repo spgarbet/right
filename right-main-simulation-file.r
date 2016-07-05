@@ -36,7 +36,7 @@ env  <- simmer("RIGHT-v1.0")
 # Define Simluation Scenario
 ##
 ####
-source("./model-inputs-main.r")
+source("./simulation-files/model-inputs-main.r")
 
 #####
 ## Assign Initial Patient Attributes

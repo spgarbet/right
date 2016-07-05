@@ -1,13 +1,6 @@
 ##################################################################################################################
 # RIGHT - Simulation Model
 # Note: Attributes Start With Prefix "a"
-#
-# git config --global user.name "graveja0"
-# git config --global user.email "john.graves@vanderbilt.edu"
-# from directory with this git repository....
-# git remote add origin git@github.com:graveja0/right-simulation.git
-# git push -u origin master
-#
 # To Do:
 #     Annals paper has a cardiovascular mortality outcome for 1 year post PCI.  Should we add in?  Or just 
 #       rely on the MACE outcome constructed elsewhere?

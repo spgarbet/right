@@ -156,6 +156,7 @@ time_to_ST = function(attrs)
     # Relative Risk
     rr = attrs[["aRR.DAPT.ST"]]
     # Need to add in loss of function and gain of function RRs here too.
+    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) rr = inputs[["Clopidogrel"]]$vRR.ST.LOF
     if (attrs[['aDAPT.Rx']]==2) rr = inputs[["Clopidogrel"]]$vRR.ST.Ticagrelor 
     if (attrs[['aDAPT.Rx']]==3) rr = inputs[["Clopidogrel"]]$vRR.ST.Prasugrel
     if (attrs[['aDAPT.Rx']]==4) rr = inputs[["Clopidogrel"]]$vRR.ST.Aspirin
@@ -394,10 +395,16 @@ time_to_ExtBleed = function(attrs)
   }
 }
 
-ExtBleed_event = function(traj) 
+ExtBleed_event = function(traj)
 {
-  traj %>%  
-    create_trajectory() %>% mark("Extracranial TIMI Major Nonfatal")  # Make sure to add this to counters
+  traj %>%
+    branch(
+      function(attrs)
+        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+        continue=c(TRUE,TRUE),
+      create_trajectory() %>% mark("Extracranial TIMI Major Nonfatal"),
+      create_trajectory() %>% mark("test")
+    )  
 }
 
 
@@ -430,8 +437,14 @@ time_to_IntBleed = function(attrs)
 
 IntBleed_event = function(traj) 
 {
-  traj %>%  
-    create_trajectory() %>% mark("Intracranial TIMI Major Nonfatal")  # Make sure to add this to counters
+  traj %>% 
+    branch(
+      function(attrs)
+        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      continue=c(TRUE,TRUE),
+    create_trajectory() %>% mark("Intracranial TIMI Major Nonfatal"),
+    create_trajectory() %>% mark("test")
+    )    # Make sure to add this to counters
 }
 
 ##
@@ -464,7 +477,13 @@ time_to_TIMIMinor = function(attrs)
 TIMIMinor_event = function(traj) 
 {
   traj %>%  
-    create_trajectory() %>% mark("TIMI Minor Nonfatal")  # Make sure to add this to counters
+    branch(
+      function(attrs)
+        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      continue=c(TRUE,TRUE),
+    create_trajectory() %>% mark("TIMI Minor Nonfatal"),
+  create_trajectory() %>% mark("test")
+  )    # Make sure to add this to counters
 }
 
 
@@ -497,7 +516,8 @@ time_to_FatalBleed = function(attrs)
 
 FatalBleed_event = function(traj) 
 {
-  traj %>% branch(
+  traj %>% 
+    branch(
     function() 1,
     continue=c(FALSE), # False is patient death
     create_trajectory("Fatal Bleed") %>% mark("Fatal Bleed") %>% cleanup_on_death()

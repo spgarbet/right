@@ -131,11 +131,11 @@ cleanup_on_death <- function(traj,attrs)
 {
   traj %>% 
     #print_attrs() %>%
-    release("NinModel") %>%
+    release("n_patients") %>%
       branch(
         function(attrs) ifelse(attrs[["aAspirin"]]==1,1,2),
         continue = c(TRUE,TRUE),
-        create_trajectory() %>% release("Aspirin"),
+        create_trajectory() %>% release("aspirin"),
         create_trajectory() %>% timeout(0)
       )
 }
@@ -145,29 +145,48 @@ cleanup_on_death <- function(traj,attrs)
 
 ############################################################################################################################################################
 ####
-## Seup and Run the Simulation.
+##
+# Setup and Run the Simulation.
+##
+####
 source('./simulation-files/event_main_loop.R')
 
+
+############################################################
 set.seed(12345)
-N <- 1000
+N <- inputs$vN
 ptm <- proc.time()
 traj <- simulation(env, inputs)
 env %>% create_counters(counters) %>%
-   add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
-   run(36500) %>% # Simulate 100 years.
-   wrap()
+  add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
+  run(365*inputs$vHorizon) %>% # Simulate 100 years.
+  wrap()
 (timer = proc.time() - ptm)
-
+############################################################
 
 ####
-## Get Data Files With Patient Attributes
-attributes <- arrange(get_mon_attributes(env),name,key,time)
-first.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(first = first(value)),key,first)
-last.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(last = last(value)),key,last) 
-all.attributes <- spread(attributes %>% group_by(name,key,time) %>% summarize(first = mean(value)),key,first)
-
-####      
-## Look at summary statistics
+##
+# Count Number of Events
+##
+####
 arrivals <- get_mon_arrivals(env, per_resource = T)
-glimpse(last.attributes)
 arrivals %>% count(resource) 
+
+
+# Gx.Status = spread(attributes %>% group_by(name,key) %>% summarize(last = last(value)),key,last) %>%  select(name,aCYP2C19,aGenotyped) %>% ungroup() %>% 
+#   mutate(aCYP2C19=factor(aCYP2C19),
+#          LOF = as.numeric( aCYP2C19==1) )
+# arrivals %>% inner_join(Gx.Status) %>% group_by(LOF) %>%  count(resource) %>% filter(resource=="Stent Thrombosis")
+# 
+# ####
+# ## 
+# # Get Data Files With Patient Attributes
+# ##
+# ####
+# 
+# attributes <- arrange(get_mon_attributes(env),name,key,time)
+# first.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(first = first(value)),key,first)
+# last.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(last = last(value)),key,last) 
+# all.attributes <- spread(attributes %>% group_by(name,key,time) %>% summarize(first = mean(value)),key,first)
+# 
+# 

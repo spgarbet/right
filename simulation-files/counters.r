@@ -1,28 +1,23 @@
 counters.gen <- c(
-              "Secular Death",
-              "NinModel",
-              "Number Genotyped"
+              "secular_death",
+              "n_patients"
 )
 counters.dapt = c(
-  "test",
-              "DAPT Initiated",
-              "DAPT Ended",
-              "Switched.DAPT",
-              "Clopidogrel",
-              "Prasugrel",
-              "Ticagrelor",
-              "Aspirin",
-              "Initiated Aspirin",
-              "Stent Thrombosis",
-              "ST Case Fatality",
-              "CABG","foo",
-              "Non Fatal MI",
-              "MI: Medical Management",
-              "Revascularization",
-              "Extracranial TIMI Major Nonfatal",
-              "Intracranial TIMI Major Nonfatal",
-              "TIMI Minor Nonfatal",
-              "Fatal Bleed"
+              "genotyped",
+              "dapt_start",
+              "dapt_end",
+              "dapt_switched",
+              "aspirin",
+              "st_all",
+              "st_fatal",
+              "cabg","foo",
+              "mi_nonfatal",
+              "mi_med_manage",
+              "revascularized",
+              "timi_ext_maj_nonfatal",
+              "timi_int_maj_nonfatal",
+              "timi_min_nonfatal",
+              "fatal_bleed"
 )
 
 counters = c(counters.gen, counters.dapt)

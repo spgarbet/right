@@ -8,8 +8,8 @@
 assign_initial_attributes <- function(traj,inputs=list()) 
 {
   traj %>%
-    seize("NinModel") %>% 
-    set_attribute("aAge",inputs[["Attr"]]$vAge) %>%
+    seize("n_patients") %>% 
+    set_attribute("aAge",runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
     set_attribute("aFemale",sample(1:2,1,inputs[["Attr"]]$vPctFemale )) %>% 
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
     set_attribute("aUtility",1) %>%

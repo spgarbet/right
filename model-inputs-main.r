@@ -15,7 +15,8 @@ inputs[["Global"]]$Scenario = "PGx-Prospective"
 
 ## General Patient Attributes
 inputs[["Attr"]]$vPctFemale = 0.5
-inputs[["Attr"]]$vAge = 40
+inputs$vLowerAge = 40
+inputs$vUpperAge = 40
 
 
 ####

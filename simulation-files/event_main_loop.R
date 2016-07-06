@@ -99,7 +99,7 @@ process_events <- function(traj, env)
   })
   args$traj   <- traj
   args$option <- function(attrs) next_event(attrs)$id
-  args$merge  <- rep(TRUE,length(event_registry))
+  args$continue  <- rep(TRUE,length(event_registry))
   
   do.call(branch, args)
 }

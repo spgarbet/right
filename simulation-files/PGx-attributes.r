@@ -4,8 +4,8 @@
 ####################################################################################################################
 # The Probability of Being Genotyped (given a risk score above the threshold is 100%), unless the scenario has genotyping turned off.
 
-if (inputs$vPreemptive %in% c("Panel")) vPrGenotyped = 1 else
-  vPrGenotyped=0
+#if (inputs$vPreemptive %in% c("Panel")) vPrGenotyped = 1 else
+#  vPrGenotyped=0
 
 assign_PGx_attributes <- function(traj, inputs = list())
 {

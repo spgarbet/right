@@ -27,9 +27,36 @@ days_till_dapt <- function(attrs)
 ######
 ## Assign DAPT Medication
 
+clopidogrel_reactive_strategy <- function(traj, inputs)
+{
+  if(inputs$vReactive == "None") 
+  {
+    traj # Do nothing to trajectory
+  } else if (inputs$vReactive == "Single")
+  {
+    traj %>%
+    branch(
+      function(attrs) attrs[['aGenotyped_CYP2C19']],
+      continue=c(TRUE, TRUE),
+      create_trajectory() %>% timeout(0),
+      create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test")
+    )
+  } else if (inputs$vReactive == "Panel")
+  {
+    traj %>%
+    branch(
+      function(attrs) attrs[['aGenotyped_CYP2C19']],
+      continue=c(TRUE, TRUE),
+      create_trajectory() %>% timeout(0),
+      create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("panel_test")
+    )
+  } else stop("Unhandled Reactive Clopidogrel Strategy")
+}
+
 assign_DAPT_medication <- function(traj,inputs) 
 {
   traj %>%
+    clopidogrel_reactive_strategy(inputs) %>%
     set_attribute("aDAPT.Rx",0) %>%
     set_attribute("aDAPT.SecondLine",
                   function() {
@@ -40,10 +67,8 @@ assign_DAPT_medication <- function(traj,inputs)
                   }) %>%
     branch(
       function(attrs) {
-### FIXME FIXME FIXME
-### This is broken
-        # Under the prospective genotyping scenario, the genotyped patients are switched with some probability.  
-        if(inputs$vPreemptive == "PGx-Prospective" & attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx.Hx']]==0 ) {
+        # The genotyped patients are switched with some probability.  
+        if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx.Hx']]==0 ) {
           return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
         } else 
         if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 

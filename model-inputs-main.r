@@ -22,10 +22,6 @@ clopidogrel = list(
     vCYP2C19.Poor    = 0.21, # (0.15-0.40)
     vCYP2C19.Rapid   = 0.33, # (0.10-.40)
     vCYP2C19.Unknown = 0.07, # (0.05-0.09)
-#    vCYP2C19.Probs   = c( vCYP2C19.Poor,
-#                          vCYP2C19.Rapid,
-#                          vCYP2C19.Unknown,
-#                          1-vCYP2C19.Poor-    vCYP2C19.Rapid-    vCYP2C19.Unknown )
 
     # Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
     vDAPTShape = 0.59,
@@ -143,6 +139,10 @@ simvastatin <- list(
     vCostAlternate=173.1      # Yearly cost of alternative
 )
 
+warfarin = list(
+    yadda_yadda = TRUE # ... More here
+)
+
 inputs <- list(
   # Population Parameters
   vN           = 10000,   # Patients to simulate
@@ -154,25 +154,24 @@ inputs <- list(
   # Strategies
   vPreemptive  = "None",  # Can be one of following: "None", "Panel", "PREDICT", or "Age >= 50"
   vReactive    = "Panel", # Can be one of following: "None", "Single", "Panel"
-  vPanel       = list(vSimvastatin = TRUE, vWarfarin=FALSE, vClopidogrel = FALSE),
+# CURRENTLY PANEL IS FOR ALL DRUGS
+#  vPanel       = list(vSimvastatin = TRUE, vWarfarin=FALSE, vClopidogrel = FALSE),
 
-  # Single Gene -- This should be moved to costs
-  vCostPanelGene  = 250, # Cost to genotype a full panel
-  vCostSingleGene = 100, # Cost to genotype single condition
-
-  # Drug specific
+  # Drug specific model parameters
   clopidogrel = clopidogrel,
   simvastatin = simvastatin,
-  warfarin = list(
-    yadda_yadda = TRUE # ... More here
-  ),
+  warfarin    = warfarin,
+  
   # If these names match the event names from the simmer model, then computation can be generalized!
   costs = list(
+    panel_test    =   250,
+    single_test   =   100,
     mild_myopathy =   129,
     mod_myopathy  =  2255,
     sev_myopathy  = 12811,
     cvd           = 20347
   ),
+  # Each listed duration will be corrected in the final data frame
   durations = list(
     mild_myopathy =  1,
     mod_myopathy  = 30,

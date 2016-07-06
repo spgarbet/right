@@ -14,7 +14,6 @@ assign_PGx_attributes <- function(traj, inputs = list())
       inputs$clopidogrel$vSensitivityPrDAPT * (attrs[['aTimeDAPTInitialized']] <=
                                                       3650) + (1 - inputs$clopidogrel$vSpecificityPrDAPT) * (1 - (attrs[["aTimeDAPTInitialized"]] <
                                                                                                                          3650))) %>%
-    
     # If this is a Prospective Genotyping Arm, then the person is genotyped with some probability
     branch(
       function()

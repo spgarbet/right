@@ -164,29 +164,25 @@ inputs <- list(
   clopidogrel = clopidogrel,
   simvastatin = simvastatin,
   warfarin = list(
-    vPREDICTsens = 0.3,    
-    vPREDICTspec = 0.3,
-    vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
-    vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
     yadda_yadda = TRUE # ... More here
   ),
   # If these names match the event names from the simmer model, then computation can be generalized!
   costs = list(
-    mild_myopathy = 129,
-    mod_myopathy = 2255,
-    sev_myopathy = 12811,
-    cvd          = 20347
+    mild_myopathy =   129,
+    mod_myopathy  =  2255,
+    sev_myopathy  = 12811,
+    cvd           = 20347
   ),
   durations = list(
-    mild_myopathy = 1,
+    mild_myopathy =  1,
     mod_myopathy  = 30,
     sev_myopathy  = 30,
     cvd           = 30
   ),
   disutilities = list(
-    mild_myopathy = 0.01,
-    mod_myopathy  = 0.05,
-    sev_myopathy  = 0.53,
+    mild_myopathy = 0.0100,
+    mod_myopathy  = 0.0500,
+    sev_myopathy  = 0.5300,
     cvd           = 0.2445
   )
   

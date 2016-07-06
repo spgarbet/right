@@ -27,7 +27,7 @@ days_till_dapt <- function(attrs)
 ######
 ## Assign DAPT Medication
 
-assign_DAPT_medication <- function(traj,inputs=list()) 
+assign_DAPT_medication <- function(traj,inputs) 
 {
   traj %>%
     set_attribute("aDAPT.Rx",0) %>%
@@ -40,8 +40,10 @@ assign_DAPT_medication <- function(traj,inputs=list())
                   }) %>%
     branch(
       function(attrs) {
+### FIXME FIXME FIXME
+### This is broken
         # Under the prospective genotyping scenario, the genotyped patients are switched with some probability.  
-        if(inputs[["Global"]]$Scenario == "PGx-Prospective" & attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx.Hx']]==0 ) {
+        if(inputs$vPreemptive == "PGx-Prospective" & attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx.Hx']]==0 ) {
           return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
         } else 
         if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 
@@ -75,7 +77,7 @@ dapt <- function(traj)
 {
   traj %>%
     branch( 
-      function(attrs) ifelse(attrs[['aNumDAPT']]<inputs$clopidogrel$vMaxDAPT,1,2),
+      function(attrs) ifelse(attrs[['aNumDAPT']] < inputs$clopidogrel$vMaxDAPT,1,2),
       continue = c(TRUE,TRUE),
       create_trajectory() %>%  
         mark("dapt_start")  %>% 
@@ -83,7 +85,7 @@ dapt <- function(traj)
         set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
         set_attribute("aOnDAPT",1) %>%
         assign_DAPT_medication(inputs) %>%
-        
+
         ####
         ##
         # Downstream Events Go here

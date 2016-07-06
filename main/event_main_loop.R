@@ -74,7 +74,7 @@ process_events <- function(traj, env)
   {
     # Determine next up
     ne <- next_event(attrs)
-    event <- ne[['event']]
+    event <-      ne[['event']]
     event_time <- ne[['event_time']]
     
     #cat(" Next up => ",event$name,"\n")
@@ -93,9 +93,11 @@ process_events <- function(traj, env)
   # Call it's modification function
   # and then update it's next time to event
   args <- lapply(event_registry,FUN=function(e) {
-#    print(e$name)   # Good for debugging event loading
+    #print(e$name)   # Good for debugging event loading
     create_trajectory(e$name) %>%
+      #timeout(function(attrs) {cat("executing ",e$name,"\n"); 0}) %>%
       e$func() %>%
+      #timeout(function(attrs) {cat("executed ",e$name,"\n"); 0}) %>%
       set_attribute(e$attr, function(attrs) {now(env)+e$time_to_event(attrs)})
   })
   args$traj      <- traj

@@ -2,7 +2,7 @@ library(simmer)
 
 
 ## Secular Death, Weibull Model
-source('./simulation-files/age-weibull.R')
+source('./main/age-weibull.R')
 
 # Given attributes of a patient (trajectory), it returns in days 
 # how long till the patient would die a secular death.

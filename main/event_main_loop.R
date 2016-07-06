@@ -93,12 +93,13 @@ process_events <- function(traj, env)
   # Call it's modification function
   # and then update it's next time to event
   args <- lapply(event_registry,FUN=function(e) {
+#    print(e$name)   # Good for debugging event loading
     create_trajectory(e$name) %>%
       e$func() %>%
       set_attribute(e$attr, function(attrs) {now(env)+e$time_to_event(attrs)})
   })
-  args$traj   <- traj
-  args$option <- function(attrs) next_event(attrs)$id
+  args$traj      <- traj
+  args$option    <- function(attrs) next_event(attrs)$id
   args$continue  <- rep(TRUE,length(event_registry))
   
   do.call(branch, args)

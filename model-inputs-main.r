@@ -4,113 +4,196 @@
 ##
 ####
 
-
-## Global Run Parameters
-
-epsilon = 0.000000000001
-end.of.model = 36500
-
-inputs      <- list()
-inputs[["Global"]]$Scenario = "PGx-Prospective"
-
-## General Patient Attributes
-inputs[["Attr"]]$vPctFemale = 0.5
-inputs$vLowerAge = 40
-inputs$vUpperAge = 40
+epsilon <- 0.000000000001
 
 
-####
-## 
-# Clopidogrel Sub-Model
-##
-####
-inputs[["Clopidogrel"]]$vDAPT.SecondLine <- "Ticagrelor"
 
-# Prognostic Model
-inputs[["Clopidogrel"]]$vSensitivityPrDAPT = 0.74
-inputs[["Clopidogrel"]]$vSpecificityPrDAPT = 0.61
+clopidogrel = list(
+#    vPREDICTsens = 0.3,    
+#    vPREDICTspec = 0.3,
 
-# Population-Level Allele Frequency Distribution
-inputs[["Clopidogrel"]]$vCYP2C19.Poor = 0.21 # (0.15-0.40)
-inputs[["Clopidogrel"]]$vCYP2C19.Rapid = 0.33 # (0.10-.40)
-inputs[["Clopidogrel"]]$vCYP2C19.Unknown = 0.07 # (0.05-0.09)
-inputs[["Clopidogrel"]]$vCYP2C19.Probs = c(inputs[["Clopidogrel"]]$vCYP2C19.Poor,
-                                           inputs[["Clopidogrel"]]$vCYP2C19.Rapid,
-                                           inputs[["Clopidogrel"]]$vCYP2C19.Unknown,
-                                           1-inputs[["Clopidogrel"]]$vCYP2C19.Poor-inputs[["Clopidogrel"]]$vCYP2C19.Rapid-inputs[["Clopidogrel"]]$vCYP2C19.Unknown )
+    vDAPT.SecondLine = "Ticagrelor",
 
-# Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
-inputs[["Clopidogrel"]]$vDAPTShape = 1#0.59  
-inputs[["Clopidogrel"]]$vDAPTScale = 1#60475.53
+    # Prognostic Model
+    vSensitivityPrDAPT = 0.74,
+    vSpecificityPrDAPT = 0.61,
 
-# This parameter governs whether repeat DAPT therapy is more or less likely after having one.
-inputs[["Clopidogrel"]]$vRRRepeat.DAPT = epsilon
+    # Population-Level Allele Frequency Distribution
+    vCYP2C19.Poor    = 0.21, # (0.15-0.40)
+    vCYP2C19.Rapid   = 0.33, # (0.10-.40)
+    vCYP2C19.Unknown = 0.07, # (0.05-0.09)
+#    vCYP2C19.Probs   = c( vCYP2C19.Poor,
+#                          vCYP2C19.Rapid,
+#                          vCYP2C19.Unknown,
+#                          1-vCYP2C19.Poor-    vCYP2C19.Rapid-    vCYP2C19.Unknown )
 
-# This paramter governs the maximum number of DAPT therapies an individual can have.  The relative risk of DAPT is 
-# set to epsilon (i.e., never re-occurs) once the patient has hit this maximum.
-inputs[["Clopidogrel"]]$vMaxDAPT = 4
+    # Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
+    vDAPTShape = 0.59,
+    vDAPTScale = 60475.53,
 
-inputs[["Clopidogrel"]]$vDAPT.Tx.Duration = 365 # (12mo-48mo)
+    # This parameter governs whether repeat DAPT therapy is more or less likely after having one.
+    vRRRepeat.DAPT = epsilon,
 
-inputs[["Clopidogrel"]]$vProbabilityDAPTSwitch = 0.55 # Source: VUMC PREDICT DATA
+    # This paramter governs the maximum number of DAPT therapies an individual can have.  The relative risk of DAPT is 
+    # set to epsilon (i.e., never re-occurs) once the patient has hit this maximum.
+    vMaxDAPT = 4,
 
-# Stent Thrombosis: Event Rates and Relative Risks
-inputs[["Clopidogrel"]]$vRiskST30 = 0.0150  # (0.010-0.020)
-inputs[["Clopidogrel"]]$vRiskST365 = 0.0060 # (0.003-0.009)
-inputs[["Clopidogrel"]]$vRiskSTgt365 = 0.0022 # (0.001-0.003)
+    vDAPT.Tx.Duration = 365, # (12mo-48mo)
 
-inputs[["Clopidogrel"]]$vRR.ST.Ticagrelor = 0.75 # (0.59-0.95)
-inputs[["Clopidogrel"]]$vRR.ST.Prasugrel = 0.48 # (0.36-0.64)
-inputs[["Clopidogrel"]]$vRR.ST.Aspirin = 1.29 # (1.12-1.48)
-inputs[["Clopidogrel"]]$vSt.Case.Fatality = 0.20 #(15-30)
-inputs[["Clopidogrel"]]$vPrCABG.ST = 0.10  # WHAT IS SOURCE?  CAN'T FIND IN ANNALS PAPER...
+    vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
 
-# Myocardial Infarction: Event Rates and Relative Risks
-inputs[["Clopidogrel"]]$vRiskMI = 0.035 #(0.013-0.097)
-inputs[["Clopidogrel"]]$vRR.MI.Ticagrelor =0.84 # (0.75-0.95)
-inputs[["Clopidogrel"]]$vRR.MI.Prasugrel = 0.76 # (0.67-0.85)
-inputs[["Clopidogrel"]]$vRR.MI.Aspirin = 1.29 # (1.12-1.48)
-inputs[["Clopidogrel"]]$vPrCABG.MI = 0.08 # (4-12)
-inputs[["Clopidogrel"]]$vPrPCI.MI = 0.55 # (45-65)
+    # Stent Thrombosis: Event Rates and Relative Risks
+    vRiskST30    = 0.0150, # (0.010-0.020)
+    vRiskST365   = 0.0060, # (0.003-0.009)
+    vRiskSTgt365 = 0.0022, # (0.001-0.003)
 
-# Revascularization
-inputs[["Clopidogrel"]]$vRiskRV365 = 0.10 # (0.05-0.15)
-inputs[["Clopidogrel"]]$vRiskRVgt365 = 0.03 # (0.02-0.04)
-inputs[["Clopidogrel"]]$vPrCABG.RV = .25 # (15-35)
+    vRR.ST.Ticagrelor = 0.75, # (0.59-0.95)
+    vRR.ST.Prasugrel  = 0.48, # (0.36-0.64)
+    vRR.ST.Aspirin    = 1.29, # (1.12-1.48)
+    vSt.Case.Fatality = 0.20, #(15-30)
+    vPrCABG.ST = 0.10,  # WHAT IS SOURCE?  CAN'T FIND IN ANNALS PAPER...
 
-# Bleeding
-inputs[["Clopidogrel"]]$vRiskExtBleed = 0.0230 # (0.015-0.070)
-inputs[["Clopidogrel"]]$vRiskIntBleed = 0.0015 # (0.001-0.002)
-inputs[["Clopidogrel"]]$vRiskTIMIMinor = 0.0200 # (0.010-0.060)
-inputs[["Clopidogrel"]]$vRiskFatalBleed = 0.0015 # (0.001-0.003)
-inputs[["Clopidogrel"]]$vRiskCABGTIMImajor = 0.0350 # (0.013-0.097)
-inputs[["Clopidogrel"]]$vRR.ExtBleed.Ticagrelor = 1.30 # (1.05-1.61)
-inputs[["Clopidogrel"]]$vRR.ExtBleed.Prasugrel = 1.22 #(0.93-1.6)
-inputs[["Clopidogrel"]]$vRR.ExtBleed.Aspirin =  0.72 #(0.60-1.00)
+    # Myocardial Infarction: Event Rates and Relative Risks
+    vRiskMI = 0.035, #(0.013-0.097)
+    vRR.MI.Ticagrelor =0.84, # (0.75-0.95)
+    vRR.MI.Prasugrel = 0.76, # (0.67-0.85)
+    vRR.MI.Aspirin = 1.29, # (1.12-1.48)
+    vPrCABG.MI = 0.08, # (4-12)
+    vPrPCI.MI = 0.55, # (45-65)
 
-inputs[["Clopidogrel"]]$vRR.IntBleed.Ticagrelor = 1.15 # (.55-2.41)
-inputs[["Clopidogrel"]]$vRR.IntBleed.Prasugrel =  0.83 # (0.36-1.92)
-inputs[["Clopidogrel"]]$vRR.IntBleed.Aspirin =  0.71 # (0.23-2.23)
+    # Revascularization
+    vRiskRV365 = 0.10, # (0.05-0.15)
+    vRiskRVgt365 = 0.03, # (0.02-0.04)
+    vPrCABG.RV = .25, # (15-35)
 
-inputs[["Clopidogrel"]]$vRR.TIMIMinor.Ticagrelor = 1.07 # ( .91 - 1.26)
-inputs[["Clopidogrel"]]$vRR.TIMIMinor.Prasugrel =  1.16 # (.91-1.49)
-inputs[["Clopidogrel"]]$vRR.TIMIMinor.Aspirin =  0.47 #(.39-.57)
+    # Bleeding
+    vRiskExtBleed = 0.0230, # (0.015-0.070)
+    vRiskIntBleed = 0.0015, # (0.001-0.002)
+    vRiskTIMIMinor = 0.0200, # (0.010-0.060)
+    vRiskFatalBleed = 0.0015, # (0.001-0.003)
+    vRiskCABGTIMImajor = 0.0350, # (0.013-0.097)
+    vRR.ExtBleed.Ticagrelor = 1.30, # (1.05-1.61)
+    vRR.ExtBleed.Prasugrel = 1.22, #(0.93-1.6)
+    vRR.ExtBleed.Aspirin =  0.72, #(0.60-1.00)
 
-inputs[["Clopidogrel"]]$vRR.FatalBleed.Ticagrelor = 1.35 #( 0.62-0.95)
-inputs[["Clopidogrel"]]$vRR.FatalBleed.Prasugrel =  0.87 # (0.48-1.59)
-inputs[["Clopidogrel"]]$vRR.FatalBleed.Aspirin =  4.19 # (1.58-11.11)
+    vRR.IntBleed.Ticagrelor = 1.15, # (.55-2.41)
+    vRR.IntBleed.Prasugrel =  0.83, # (0.36-1.92)
+    vRR.IntBleed.Aspirin =  0.71, # (0.23-2.23)
 
-inputs[["Clopidogrel"]]$vRR.RiskCABGTIMImajor.Ticagrelor = 1.08 # (0.61-1.91)
-inputs[["Clopidogrel"]]$vRR.RiskCABGTIMImajor.Prasugrel =  1.08 # (0.85-1.36)
-inputs[["Clopidogrel"]]$vRR.RiskCABGTIMImajor.Aspirin =  4.73# (1.90-11.82)
+    vRR.TIMIMinor.Ticagrelor = 1.07, # ( .91 - 1.26)
+    vRR.TIMIMinor.Prasugrel =  1.16, # (.91-1.49)
+    vRR.TIMIMinor.Aspirin =  0.47, #(.39-.57)
 
-inputs[["Clopidogrel"]]$vRR.ST.LOF = 1.75 #(1.50-2.03) High Discrimination Scenario =  2.81 (1.81-4.37)
-inputs[["Clopidogrel"]]$vRR.MI.LOF = 1.48 #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
-inputs[["Clopidogrel"]]$vRR.Mort.LOF = 1.28 #(0.95-1.73)
-inputs[["Clopidogrel"]]$vRR.Bleed.LOF = 0.84 # (0.75-1.00)
-inputs[["Clopidogrel"]]$vRR.Thrombotic.GOF = 0.75 # (0.66-1.00)
-inputs[["Clopidogrel"]]$vRR.Bleed.GOF = 1.26 # (1.00-1.50)
+    vRR.FatalBleed.Ticagrelor = 1.35, #( 0.62-0.95)
+    vRR.FatalBleed.Prasugrel =  0.87, # (0.48-1.59)
+    vRR.FatalBleed.Aspirin =  4.19, # (1.58-11.11)
 
+    vRR.RiskCABGTIMImajor.Ticagrelor = 1.08, # (0.61-1.91)
+    vRR.RiskCABGTIMImajor.Prasugrel =  1.08, # (0.85-1.36)
+    vRR.RiskCABGTIMImajor.Aspirin =  4.73,# (1.90-11.82)
+
+    vRR.ST.LOF = 1.75, #(1.50-2.03) High Discrimination Scenario =  2.81 (1.81-4.37)
+    vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
+    vRR.Mort.LOF = 1.28, #(0.95-1.73)
+    vRR.Bleed.LOF = 0.84, # (0.75-1.00)
+    vRR.Thrombotic.GOF = 0.75, # (0.66-1.00)
+    vRR.Bleed.GOF = 1.26  # (1.00-1.50)
+)
+
+simvastatin <- list(
+    vPREDICTsens = 0.3,    
+    vPREDICTspec = 0.3,
+    vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
+    vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
+    
+    vProbSimvastatinAlt = 1,  # Prob. of Alt | Variant
+    vProbSimStopMild = 0.23,  # Prob. of Stop | Mild Myo
+    vProbSimStopMod  = 0.23,  # Prob. of Stop | Mod Myo
+    vProbSimStopSev  = 1.00,  # Prob. of Stop | Sev Myo
+ 
+    # Mild Myopathy Risks
+    vMildMyoBaseNoVar=1e-7, # No Drug Risk of mild myopathy
+    vMildMyoSimNoVar=0.05,  # Simvastatin Mild Myopathy Baseline Risk
+    vMildMyoSimMedVar=1,    # Rel Risk|Medium metabolizer
+    vMildMyoSimPoorVar=1,   # Rel Risk|Poor metabolizer
+    vMildMyoAltNoVar=0.05,  # Alternate Drug Mild Myopathy Baseline Risk
+    vMildMyoAltMedVar=1,    # Rel Risk|Medium metabolizer
+    vMildMyoAltPoorVar=1,    # Rel Risk|Poor metabolizer
+
+    # Moderate Myopathy Risks
+    vModMyoBaseNoVar=1e-10, # No Drug Risk of mild myopathy
+    vModMyoSimNoVar=0.00011,  # Simvastatin Mild Myopathy Baseline Risk
+    vModMyoSimMedVar=2.55,    # Rel Risk|Medium metabolizer
+    vModMyoSimPoorVar=9.56,   # Rel Risk|Poor metabolizer
+    vModMyoAltNoVar=0.00011,  # Alternate Drug Mild Myopathy Baseline Risk
+    vModMyoAltMedVar=1.08,    # Rel Risk|Medium metabolizer
+    vModMyoAltPoorVar=4.05,    # Rel Risk|Poor metabolizer
+
+    # Moderate Myopathy Risks
+    vSevMyoBaseNoVar=1e-16,   # No Drug Risk of mild myopathy
+    vSevMyoSimNoVar=0.000034, # Simvastatin Mild Myopathy Baseline Risk
+    vSevMyoSimMedVar=2.55,    # Rel Risk|Medium metabolizer
+    vSevMyoSimPoorVar=9.56,   # Rel Risk|Poor metabolizer
+    vSevMyoAltNoVar=0.000034, # Alternate Drug Mild Myopathy Baseline Risk
+    vSevMyoAltMedVar=1.08,    # Rel Risk|Medium metabolizer
+    vSevMyoAltPoorVar=4.05,   # Rel Risk|Poor metabolizer
+
+    # This should be moved to costs section somehow....
+    vCostSimvastatin=147,     # Yearly cost of simvastatin
+    vCostAlternate=173.1      # Yearly cost of alternative
+)
+
+inputs <- list(
+  # Population Parameters
+  vN           = 10000,   # Patients to simulate
+  vLowerAge    = 40,      # Lower age to simulate coming in (uniform distribution)
+  vUpperAge    = 40,      # Upper age to simulate
+  vHorizon     = 10,      # Length of simulation upon a patient entering
+  vPctFemale   = 0.5,     # Percent Female
+  
+  # Strategies
+  vPreemptive  = "None",  # Can be one of following: "None", "Panel", "PREDICT", or "Age >= 50"
+  vReactive    = "Panel", # Can be one of following: "None", "Single", "Panel"
+  vPanel       = list(vSimvastatin = TRUE, vWarfarin=FALSE, vClopidogrel = FALSE),
+
+  # Single Gene -- This should be moved to costs
+  vCostPanelGene  = 250, # Cost to genotype a full panel
+  vCostSingleGene = 100, # Cost to genotype single condition
+
+  # Drug specific
+  clopidogrel = clopidogrel,
+  simvastatin = simvastatin,
+  warfarin = list(
+    vPREDICTsens = 0.3,    
+    vPREDICTspec = 0.3,
+    vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
+    vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
+    yadda_yadda = TRUE # ... More here
+  ),
+  # If these names match the event names from the simmer model, then computation can be generalized!
+  costs = list(
+    mild_myopathy = 129,
+    mod_myopathy = 2255,
+    sev_myopathy = 12811,
+    cvd          = 20347
+  ),
+  durations = list(
+    mild_myopathy = 1,
+    mod_myopathy  = 30,
+    sev_myopathy  = 30,
+    cvd           = 30
+  ),
+  disutilities = list(
+    mild_myopathy = 0.01,
+    mod_myopathy  = 0.05,
+    sev_myopathy  = 0.53,
+    cvd           = 0.2445
+  )
+  
+)   
+
+# This should be folded into the input list, but for now to get this working is left as a global
+end_of_model <- inputs$vHorizon  * 365 
 
 
 

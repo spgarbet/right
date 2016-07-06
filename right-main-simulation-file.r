@@ -15,7 +15,7 @@
 ####
 
 rm(list=ls())
-setwd("~/Dropbox/Projects/right-simulation/")
+#setwd("~/Dropbox/Projects/right-simulation/")
 pkg = list("simmer",
            "dplyr",
            "ggplot2",
@@ -27,31 +27,32 @@ invisible(lapply(pkg, require, character.only = TRUE))
 ####
 ## 
 # Define Simulation Environment.
-##
+#
+# NOTE: This must be done at a global level for the simmer now() function to be available
+#       inside trajectories. Without this at a global level, the simulation won't work.
 ####
 env  <- simmer("RIGHT-v1.0")
 
 ####
 ## 
-# Define Simluation Scenario
+# Define Simulation Scenario
 ##
 ####
-source("./simulation-files/model-inputs-main.r")
+source("./model-inputs-main.r")
 
 #####
 ## Assign Initial Patient Attributes
 
-source("./simulation-files/initial-patient-attributes.r")
-source("./simulation-files/PGx-attributes.r")
-source("./simulation-files/dapt-events.r")
+source("./clopidogrel/initial-patient-attributes.r")
+source("./clopidogrel/PGx-attributes.r")
+source("./clopidogrel/dapt-events.r")
 
 assign_attributes <- function(traj, inputs)
 {
   traj %>%
-    assign_initial_attributes(inputs) %>%
+    assign_initial_clopidogrel_attributes(inputs) %>%
     assign_dapt_attributes(inputs) %>%
     assign_CYP2C19_status(inputs) 
-
 }
 
 # These Need to Be Run After The Initial Event Times Have Been Determined 
@@ -63,7 +64,7 @@ assign_additional_attributes <- function(traj, inputs)
 
 ####
 ## Secular Death
-source('./simulation-files/event_secular_death.R')
+source('./main/event_secular_death.R')
 
 ####
 ## Event Registry
@@ -112,7 +113,7 @@ event_registry <- list(
 
 #####
 ## Counters
-source("./simulation-files/counters.r")
+source("./main/counters.r")
 
 exec <- function(traj, func)
 {
@@ -149,16 +150,18 @@ cleanup_on_death <- function(traj,attrs)
 # Setup and Run the Simulation.
 ##
 ####
-source('./simulation-files/event_main_loop.R')
+source('./main/event_main_loop.R')
 
 
 ############################################################
 set.seed(12345)
-N <- inputs$vN
+
 ptm <- proc.time()
 traj <- simulation(env, inputs)
-env %>% create_counters(counters) %>%
-  add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
+env %>% create_counters(counters)
+
+env %>%
+  add_generator("patient", traj, at(rep(0, inputs$vN)), mon=2) %>%
   run(365*inputs$vHorizon) %>% # Simulate 100 years.
   wrap()
 (timer = proc.time() - ptm)

@@ -1,3 +1,8 @@
+RIGHT - Pharmacogenomics Simulation
+===================================
+
+Creating Events Checklist
+-------------------------
 1. Add event to event registry in main simulation file.
 2. Create a time to event in the events file.
 3. Create an event function in the events file

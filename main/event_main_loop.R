@@ -151,7 +151,7 @@ simulation <- function(env, inputs)
   create_trajectory("Patient")     %>%
     initialize_patient(inputs)     %>%
     assign_events(inputs)          %>%
-    preemptive_strategy(inputs) %>%
+    preemptive_strategy(inputs)    %>%
     branch( # Used branch, to prevent rollback from looking inside event loop function
       function() 1,
       continue=TRUE,

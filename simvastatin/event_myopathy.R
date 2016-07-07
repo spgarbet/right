@@ -1,6 +1,5 @@
 library(simmer)
 
-
 switch_statin <- function(inputs)
 {
   create_trajectory("Switch Statin") %>% 
@@ -14,15 +13,15 @@ switch_statin <- function(inputs)
         seize("alt_simvastatin") %>%
         set_attribute("aCVDdrug", 2),
       create_trajectory("Stopped Treatment") %>%
-        mark("stopped") %>%
+        mark("sim_stopped") %>%
         release("alt_simvastatin") %>%
         set_attribute("aCVDdrug", 0)
   )
 }
 
-stop_cvd_treatment <- function(inputs)
+stop_statin_treatment <- function(inputs)
 {
-  create_trajectory("Stop CVD Treatment") %>%
+  create_trajectory("Stop Statin Treatment") %>%
     branch(
       function(attrs) attrs[["aCVDdrug"]]+1,
       continue=rep(TRUE,3),
@@ -38,10 +37,10 @@ next_step <- function(traj, inputs)
 {
   traj %>%
   branch(
-    function() sample(1:2, 1, prob=c(0.77, 0.23)),
+    function() sample(1:2, 1, prob=c(0.77, 0.23)), #TODO: Should this be from inputs?
     continue=rep(TRUE,2),
     switch_statin(inputs),
-    stop_cvd_treatment(inputs)
+    stop_statin_treatment(inputs)
   )
 }
 
@@ -51,7 +50,6 @@ days_till_mild_myopathy <- function(attrs, inputs)
   sim  <- inputs$simvastatin
   drug <- attrs[["aCVDdrug"]]
   geno <- attrs[["aCVDgenotype"]]
-  
 
   time_frame <- 1825 # 5 Years in days
   risk       <- if     (drug == 0) sim$vMildMyoBaseNoVar
@@ -86,29 +84,29 @@ mild_myopathy <- function(traj, inputs)
 # Moderate myopathy events
 days_till_mod_myopathy <- function(attrs, inputs)
 {
+  sim  <- inputs$simvastatin
   drug <- attrs[["aCVDdrug"]]
-  gt   <- attrs[["CVDgenotype"]]
-  
-  rr <- if(drug == 1)
-  {
-    c(1, 2.55, 9.56)[gt]
-  } else if(drug == 2)
-  {
-    c(1, 1.08, 4.05)[gt]
-  } else
-  {
-    1
-  }
-  
-  time_frame <- 365 # 1 Year
-  risk       <- if(drug == 0) 1e-10 else 0.00011
+  geno <- attrs[["aCVDgenotype"]]
+
+  time_frame <- 1825 # 5 Years in days
+  risk       <- if     (drug == 0) sim$vModMyoBaseNoVar
+                else if(drug == 1) sim$vModMyoSimNoVar
+                else if(drug == 2) sim$vModMyoAltNoVar
+
+  rr         <- if      (geno == 1) 1
+                else if (drug == 0) 1
+                else if (geno == 2 && drug == 1) sim$vModMyoSimMedVar
+                else if (geno == 2 && drug == 2) sim$vModMyoAltMedVar
+                else if (geno == 3 && drug == 1) sim$vModMyoSimPoorVar
+                else if (geno == 3 && drug == 2) sim$vModMyoAltPoorVar 
+                else stop("Unhandled mod myopathy geno/drug combination")
+
   rate       <- -log(1-risk)*rr/time_frame
-  
   t2e <- rexp(1, rate)
-  
-  # Events are considered to only be in the first year, otherwise beyond end of life
+
+  # NOTE: Events are considered to only be in the first year. (but odds were for 5!?)
   if(t2e > 365) {return(inputs$vHorizon*365+1)}
-  
+
   return(t2e)
 }
 
@@ -123,29 +121,29 @@ mod_myopathy <- function(traj,inputs)
 # Severe myopathy events
 days_till_sev_myopathy <- function(attrs,inputs)
 {
+  sim  <- inputs$simvastatin
   drug <- attrs[["aCVDdrug"]]
-  gt   <- attrs[["CVDgenotype"]]
-  
-  rr <- if(drug == 1)
-  {
-    c(1, 2.55, 9.56)[gt]
-  } else if(drug == 2)
-  {
-    c(1, 1.08, 4.05)[gt]
-  } else
-  {
-    1
-  }
-  
-  time_frame <- 365 # 1 Year
-  risk       <- if(drug == 0) 1e-16 else 0.000034
+  geno <- attrs[["aCVDgenotype"]]
+
+  time_frame <- 1825 # 5 Years in days
+  risk       <- if     (drug == 0) sim$vSevMyoBaseNoVar
+                else if(drug == 1) sim$vSevMyoSimNoVar
+                else if(drug == 2) sim$vSevMyoAltNoVar
+
+  rr         <- if      (geno == 1) 1
+                else if (drug == 0) 1
+                else if (geno == 2 && drug == 1) sim$vSevMyoSimMedVar
+                else if (geno == 2 && drug == 2) sim$vSevMyoAltMedVar
+                else if (geno == 3 && drug == 1) sim$vSevMyoSimPoorVar
+                else if (geno == 3 && drug == 2) sim$vSevMyoAltPoorVar 
+                else stop("Unhandled severe myopathy geno/drug combination")
+
   rate       <- -log(1-risk)*rr/time_frame
-  
   t2e <- rexp(1, rate)
-  
-  # Events are considered to only be in the first year, otherwise beyond end of life
+
+  # NOTE: Events are considered to only be in the first year. (but odds were for 5!?)
   if(t2e > 365) {return(inputs$vHorizon*365+1)}
-  
+
   return(t2e)
 }
 
@@ -158,6 +156,6 @@ sev_myopathy <- function(traj,inputs)
     function() sample(1:2, 1, prob=c(0.1, 0.9)),
     continue = c(FALSE, TRUE),
     create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_termination(),
-    create_trajectory("Severe Myopathy")       %>% timeout(0)
+    stop_statin_treatment(inputs)
   )
 }

@@ -127,7 +127,7 @@ simvastatin <- list(
     vModMyoAltMedVar=1.08,    # Rel Risk|Medium metabolizer
     vModMyoAltPoorVar=4.05,    # Rel Risk|Poor metabolizer
 
-    # 5-year Moderate Myopathy Risks
+    # 5-year Severe Myopathy Risks
     vSevMyoBaseNoVar=1e-16,   # No Drug Risk of mild myopathy
     vSevMyoSimNoVar=0.000034, # Simvastatin Mild Myopathy Baseline Risk
     vSevMyoSimMedVar=2.55,    # Rel Risk|Medium metabolizer
@@ -153,7 +153,7 @@ inputs <- list(
   # Strategies
   vPreemptive  = "None",  # Can be one of following: "None", "Panel", "PREDICT", or "Age >= 50"
   vReactive    = "Panel", # Can be one of following: "None", "Single", "Panel"
-# CURRENTLY PANEL IS FOR ALL DRUGS
+# CURRENTLY PANEL IS FOR ALL DRUGS ???
 #  vPanel       = list(vSimvastatin = TRUE, vWarfarin=FALSE, vClopidogrel = FALSE),
 
   # Drug specific model parameters

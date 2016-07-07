@@ -35,10 +35,10 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
   {
     traj %>%
     branch(
-      function(attrs) attrs[['aGenotyped_CYP2C19']],
+      function(attrs) all_genotyped(attrs)+1,
       continue=c(TRUE, TRUE),
-      create_trajectory() %>% timeout(0),
-      create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("panel_test")
+      create_trajectory() %>% panel_test(), # Not all genotyped, then do it
+      create_trajectory() %>% timeout(0)    # Already done, ignore
     )
   } else stop("Unhandled Reactive Clopidogrel Strategy")
 }

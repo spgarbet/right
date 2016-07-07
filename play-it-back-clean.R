@@ -46,6 +46,27 @@ source("./inputs.R")
 ## Secular Death
 source('./main/event_secular_death.R')
 
+
+# Define Panel Test attributes, functions
+all_genotyped <- function(attrs)
+{
+   attrs[['aGenotyped_CVD']] == 1 && attrs[['aGenotyped_CYP2C19']] == 1
+}
+
+any_genotyped <- function(attrs)
+{
+   attrs[['aGenotyped_CVD']] == 1 || attrs[['aGenotyped_CYP2C19']] == 1
+}
+
+panel_test <- function(traj, inputs)
+{
+  traj %>% 
+    set_attribute('aGenotyped_CYP2C19', 1)  %>%
+    set_attribute('aGenotypedCVD', 1) %>%
+    mark("panel_test")
+}
+
+
 #####
 ## Clopidogrel
 source("./clopidogrel/counters.R")
@@ -73,28 +94,6 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
     assign_clopidogrel_attributes(inputs) %>%
     assign_simvastatin_attributes(inputs)
-}
-
-all_genotyped <- function(attrs)
-{
-   attrs[['aGenotyped_CVD']] == 1 && attrs[['aGenotyped_CYP2C19']] == 1
-}
-
-any_genotyped <- function(attrs)
-{
-   attrs[['aGenotyped_CVD']] == 1 || attrs[['aGenotyped_CYP2C19']] == 1
-}
-
-panel_test <- function(traj, inputs)
-{
-  # NOTE: Cannot put logic here to check for already done
-  # because premptive strategy may have every predict succeed
-  # and it calls this without knowing that it effectively did 
-  # a full panel
-  traj %>% 
-    set_attribute('aGenotyped_CYP2C19', 1)  %>%
-    set_attribute('aGenotypedCVD', 1) %>%
-    mark("panel_test")
 }
 
 predict_test <- function(traj, inputs)

@@ -59,7 +59,7 @@ assign_attributes <- function(traj, inputs)
 assign_additional_attributes <- function(traj, inputs)
 {
   traj %>%
-    assign_PGx_attributes(inputs) 
+    assign_clopidogrel_PGx_attributes(inputs) 
 }
 
 ####

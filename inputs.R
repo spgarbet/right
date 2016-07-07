@@ -99,6 +99,8 @@ clopidogrel = list(
 simvastatin <- list(
     vPREDICTsens = 0.74,    
     vPREDICTspec = 0.61,
+    vScale = 80722.66,
+    vShape = 0.52,
     vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
     vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
     
@@ -107,7 +109,7 @@ simvastatin <- list(
     vProbSimStopMod  = 0.23,  # Prob. of Stop | Mod Myo
     vProbSimStopSev  = 1.00,  # Prob. of Stop | Sev Myo
  
-    # Mild Myopathy Risks
+    # 5-year Mild Myopathy Risks
     vMildMyoBaseNoVar=1e-7, # No Drug Risk of mild myopathy
     vMildMyoSimNoVar=0.05,  # Simvastatin Mild Myopathy Baseline Risk
     vMildMyoSimMedVar=1,    # Rel Risk|Medium metabolizer
@@ -116,7 +118,7 @@ simvastatin <- list(
     vMildMyoAltMedVar=1,    # Rel Risk|Medium metabolizer
     vMildMyoAltPoorVar=1,    # Rel Risk|Poor metabolizer
 
-    # Moderate Myopathy Risks
+    # 5-year Moderate Myopathy Risks
     vModMyoBaseNoVar=1e-10, # No Drug Risk of mild myopathy
     vModMyoSimNoVar=0.00011,  # Simvastatin Mild Myopathy Baseline Risk
     vModMyoSimMedVar=2.55,    # Rel Risk|Medium metabolizer
@@ -125,7 +127,7 @@ simvastatin <- list(
     vModMyoAltMedVar=1.08,    # Rel Risk|Medium metabolizer
     vModMyoAltPoorVar=4.05,    # Rel Risk|Poor metabolizer
 
-    # Moderate Myopathy Risks
+    # 5-year Moderate Myopathy Risks
     vSevMyoBaseNoVar=1e-16,   # No Drug Risk of mild myopathy
     vSevMyoSimNoVar=0.000034, # Simvastatin Mild Myopathy Baseline Risk
     vSevMyoSimMedVar=2.55,    # Rel Risk|Medium metabolizer
@@ -186,9 +188,6 @@ inputs <- list(
   )
   
 )   
-
-# This should be folded into the input list, but for now to get this working is left as a global
-end_of_model <- inputs$vHorizon  * 365 
 
 
 

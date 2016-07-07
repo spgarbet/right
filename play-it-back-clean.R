@@ -62,6 +62,7 @@ source('./simvastatin/PGx-attributes.R')
 source('./simvastatin/cleanup.R')
 source('./simvastatin/event_cvd.R')
 source('./simvastatin/event_myopathy.R')
+source('./simvastatin/event_statin.R')
 
 initialize_patient <- function(traj, inputs)
 {
@@ -176,10 +177,16 @@ event_registry <- list(
        reactive      = FALSE),
   
   #### Simvastatin Events
+  list(name          = "Start of Statin",
+       attr          = "aStartStatin",
+       time_to_event = days_till_statin,
+       func          = statin,
+       reactive      = FALSE),
 #  list(name          = "Mild Myopathy",
 #       attr          = "aMildMyoTime",
 #       time_to_event = days_till_mild_myopathy,
-#       func          = mild_myopathy),
+#       func          = mild_myopathy,
+#       reactive      = TRUE),
 #  list(name          = "Moderate Myopathy",
 #       attr          = "aModMyoTime",
 #       time_to_event = days_till_mod_myopathy,
@@ -192,7 +199,7 @@ event_registry <- list(
        attr          = "aCVDTime",
        time_to_event = days_till_cvd,
        func          = cvd,
-        reactive      = TRUE),
+       reactive      = TRUE),
   list(name          = "Reassess CVD Risk",
        attr          = "aCVDReassess",
        time_to_event = days_till_reassess_cvd,

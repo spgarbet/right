@@ -23,9 +23,9 @@ assign_clopidogrel_PGx_attributes <- function(traj, inputs = list())
 # FURTHER FIXME what if the panel doesn't include clopidogrel? 
     
     # First, Get the Probaiblity That the Risk Score Returns a Value Above the Threshold
-    set_attribute("aPrDAPT.Score.Eq1",  function(attrs)
+    traj %>% set_attribute("aPrDAPT.Score.Eq1",  function(attrs)
       inputs$clopidogrel$vSensitivityPrDAPT * (attrs[['aTimeDAPTInitialized']] <=
-                                                      3650) + (1 - inputs$clopidogrel$vSpecificityPrDAPT) * (1 - (attrs[["aTimeDAPTInitialized"]] < 3650))) %>%
+                                                      inputs$vHorizon*365) + (1 - inputs$clopidogrel$vSpecificityPrDAPT) * (1 - (attrs[["aTimeDAPTInitialized"]] < inputs$vHorizon*365))) %>%
     # If this is a Prospective Genotyping Arm, then the person is genotyped with some probability
     branch(
       function()
@@ -53,25 +53,6 @@ assign_clopidogrel_PGx_attributes <- function(traj, inputs = list())
     )
   } else stop("Unhandled Preemptive Clopidogrel Strategy")
 
-}
-
-# These are the probabilitie of being a poor, rapid, uknown, or normal metabolizer. Just arranging into a vector to facilitate sampling below. 
-assign_CYP2C19_status <- function(traj,inputs)
-{
-  vCYP2C19.Probs = c(inputs$clopidogrel$vCYP2C19.Poor,
-                     inputs$clopidogrel$vCYP2C19.Rapid,
-                     inputs$clopidogrel$vCYP2C19.Unknown,
-                     1-inputs$clopidogrel$vCYP2C19.Poor-inputs$clopidogrel$vCYP2C19.Rapid-inputs$clopidogrel$vCYP2C19.Unknown )
-  
-  traj %>%
-    branch(
-    function() sample(1:4,1,prob=vCYP2C19.Probs),
-    continue= rep(TRUE,4),
-    create_trajectory() %>% set_attribute("aCYP2C19",1), # Poor (currently only one used)
-    create_trajectory() %>% set_attribute("aCYP2C19",2), # Rapid
-    create_trajectory() %>% set_attribute("aCYP2C19",3), # Unknown (heterozygous)
-    create_trajectory() %>% set_attribute("aCYP2C19",4)  # Wildtype
-  )
 }
 
 

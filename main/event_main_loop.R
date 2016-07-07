@@ -2,6 +2,27 @@ library(simmer)
 
   ##############################################
  ##
+## Helper functions to make code simpler
+##
+exec <- function(traj, func)
+{
+  traj %>%
+  timeout(function(attrs) {func(attrs); 0})
+}
+
+print_attrs <- function(traj)
+{
+  exec(traj, function(attrs) print(attrs))
+}
+
+write_attrs <- function(traj,file=patients)
+{
+  exec(traj, function(attrs) patients = rbind.fill(file,as.data.frame(attrs)))
+}
+
+
+  ##############################################
+ ##
 ## Helper functions for managing counters
 ##
 ## Hopefully, no modification required.
@@ -39,7 +60,7 @@ assign_events <- function(traj, inputs)
   {
     traj <- set_attribute(traj, event$attr, function(attrs)
     {
-      event$time_to_event(attrs)
+      event$time_to_event(attrs, inputs)
     })
   })
   traj
@@ -67,7 +88,7 @@ next_event <- function(attrs)
 }
 
 # Process events in main loop
-process_events <- function(traj, env)
+process_events <- function(traj, env, inputs)
 {
   # Find the next event from possible events, and timeout (wait) till that moment
   traj <- timeout(traj, function(attrs)
@@ -96,15 +117,22 @@ process_events <- function(traj, env)
     #print(e$name)   # Good for debugging event loading
     create_trajectory(e$name) %>%
       #timeout(function(attrs) {cat("executing ",e$name,"\n"); 0}) %>%
-      e$func() %>%
+      e$func(inputs) %>%
       #timeout(function(attrs) {cat("executed ",e$name,"\n"); 0}) %>%
-      set_attribute(e$attr, function(attrs) {now(env)+e$time_to_event(attrs)})
+      set_attribute(e$attr, function(attrs) {now(env)+e$time_to_event(attrs,inputs)})
   })
   args$traj      <- traj
   args$option    <- function(attrs) next_event(attrs)$id
   args$continue  <- rep(TRUE,length(event_registry))
   
-  do.call(branch, args)
+  traj <- do.call(branch, args)
+  
+  # Apply reactive events
+  lapply(event_registry[sapply(event_registry, function(x) x$reactive)], FUN=function(e){
+    traj <- set_attribute(traj, e$attr, function(attrs) {now(env)+e$time_to_event(attrs,inputs)})
+  })
+  
+  traj
 }
 
   ##############################################
@@ -121,13 +149,13 @@ process_events <- function(traj, env)
 simulation <- function(env, inputs)
 {
   create_trajectory("Patient")     %>%
-    assign_attributes(inputs)        %>%
-    assign_events(inputs)            %>%
-    assign_additional_attributes(inputs) %>%
+    initialize_patient(inputs)     %>%
+    assign_events(inputs)          %>%
+    preemptive_strategy(inputs) %>%
     branch( # Used branch, to prevent rollback from looking inside event loop function
       function() 1,
       continue=TRUE,
-      create_trajectory("main_loop") %>% process_events(env)
+      create_trajectory("main_loop") %>% process_events(env, inputs)
     ) %>% 
     rollback(amount=1, times=100) # Process up to 100 events per person
 }

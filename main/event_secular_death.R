@@ -1,6 +1,3 @@
-library(simmer)
-
-
 ## Secular Death, Weibull Model
 source('./main/age-weibull.R')
 
@@ -8,10 +5,10 @@ source('./main/age-weibull.R')
 # how long till the patient would die a secular death.
 #
 # NOTE: The variable in must be named attrs
-days_till_death <- function(attrs)
+days_till_death <- function(attrs, inputs)
 {
   age       <- attrs[['aAge']]
-  death_age <- ageAtDeath(age, attrs[['aFemale']])
+  death_age <- ageAtDeath(age, attrs[['aGender']])
   
   return(365*(death_age-age))
 }
@@ -22,11 +19,11 @@ days_till_death <- function(attrs)
 # In this case, it marks a counter and terminates 
 # the trajectory. A branch is required, even though
 # it doesn't branch to force the termination.
-secular_death <- function(traj)
+secular_death <- function(traj, inputs)
 {
   traj %>% branch(
     function() 1,
-    continue=c(FALSE), # False is patient death
-    create_trajectory("Secular Death") %>% mark("secular_death") %>% cleanup_on_death()
+    continue=c(FALSE), # False is patient death, had to use a branch to force termination
+    create_trajectory("Secular Death") %>% mark("secular_death") %>% cleanup_on_termination()
   )
 }

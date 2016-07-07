@@ -1,15 +1,5 @@
 
 ####
-## Assign DAPT-Indication-Related Parameters
-assign_dapt_attributes <- function(traj,inputs=list()) 
-{
-  traj %>%
-    set_attribute("aRRDAPT",1) %>%
-    set_attribute("aNumDAPT",0) %>%
-    set_attribute("aDAPT.Rx.Hx",0)
-}
-
-####
 ## Assign Time to DAPT
 days_till_dapt <- function(attrs) 
 {

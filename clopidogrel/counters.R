@@ -1,7 +1,3 @@
-counters.gen <- c(
-              "secular_death",
-              "n_patients"
-)
 counters.dapt = c(
               "genotyped",
               "dapt_start",
@@ -10,7 +6,7 @@ counters.dapt = c(
               "aspirin",
               "st_all",
               "st_fatal",
-              "cabg","foo",
+              "cabg",
               "mi_nonfatal",
               "mi_med_manage",
               "revascularized",
@@ -19,5 +15,3 @@ counters.dapt = c(
               "timi_min_nonfatal",
               "fatal_bleed"
 )
-
-counters = c(counters.gen, counters.dapt)

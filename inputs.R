@@ -97,8 +97,8 @@ clopidogrel = list(
 )
 
 simvastatin <- list(
-    vPREDICTsens = 0.3,    
-    vPREDICTspec = 0.3,
+    vPREDICTsens = 0.74,    
+    vPREDICTspec = 0.61,
     vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
     vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
     
@@ -132,11 +132,8 @@ simvastatin <- list(
     vSevMyoSimPoorVar=9.56,   # Rel Risk|Poor metabolizer
     vSevMyoAltNoVar=0.000034, # Alternate Drug Mild Myopathy Baseline Risk
     vSevMyoAltMedVar=1.08,    # Rel Risk|Medium metabolizer
-    vSevMyoAltPoorVar=4.05,   # Rel Risk|Poor metabolizer
+    vSevMyoAltPoorVar=4.05   # Rel Risk|Poor metabolizer
 
-    # This should be moved to costs section somehow....
-    vCostSimvastatin=147,     # Yearly cost of simvastatin
-    vCostAlternate=173.1      # Yearly cost of alternative
 )
 
 warfarin = list(
@@ -164,12 +161,15 @@ inputs <- list(
   
   # If these names match the event names from the simmer model, then computation can be generalized!
   costs = list(
-    panel_test    =   250,
-    single_test   =   100,
-    mild_myopathy =   129,
-    mod_myopathy  =  2255,
-    sev_myopathy  = 12811,
-    cvd           = 20347
+    panel_test      =   250,
+    single_test     =   100,
+    mild_myopathy   =   129,
+    mod_myopathy    =  2255,
+    sev_myopathy    = 12811,
+    cvd             = 20347,
+    simvastatin     =   147,
+    alt_simvastatin = 173.1,
+    reduced_simvastatin = 90
   ),
   # Each listed duration will be corrected in the final data frame
   durations = list(

@@ -34,7 +34,27 @@ statin_reactive_strategy <- function(traj, inputs)
 
 assign_statin <- function(traj, inputs)
 {
-  traj
+  traj %>%
+    set_attribute("aStartStatin", inputs$vHorizon*365+1) %>% # Don't assign again
+    branch(
+      function(attrs) attrs[["aStatinRxHx"]]+1,
+      continue=rep(TRUE,2),
+      create_trajectory() %>%
+        set_attribute("aStatinRxHx", 1) %>% # Now they have a history of statin RX
+        branch(
+          function(attrs) 
+            (attrs[['aGenotyped_CVD']] == 1 && attrs[['aCVDgenotype']] != 1) + 1,
+          continue = rep(TRUE,2),
+          create_trajectory("Simvastatin") %>%
+            seize("simvastatin") %>%
+            set_attribute("aCVDdrug", 1),
+          create_trajectory("Alt. Simvastatin") %>%
+            seize("alt_simvastatin") %>%
+            set_attribute("aCVDdrug", 2)
+        ),
+      create_trajectory() %>% timeout(0) # Due to prior history, don't prescribe again
+    )
+
 }
 
 statin <- function(traj, inputs)

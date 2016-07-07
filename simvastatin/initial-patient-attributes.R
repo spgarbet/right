@@ -12,7 +12,8 @@ assign_simvastatin_attributes <- function(traj, inputs)
     create_trajectory("TC") %>% set_attribute("aCVDgenotype", 2),
     create_trajectory("CC") %>% set_attribute("aCVDgenotype", 3)
   ) %>%
-  set_attribute("aCVDdrug", 0) %>%   # Not prescribed anything
-  set_attribute("aGenotyped_CVD", 2) # Initially not genotyped
+  set_attribute("aCVDdrug", 0)       %>% # Not prescribed anything
+  set_attribute("aGenotyped_CVD", 2) %>% # Initially not genotyped
+  set_attribute("aStatinRxHx", 0)        # No history of prescription
 
 }

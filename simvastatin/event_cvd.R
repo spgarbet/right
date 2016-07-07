@@ -10,11 +10,12 @@
 ##
 ## Trying to look at replacing the CVD event generator
 
+# This causes a reassessment of CVD risk based on age
 days_till_reassess_cvd <- function(attrs,inputs) { 2.5*365 }
 
 reassess_cvd <- function(traj,inputs)
 {
-  traj # Does nothing, but triggers reassessment. 
+  traj # Does nothing, but triggers reassessment, via reactive events
 }
 
 age_bracket <- function(attrs)
@@ -35,10 +36,16 @@ age_bracket <- function(attrs)
 
 days_till_cvd <- function(attrs, inputs)
 {
+  # Are they at risk of being prescribed Statins => increased CVD risk
+  if(attrs[['aStartStatin']] > inputs$vHorizon*365)
+  {
+    return(inputs$vHorizon*365+ 1) # No CVD present above background rate
+  }
+  
   drug       <- attrs[['aCVDdrug']]
   gender     <- attrs[['aGender']]
   bracket    <- age_bracket(attrs)
-  time_frame <- 3650
+  time_frame <- 3650 # Rates are over 10 years
   probCVDf <- c(0.02071300,
                 0.03951050,
                 0.05464350,
@@ -58,8 +65,7 @@ days_till_cvd <- function(attrs, inputs)
                 0.30658550,
                 0.34763400)
   
-  rr <- if(drug==3) {0.75} else
-        if(drug==0) {1}    else {0.65}
+  rr <- if(drug==0) {1} else {0.65}
   
   prob <- if(gender == 1) {probCVDm[bracket]} else {probCVDf[bracket]}
   
@@ -76,6 +82,7 @@ cvd <- function(traj,inputs)
     function() sample(1:2, 1, prob=c(0.117, 0.883)),
     continue=c(FALSE, TRUE),
     create_trajectory("CVD w/ Death") %>% mark("cvd_death") %>% cleanup_on_termination(),
-    create_trajectory("CVD Event") %>% timeout(0)
-  )
+    create_trajectory("CVD Event")    %>% timeout(0)
+  ) %>%
+  assign_statin(inputs)
 }

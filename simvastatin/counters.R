@@ -8,5 +8,4 @@ counters.simvastatin <-
               "sim_stopped",
               "sim_switched",
               "simvastatin",
-              "alt_simvastatin",
-              "reduced_simvastatin")
+              "alt_simvastatin")

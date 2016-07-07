@@ -99,8 +99,12 @@ clopidogrel = list(
 simvastatin <- list(
     vPREDICTsens = 0.74,    
     vPREDICTspec = 0.61,
+    
+    # Weibull for statin prescription
     vScale = 80722.66,
     vShape = 0.52,
+    
+    #
     vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
     vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
     
@@ -170,8 +174,7 @@ inputs <- list(
     sev_myopathy    = 12811,
     cvd             = 20347,
     simvastatin     =   147,
-    alt_simvastatin = 173.1,
-    reduced_simvastatin = 90
+    alt_simvastatin = 173.1
   ),
   # Each listed duration will be corrected in the final data frame
   durations = list(

@@ -103,7 +103,6 @@ predict_test <- function(traj, inputs)
     predict_simvastatin(inputs) 
 }
 
-
 # Must Be Run After The Initial Event Times Have Been Determined 
 # For predict to work
 preemptive_strategy <- function(traj, inputs)
@@ -212,10 +211,7 @@ source("./main/counters.R")
 counters <- c(counters.gen, counters.dapt, counters.simvastatin)
 
 
-# Note that simply releasing a resource will release it for everyone.  Therefore, we need
-# to have a branch that only releases it for folks with, for example, a drug.  
-
-############################################################################################################################################################
+#####################################################################
 ####
 ##
 # Setup and Run the Simulation.

@@ -37,6 +37,7 @@ age_bracket <- function(attrs)
 days_till_cvd <- function(attrs, inputs)
 {
   # Are they at risk of being prescribed Statins => increased CVD risk
+  # QUESTION: Should this be dictated by end of life, not just end of simulation?
   if(attrs[['aStartStatin']] > inputs$vHorizon*365)
   {
     return(inputs$vHorizon*365+ 1) # No CVD present above background rate

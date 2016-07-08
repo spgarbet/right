@@ -181,7 +181,9 @@ inputs <- list(
     mild_myopathy =  1,
     mod_myopathy  = 30,
     sev_myopathy  = 30,
-    cvd           = 30
+    cvd           = 30,
+    panel_test    =  1,
+    single_test   =  1
   ),
   disutilities = list(
     mild_myopathy = 0.0100,

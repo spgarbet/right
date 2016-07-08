@@ -46,33 +46,8 @@ source("./inputs.R")
 ## Secular Death
 source('./main/event_secular_death.R')
 
-#####
-## Clopidogrel
-source("./clopidogrel/counters.R")
-source("./clopidogrel/initial-patient-attributes.R")
-source("./clopidogrel/cleanup.R")
-source("./clopidogrel/PGx-attributes.r")
-source("./clopidogrel/dapt-events.r")
 
-####
-## Simvastatin
-source('./simvastatin/counters.R')
-source('./simvastatin/simvastatin.R')
-source('./simvastatin/cleanup.R')
-source('./simvastatin/event_cvd.R')
-source('./simvastatin/event_myopathy.R')
-
-initialize_patient <- function(traj, inputs)
-{
-  traj %>%
-    seize("n_patients")       %>%
-    set_attribute("aGender",    function(attrs) sample(1:2,1,c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
-    set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
-    set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
-    assign_clopidogrel_attributes(inputs) %>%
-    assign_simvastatin_attributes(inputs)
-}
-
+# Define Panel Test attributes, functions
 all_genotyped <- function(attrs)
 {
    attrs[['aGenotyped_CVD']] == 1 && attrs[['aGenotyped_CYP2C19']] == 1
@@ -85,13 +60,47 @@ any_genotyped <- function(attrs)
 
 panel_test <- function(traj, inputs)
 {
-  # Cannot put logic here to check for already done
-  # because premptive strategy may have every predict succeed
-  # and it calls this without knowing that it effectively did 
-  # a full panel
-  genotype_clopidogrel(inputs) %>%
-  genotype_simvastatin(inputs) %>%
-  mark("panel_test")
+  traj %>% 
+    set_attribute('aGenotyped_CYP2C19', 1)  %>%
+    set_attribute('aGenotyped_CVD', 1) %>%
+    mark("panel_test")
+}
+
+
+#####
+## Clopidogrel
+source("./clopidogrel/counters.R")
+source("./clopidogrel/initial-patient-attributes.R")
+source("./clopidogrel/cleanup.R")
+source("./clopidogrel/PGx-attributes.r")
+source("./clopidogrel/dapt-events.r")
+
+####
+## Simvastatin
+source('./simvastatin/counters.R')
+source('./simvastatin/initial-patient-attributes.R')
+source('./simvastatin/PGx-attributes.R')
+source('./simvastatin/cleanup.R')
+source('./simvastatin/event_cvd.R')
+source('./simvastatin/event_myopathy.R')
+source('./simvastatin/event_statin.R')
+
+initialize_patient <- function(traj, inputs)
+{
+  traj %>%
+    seize("n_patients")       %>%
+    set_attribute("aGender",    function(attrs) sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
+    set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
+    set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
+    assign_clopidogrel_attributes(inputs) %>%
+    assign_simvastatin_attributes(inputs)
+}
+
+predict_test <- function(traj, inputs)
+{
+  traj %>%
+    predict_clopidogrel(inputs) %>%
+    predict_simvastatin(inputs) 
 }
 
 # Must Be Run After The Initial Event Times Have Been Determined 
@@ -109,8 +118,7 @@ preemptive_strategy <- function(traj, inputs)
   } else if (inputs$vPreemptive == "PREDICT"  )
   {
     traj %>%
-      predict_clopidogrel(inputs) %>%
-      predict_simvastatin(inputs) %>%
+      predict_test(inputs) %>%
       branch(
         function(attrs) any_genotyped(attrs),
         continue=rep(TRUE,2),
@@ -140,7 +148,7 @@ cleanup_on_termination <- function(traj)
     cleanup_simvastatin() 
 }
 
-terminate_simulation <- function(traj)
+terminate_simulation <- function(traj, inputs)
 {
   traj %>%
   branch(
@@ -158,71 +166,92 @@ event_registry <- list(
   list(name          = "Secular Death",
        attr          = "aSecularDeathTime",
        time_to_event = days_till_death,
-       func          = secular_death),
+       func          = secular_death,
+       reactive      = FALSE),
   list(name          = "Terminate at 10 years",
        attr          = "aTerminate",
-       time_to_event = function(attrs) 365.0*inputs$vHorizon,
-       func          = terminate_simulation),
+       time_to_event = function(attrs,inputs) 365.0*inputs$vHorizon,
+       func          = terminate_simulation,
+       reactive      = FALSE),
+  
+  #### Simvastatin Events
+  list(name          = "Start of Statin",
+       attr          = "aStartStatin",
+       time_to_event = days_till_statin,
+       func          = statin,
+       reactive      = FALSE),
+  list(name          = "Mild Myopathy",
+       attr          = "aMildMyoTime",
+       time_to_event = days_till_mild_myopathy,
+       func          = mild_myopathy,
+       reactive      = TRUE),
+  list(name          = "Moderate Myopathy",
+       attr          = "aModMyoTime",
+       time_to_event = days_till_mod_myopathy,
+       func          = mod_myopathy,
+       reactive      = TRUE),
+  list(name          = "Severe Myopathy",
+       attr          = "aSevMyoTime",
+       time_to_event = days_till_sev_myopathy,
+       func          = sev_myopathy,
+       reactive      = TRUE),
+  list(name          = "Cardiovascular Disease",
+       attr          = "aCVDTime",
+       time_to_event = days_till_cvd,
+       func          = cvd,
+       reactive      = TRUE),
+  list(name          = "Reassess CVD Risk",
+       attr          = "aCVDReassess",
+       time_to_event = days_till_reassess_cvd,
+       func          = reassess_cvd,
+       reactive      = FALSE),
   
   #### Clopidogrel Events
   list(name          = "DAPT Initialized",
        attr          = "aTimeDAPTInitialized",
        time_to_event = days_till_dapt,
-       func          = dapt) ,
+       func          = dapt,
+       reactive      = FALSE) ,
   list(name          = "DAPT Ended",
        attr          = "aDAPTEnded",
        time_to_event = dapt_end_time,
-       func          = dapt_end),
+       func          = dapt_end,
+       reactive      = FALSE),
   list(name          = "Stent Thromb",
        attr          = "aST",
        time_to_event = time_to_ST,
-       func          = ST_event),
+       func          = ST_event,
+       reactive      = FALSE),
   list(name          = "Myocardial Infarction",
        attr          = "aMI",
        time_to_event = time_to_MI,
-       func          = MI_event) , 
+       func          = MI_event,
+       reactive      = FALSE) , 
   list(name          = "Revascularization",
        attr          = "aRV",
        time_to_event = time_to_RV,
-       func          = RV_event) ,
+       func          = RV_event,
+       reactive      = FALSE) ,
   list(name          = "Extracranial TIMI Non-Fatal",
        attr          = "aExtBleed",
        time_to_event = time_to_ExtBleed,
-       func          = ExtBleed_event) ,
+       func          = ExtBleed_event,
+       reactive      = FALSE) ,
   list(name          = "Intracranial TIMI Major Nonfatal",
        attr          = "aIntBleed",
        time_to_event = time_to_IntBleed,
-       func          = IntBleed_event),
+       func          = IntBleed_event,
+       reactive      = FALSE),
   list(name          = "TIMI Minor",
        attr          = "aTIMIMinor",
        time_to_event = time_to_TIMIMinor,
-       func          = TIMIMinor_event) ,
+       func          = TIMIMinor_event,
+       reactive      = FALSE) ,
   list(name          = "Fatal Bleed",
        attr          = "aFatalBleed",
        time_to_event = time_to_FatalBleed,
-       func          = FatalBleed_event),
-  
-  #### Simvastatin Events
-  list(name          = "Mild Myopathy",
-       attr          = "aMildMyoTime",
-       time_to_event = days_till_mild_myopathy,
-       func          = mild_myopathy),
-  list(name          = "Moderate Myopathy",
-       attr          = "aModMyoTime",
-       time_to_event = days_till_mod_myopathy,
-       func          = mod_myopathy),
-  list(name          = "Severe Myopathy",
-       attr          = "aSevMyoTime",
-       time_to_event = days_till_sev_myopathy,
-       func          = sev_myopathy),
-  list(name          = "Cardiovascular Disease",
-       attr          = "aCVDTime",
-       time_to_event = days_till_cvd,
-       func          = cvd),
-  list(name          = "Reassess CVD Risk",
-       attr          = "aCVDReassess",
-       time_to_event = days_till_reassess_cvd,
-       func          = reassess_cvd)
+       func          = FatalBleed_event,
+       reactive      = FALSE)
 )
 
 #####
@@ -231,10 +260,7 @@ source("./main/counters.R")
 counters <- c(counters.gen, counters.dapt, counters.simvastatin)
 
 
-# Note that simply releasing a resource will release it for everyone.  Therefore, we need
-# to have a branch that only releases it for folks with, for example, a drug.  
-
-############################################################################################################################################################
+#####################################################################
 ####
 ##
 # Setup and Run the Simulation.
@@ -257,6 +283,7 @@ env %>%
 (timer = proc.time() - ptm)
 ############################################################
 
+
 ####
 ##
 # Count Number of Events
@@ -264,4 +291,18 @@ env %>%
 ####
 arrivals <- get_mon_arrivals(env, per_resource = T)
 arrivals %>% count(resource) 
+
+####
+##
+# Compute Costs!!!
+##
+####
+
+source("./costs.R")
+x <- costs(env, inputs)
+
+# Look for reduced quality lives
+x[x$QALY < 8.62,]
+# Checkout why
+arrivals[arrivals$name == 'patient7617',]
 

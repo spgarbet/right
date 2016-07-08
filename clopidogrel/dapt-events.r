@@ -108,28 +108,28 @@ dapt <- function(traj, inputs)
         ####
         
         # End of Therapy
-        set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) %>%
+        set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) %>%
         
         # Stent Thrombosis
-        set_attribute("aST",function(attrs) now(env) + time_to_ST(attrs)) %>%
+        set_attribute("aST",function(attrs) now(env) + time_to_ST(attrs,inputs)) %>%
         
         # Myocardial Infarction (Non-Fatal)
-        set_attribute("aMI",function(attrs) now(env) + time_to_MI(attrs)) %>%
+        set_attribute("aMI",function(attrs) now(env) + time_to_MI(attrs,inputs)) %>%
         
         # Revascularizaiton
-        set_attribute("aRV",function(attrs) now(env) + time_to_RV(attrs)) %>%
+        set_attribute("aRV",function(attrs) now(env) + time_to_RV(attrs,inputs)) %>%
         
         # Extracranial (TIMI major and nonfatal)
-        set_attribute("aExtBleed",function(attrs) now(env) + time_to_ExtBleed(attrs)) %>%
+        set_attribute("aExtBleed",function(attrs) now(env) + time_to_ExtBleed(attrs,inputs)) %>%
       
         # Intracranial (TIMI major and nonfatal)
-        set_attribute("aIntBleed",function(attrs) now(env) + time_to_IntBleed(attrs)) %>%
+        set_attribute("aIntBleed",function(attrs) now(env) + time_to_IntBleed(attrs,inputs)) %>%
       
         # TIMI minor
-        set_attribute("aTIMIMinor",function(attrs) now(env) + time_to_TIMIMinor(attrs)) %>%
+        set_attribute("aTIMIMinor",function(attrs) now(env) + time_to_TIMIMinor(attrs,inputs)) %>%
         
         # Fatal Bleed
-        set_attribute("aFatalBleed",function(attrs) now(env) + time_to_FatalBleed(attrs))
+        set_attribute("aFatalBleed",function(attrs) now(env) + time_to_FatalBleed(attrs,inputs))
       ,
       create_trajectory() %>% set_attribute("aRRDAPT",epsilon)
     ) 
@@ -140,7 +140,7 @@ dapt <- function(traj, inputs)
 # DAPT Treatment Course Ends
 ##
 ####
-dapt_end_time = function(attrs,inputs) {
+dapt_end_time <- function(attrs,inputs) {
    if (attrs[["aOnDAPT"]]==1)
    {
      return( inputs$clopidogrel$vDAPT.Tx.Duration )
@@ -166,7 +166,7 @@ dapt_end <- function(traj,inputs)
 # CABG, and, as a simplifying assumption, the others underwent a repeat PCI with a drug-eluting stent.
 
 
-time_to_ST = function(attrs,inputs) 
+time_to_ST <- function(attrs,inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
@@ -203,7 +203,7 @@ ST_event = function(traj, inputs)
      branch(
        function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vSt.Case.Fatality,1-inputs$clopidogrel$vSt.Case.Fatality)),
        continue=c(FALSE,TRUE),
-       create_trajectory() %>% mark("st_fatal") %>% cleanup_on_death(),
+       create_trajectory() %>% mark("st_fatal") %>% cleanup_on_termination(),
        create_trajectory() %>% 
          branch(
            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
@@ -217,7 +217,7 @@ ST_event = function(traj, inputs)
            create_trajectory() %>%  
              set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
              set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
-             set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs)) 
+             set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) 
            
            #* TO DO: Add in Brief 7 Day Utility Decrement
          )
@@ -297,7 +297,7 @@ MI_event = function(traj, inputs)
             set_attribute("aNumDAPT", function(attrs)
               attrs[['aNumDAPT']] + 1) %>%
             set_attribute("aOnDAPT", 1) %>% set_attribute("aDAPTEnded", function(attrs)
-              now(env) + dapt_end_time(attrs)) ,
+              now(env) + dapt_end_time(attrs,inputs)) ,
           #* TO DO: Add in Brief 7 Day Utility Decrement
           
           create_trajectory() %>%  mark("mi_med_manage")
@@ -364,7 +364,7 @@ RV_event = function(traj, inputs)
       create_trajectory() %>%  
         set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
         set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
-        set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs))  
+        set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs, inputs))  
       #* TO DO: Add in Brief 7 Day Utility Decrement
 
     ),
@@ -537,7 +537,7 @@ FatalBleed_event = function(traj, inputs)
     branch(
     function() 1,
     continue=c(FALSE), # False is patient death
-    create_trajectory("Fatal Bleed") %>% mark("fatal_bleed") %>% cleanup_on_death()
+    create_trajectory("Fatal Bleed") %>% mark("fatal_bleed") %>% cleanup_on_termination()
   )
 }
 

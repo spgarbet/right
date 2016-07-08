@@ -31,25 +31,18 @@ compile_statistics <- function(env, inputs)
   # Computes discounted rate of time
   arrivals$discounted_time <- discounted_cost(arrivals$start_time, arrivals$end_time, 365.0)
   
-  # Compute Event base costs
+  # Compute Event base cost map
   idx <- function(str) {as.numeric(factor(str, levels=levels(arrivals$resource)))}
   base_cost_map <- rep(0, nlevels(arrivals$resource))
-  base_cost_map[idx("drug1")]         <- inputs$vCostDrug1/365
-  base_cost_map[idx("drug2")]         <- inputs$vCostDrug2/365
-  base_cost_map[idx("drug3")]         <- inputs$vCostDrug3/365
-  base_cost_map[idx("drug4")]         <- inputs$vCostDrug4/365
-  base_cost_map[idx("genotyped")]     <- inputs$vCostPGx
-  base_cost_map[idx("mild_myopathy")] <-   129
-  base_cost_map[idx("mod_myopathy")]  <-  2255/30
-  base_cost_map[idx("sev_myopathy")]  <- 12811/30
-  base_cost_map[idx("cvd")]           <- 20347/30
-  
-  # Compute Disutility costs
+  sapply(names(inputs$costs), FUN=function(name){
+    base_cost_map[idx(name)] <<- inputs$costs[[name]]    
+  })
+
+  # Compute Disutility cost map
   base_disutility_map <- rep(0, nlevels(arrivals$resource))
-  base_disutility_map[idx("mild_myopathy")] <- 0.01
-  base_disutility_map[idx("mod_myopathy")]  <- 0.05
-  base_disutility_map[idx("sev_myopathy")]  <- 0.53
-  base_disutility_map[idx("cvd")]           <- 0.2445
+  sapply(names(inputs$disutilities), FUN=function(name){
+    base_disutility_map[idx(name)] <<- inputs$disutilities[[name]]    
+  })
   
   arrivals$discounted_cost <- arrivals$discounted_time*base_cost_map[as.numeric(arrivals$resource)]
   arrivals$disutility <- arrivals$discounted_time*base_disutility_map[as.numeric(arrivals$resource)]
@@ -62,7 +55,7 @@ compile_statistics <- function(env, inputs)
 #
 costs <- function(env, inputs)
 {
-  arrivals <- compile_statistics(arrivals, inputs)
+  arrivals <- compile_statistics(env, inputs)
   
   stats <- as.data.frame(do.call(rbind, lapply(split(arrivals, arrivals$name), FUN=function(x)
   {

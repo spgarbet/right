@@ -236,6 +236,7 @@ env %>%
 (timer = proc.time() - ptm)
 ############################################################
 
+
 ####
 ##
 # Count Number of Events
@@ -243,4 +244,18 @@ env %>%
 ####
 arrivals <- get_mon_arrivals(env, per_resource = T)
 arrivals %>% count(resource) 
+
+####
+##
+# Compute Costs!!!
+##
+####
+
+source("./costs.R")
+x <- costs(env, inputs)
+
+# Look for reduced quality lives
+x[x$QALY < 8.62,]
+# Checkout why
+arrivals[arrivals$name == 'patient7617',]
 

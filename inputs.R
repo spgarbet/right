@@ -166,15 +166,16 @@ inputs <- list(
   warfarin    = warfarin,
   
   # If these names match the event names from the simmer model, then computation can be generalized!
+  # These must be DAILY costs
   costs = list(
     panel_test      =   250,
     single_test     =   100,
     mild_myopathy   =   129,
-    mod_myopathy    =  2255,
-    sev_myopathy    = 12811,
-    cvd             = 20347,
-    simvastatin     =   147,
-    alt_simvastatin = 173.1
+    mod_myopathy    =  2255/30, # Note this divided by duration
+    sev_myopathy    = 12811/30,
+    cvd             = 20347/30,
+    simvastatin     =   147/365,
+    alt_simvastatin = 173.1/365
   ),
   # Each listed duration will be corrected in the final data frame
   durations = list(

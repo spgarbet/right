@@ -99,7 +99,7 @@ initialize_patient <- function(traj, inputs)
 predict_test <- function(traj, inputs)
 {
   traj %>%
-#    predict_clopidogrel(inputs) %>%
+    predict_clopidogrel(inputs) %>%
     predict_simvastatin(inputs) 
 }
 

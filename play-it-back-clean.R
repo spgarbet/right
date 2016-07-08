@@ -62,7 +62,7 @@ panel_test <- function(traj, inputs)
 {
   traj %>% 
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
-    set_attribute('aGenotypedCVD', 1) %>%
+    set_attribute('aGenotyped_CVD', 1) %>%
     mark("panel_test")
 }
 

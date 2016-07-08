@@ -44,8 +44,10 @@ assign_statin <- function(traj, inputs)
         branch(
           function(attrs) 
           {
+            # If not genotyped or wildtype gene, return 1 for simvastatin
             if(attrs[['aGenotyped_CVD']] != 1 || attrs[['aCVDgenotype']] == 1) return(1)
             
+            # Otherwise, run probability of prescribing alternate
             sample(1:2, 1, prob=c(1-inputs$simvastatin$vProbSimvastatinAlt, inputs$simvastatin$vProbSimvastatinAlt))
           },  
           continue = rep(TRUE,2),

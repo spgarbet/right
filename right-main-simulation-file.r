@@ -50,19 +50,21 @@ source('./main/event_secular_death.R')
 # Define Panel Test attributes, functions
 all_genotyped <- function(attrs)
 {
-   attrs[['aGenotyped_CVD']] == 1 && attrs[['aGenotyped_CYP2C19']] == 1
+   attrs[['aGenotyped_CVD']]     == 1 &&  # Simvastatin
+   attrs[['aGenotyped_CYP2C19']] == 1     # Clopidogrel
 }
 
 any_genotyped <- function(attrs)
 {
-   attrs[['aGenotyped_CVD']] == 1 || attrs[['aGenotyped_CYP2C19']] == 1
+   attrs[['aGenotyped_CVD']]     == 1 ||
+   attrs[['aGenotyped_CYP2C19']] == 1
 }
 
 panel_test <- function(traj, inputs)
 {
   traj %>% 
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
-    set_attribute('aGenotyped_CVD', 1) %>%
+    set_attribute('aGenotyped_CVD',     1)  %>%
     mark("panel_test")
 }
 
@@ -105,6 +107,8 @@ predict_test <- function(traj, inputs)
 
 # Must Be Run After The Initial Event Times Have Been Determined 
 # For predict to work
+
+# No modification required for adding more drug models
 preemptive_strategy <- function(traj, inputs)
 {
 
@@ -304,5 +308,5 @@ x <- costs(env, inputs)
 # Look for reduced quality lives
 x[x$QALY < 8.62,]
 # Checkout why
-arrivals[arrivals$name == 'patient7617',]
+arrivals[arrivals$name == 'patient1028',]
 

@@ -72,7 +72,7 @@ panel_test <- function(traj, inputs)
 source("./clopidogrel/counters.R")
 source("./clopidogrel/initial-patient-attributes.R")
 source("./clopidogrel/cleanup.R")
-#source("./clopidogrel/PGx-attributes.r")
+source("./clopidogrel/PGx-attributes.r")
 #source("./clopidogrel/dapt-events.r")
 
 ####

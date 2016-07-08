@@ -63,11 +63,11 @@ costs <- function(env, inputs)
     results <- c(sum(x$discounted_cost),
                 (sum(life$discounted_time) - sum(x$disutility))/365,
                 sum(life$activity_time)/365)
-    names(results) <- c("Discount.Cost", "QALY", "Life")
+    names(results) <- c("Discount_Cost", "QALY", "Life")
     results
   })))
   
-  stats$ce_ratio <- stats$Discount.Cost / stats$QALY
+  stats$ce_ratio <- stats$Discount_Cost / stats$QALY
   
   stats
 }

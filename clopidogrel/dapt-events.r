@@ -1,7 +1,7 @@
 
 ####
 ## Assign Time to DAPT
-days_till_dapt <- function(attrs) 
+days_till_dapt <- function(attrs, inputs) 
 {
   aRandUnif = runif(n=1,min=0,max=1) 
   aLPEvent = attrs[['aRRDAPT']]
@@ -88,7 +88,7 @@ assign_DAPT_medication <- function(traj,inputs)
      )
   }
 
-dapt <- function(traj)
+dapt <- function(traj, inputs)
 {
   traj %>%
     branch( 
@@ -140,7 +140,7 @@ dapt <- function(traj)
 # DAPT Treatment Course Ends
 ##
 ####
-dapt_end_time = function(attrs) {
+dapt_end_time = function(attrs,inputs) {
    if (attrs[["aOnDAPT"]]==1)
    {
      return( inputs$clopidogrel$vDAPT.Tx.Duration )
@@ -148,7 +148,7 @@ dapt_end_time = function(attrs) {
      return(end_of_model +1)
 }
 
-dapt_end <- function(traj) 
+dapt_end <- function(traj,inputs) 
 {
   traj %>%
     create_trajectory()  %>% mark("dapt_end") %>% set_attribute("aOnDAPT",2)
@@ -166,7 +166,7 @@ dapt_end <- function(traj)
 # CABG, and, as a simplifying assumption, the others underwent a repeat PCI with a drug-eluting stent.
 
 
-time_to_ST = function(attrs) 
+time_to_ST = function(attrs,inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
   {
@@ -191,7 +191,7 @@ time_to_ST = function(attrs)
   }
 }
 
-ST_event = function(traj) 
+ST_event = function(traj, inputs) 
 {
   traj %>%
     branch(
@@ -239,7 +239,7 @@ ST_event = function(traj)
 #hospitalization for the nonfatal MI (17,72). Patients who had one or more nonfatal MIs experienced 
 #a 30% increase in long-term cardiovascular mortality and recurrent MI (72).
 
-time_to_MI = function(attrs) 
+time_to_MI = function(attrs, inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
   {
@@ -265,7 +265,7 @@ time_to_MI = function(attrs)
 
 
 
-MI_event = function(traj)
+MI_event = function(traj, inputs)
 {
   traj %>%
     branch(
@@ -319,7 +319,7 @@ MI_event = function(traj)
 # related to stent thrombosis and MI separately, we subtracted these from the total observed revascularizations 
 # to avoid double counting.
 
-time_to_RV = function(attrs) 
+time_to_RV = function(attrs, inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
   {
@@ -342,7 +342,7 @@ time_to_RV = function(attrs)
 
 
 
-RV_event = function(traj) 
+RV_event = function(traj, inputs) 
 {
   traj %>%
     branch(
@@ -388,7 +388,7 @@ RV_event = function(traj)
 # these were associated with increased costs and decreased quality-adjusted life years (QALYs), but 
 # did not increase perioperative mortality.
 
-time_to_ExtBleed = function(attrs) 
+time_to_ExtBleed = function(attrs, inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
   {
@@ -412,7 +412,7 @@ time_to_ExtBleed = function(attrs)
   }
 }
 
-ExtBleed_event = function(traj)
+ExtBleed_event = function(traj, inputs)
 {
   traj %>%
     branch(
@@ -428,7 +428,7 @@ ExtBleed_event = function(traj)
 ##
 # Intracranial (TIMI Major and Non-Fatal)
 ##
-time_to_IntBleed = function(attrs) 
+time_to_IntBleed = function(attrs, inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
   {
@@ -452,7 +452,7 @@ time_to_IntBleed = function(attrs)
   }
 }
 
-IntBleed_event = function(traj) 
+IntBleed_event = function(traj, inputs) 
 {
   traj %>% 
     branch(
@@ -467,7 +467,7 @@ IntBleed_event = function(traj)
 ##
 # TIMI Minor Bleed
 ##
-time_to_TIMIMinor = function(attrs) 
+time_to_TIMIMinor = function(attrs, inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
   {
@@ -491,7 +491,7 @@ time_to_TIMIMinor = function(attrs)
   }
 }
 
-TIMIMinor_event = function(traj) 
+TIMIMinor_event = function(traj, inputs) 
 {
   traj %>%  
     branch(
@@ -507,7 +507,7 @@ TIMIMinor_event = function(traj)
 ##
 # Fatal Bleed
 ##
-time_to_FatalBleed = function(attrs) 
+time_to_FatalBleed = function(attrs, inputs) 
 {
   if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
   {
@@ -531,7 +531,7 @@ time_to_FatalBleed = function(attrs)
   }
 }
 
-FatalBleed_event = function(traj) 
+FatalBleed_event = function(traj, inputs) 
 {
   traj %>% 
     branch(

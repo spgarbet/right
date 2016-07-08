@@ -145,7 +145,7 @@ dapt_end_time = function(attrs,inputs) {
    {
      return( inputs$clopidogrel$vDAPT.Tx.Duration )
    } else
-     return(end_of_model +1)
+     return(inputs$vHorizon*365 +1)
 }
 
 dapt_end <- function(traj,inputs) 
@@ -168,7 +168,7 @@ dapt_end <- function(traj,inputs)
 
 time_to_ST = function(attrs,inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.ST"]]
@@ -241,7 +241,7 @@ ST_event = function(traj, inputs)
 
 time_to_MI = function(attrs, inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.MI"]]
@@ -321,7 +321,7 @@ MI_event = function(traj, inputs)
 
 time_to_RV = function(attrs, inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.RV"]]
@@ -390,7 +390,7 @@ RV_event = function(traj, inputs)
 
 time_to_ExtBleed = function(attrs, inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.ExtBleed"]]
@@ -430,7 +430,7 @@ ExtBleed_event = function(traj, inputs)
 ##
 time_to_IntBleed = function(attrs, inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.IntBleed"]]
@@ -469,7 +469,7 @@ IntBleed_event = function(traj, inputs)
 ##
 time_to_TIMIMinor = function(attrs, inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.TIMIMinor"]]
@@ -509,7 +509,7 @@ TIMIMinor_event = function(traj, inputs)
 ##
 time_to_FatalBleed = function(attrs, inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(end_of_model+1) else
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.FatalBleed"]]

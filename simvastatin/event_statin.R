@@ -43,7 +43,11 @@ assign_statin <- function(traj, inputs)
         set_attribute("aStatinRxHx", 1) %>% # Now they have a history of statin RX
         branch(
           function(attrs) 
-            (attrs[['aGenotyped_CVD']] == 1 && attrs[['aCVDgenotype']] != 1) + 1,
+          {
+            if(attrs[['aGenotyped_CVD']] != 1 || attrs[['aCVDgenotype']] == 1) return(1)
+            
+            sample(1:2, 1, prob=c(1-inputs$simvastatin$vProbSimvastatinAlt, inputs$simvastatin$vProbSimvastatinAlt))
+          },  
           continue = rep(TRUE,2),
           create_trajectory("Simvastatin") %>%
             seize("simvastatin") %>%

@@ -33,11 +33,11 @@ stop_statin_treatment <- function(inputs)
 }
 
 
-next_step <- function(traj, inputs)
+next_step <- function(traj, inputs, probability_stop)
 {
   traj %>%
   branch(
-    function() sample(1:2, 1, prob=c(0.77, 0.23)), #TODO: Should this be from inputs?
+    function() sample(1:2, 1, prob=c(1-probability_stop, probability_stop)), 
     continue=rep(TRUE,2),
     switch_statin(inputs),
     stop_statin_treatment(inputs)
@@ -78,7 +78,7 @@ mild_myopathy <- function(traj, inputs)
 {
   traj %>%
   mark("mild_myopathy") %>%
-  next_step(inputs)
+  next_step(inputs, inputs$simvastatin$vProbSimStopMild)
 }
 
 # Moderate myopathy events
@@ -115,7 +115,7 @@ mod_myopathy <- function(traj,inputs)
 {
   traj %>%
   mark("mod_myopathy") %>%
-  next_step()
+  next_step(inputs, inputs$simvastatin$vProbSimStopMod)
 }
 
 # Severe myopathy events
@@ -156,6 +156,6 @@ sev_myopathy <- function(traj,inputs)
     function() sample(1:2, 1, prob=c(0.1, 0.9)),
     continue = c(FALSE, TRUE),
     create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_termination(),
-    stop_statin_treatment(inputs)
+    create_trajectory("Do we stop treatment?") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)
   )
 }

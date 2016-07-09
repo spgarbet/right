@@ -20,6 +20,7 @@ assign_initial_clopidogrel_attributes <- function(traj,inputs)
   traj %>%
     set_attribute("aAspirin",2) %>%
     set_attribute("aOnDAPT",2) %>%
+    set_attribute("aGenotyped_CYP2C19",2) %>%
     set_attribute("aRR.DAPT.ST",1) %>%
     set_attribute("aRR.DAPT.MI",1) %>%
     set_attribute("aRR.DAPT.RV",1) %>%

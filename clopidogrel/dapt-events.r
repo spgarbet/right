@@ -3,9 +3,15 @@
 ## Assign Time to DAPT
 days_till_dapt <- function(attrs, inputs) 
 {
-  aRandUnif = runif(n=1,min=0,max=1) 
-  aLPEvent = attrs[['aRRDAPT']]
-  inputs$clopidogrel$vDAPTScale * (-log(aRandUnif)*exp(-log(aLPEvent)))^(1/inputs$clopidogrel$vDAPTShape)
+  if (inputs$vDrugs$vClopidogrel)
+  {
+    aRandUnif = runif(n=1,min=0,max=1) 
+    aLPEvent = attrs[['aRRDAPT']]
+    inputs$clopidogrel$vDAPTScale * (-log(aRandUnif)*exp(-log(aLPEvent)))^(1/inputs$clopidogrel$vDAPTShape)
+  } else 
+  {
+    inputs$vHorizon*365+1
+  }
 }
 
 

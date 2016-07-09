@@ -24,8 +24,6 @@ pkg = list("simmer",
            "msm")
 invisible(lapply(pkg, require, character.only = TRUE))
 
-
-
 ####
 ## 
 # Define Simulation Environment.
@@ -50,14 +48,14 @@ source('./main/event_secular_death.R')
 # Define Panel Test attributes, functions
 all_genotyped <- function(attrs)
 {
-   attrs[['aGenotyped_CVD']]     == 1 &&  # Simvastatin
-   attrs[['aGenotyped_CYP2C19']] == 1     # Clopidogrel
+  attrs[['aGenotyped_CVD']]     == 1 &&  # Simvastatin
+    attrs[['aGenotyped_CYP2C19']] == 1     # Clopidogrel
 }
 
 any_genotyped <- function(attrs)
 {
-   attrs[['aGenotyped_CVD']]     == 1 ||
-   attrs[['aGenotyped_CYP2C19']] == 1
+  attrs[['aGenotyped_CVD']]     == 1 ||
+    attrs[['aGenotyped_CYP2C19']] == 1
 }
 
 panel_test <- function(traj, inputs)
@@ -111,7 +109,7 @@ predict_test <- function(traj, inputs)
 # No modification required for adding more drug models
 preemptive_strategy <- function(traj, inputs)
 {
-
+  
   # Note this doesn't have to use branch, because it's a global that every trajectory gets
   if        (inputs$vPreemptive == "None"     )
   {
@@ -132,12 +130,12 @@ preemptive_strategy <- function(traj, inputs)
   } else if (inputs$vPreemptive == "Age >= 50")
   {
     traj %>%
-    branch(
-      function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
-      continue = c(TRUE, TRUE),
-      create_trajectory() %>% timeout(0), # Do nothing
-      create_trajectory() %>% panel_test(inputs)
-    )
+      branch(
+        function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
+        continue = c(TRUE, TRUE),
+        create_trajectory() %>% timeout(0), # Do nothing
+        create_trajectory() %>% panel_test(inputs)
+      )
   } else stop("Unhandled Preemptive Strategy")
 }
 
@@ -155,11 +153,11 @@ cleanup_on_termination <- function(traj)
 terminate_simulation <- function(traj, inputs)
 {
   traj %>%
-  branch(
-    function() 1, 
-    continue=FALSE,
-    create_trajectory() %>% cleanup_on_termination()
-  )
+    branch(
+      function() 1, 
+      continue=FALSE,
+      create_trajectory() %>% cleanup_on_termination()
+    )
 }
 
 ####
@@ -263,50 +261,23 @@ event_registry <- list(
 source("./main/counters.R")
 counters <- c(counters.gen, counters.dapt, counters.simvastatin)
 
-
 #####################################################################
-####
-##
-# Setup and Run the Simulation.
-##
-####
-source('./main/event_main_loop.R')
 
+exec.simulation = function(s=12345)
+{
+  library(parallel)
+  RNGkind("L'Ecuyer-CMRG")
+  set.seed(s)
+  N <- inputs$vN
+  traj <- simulation(env, inputs)
+  mc.reset.stream()
+  envs <-  mclapply(1:inputs$vNIter,mc.set.seed = TRUE, function(i) {
+    env %>% create_counters(counters) %>%
+      add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
+      run(365*inputs$vHorizon) %>% # Simulate 100 years.
+      wrap()
+  })
+}
 
-############################################################
-set.seed(12345)
-
-ptm <- proc.time()
-traj <- simulation(env, inputs)
-env %>% create_counters(counters)
-
-env %>%
-  add_generator("patient", traj, at(rep(0, inputs$vN)), mon=2) %>%
-  run(365*inputs$vHorizon+10) %>% # Simulate just past horizon
-  wrap()
-(timer = proc.time() - ptm)
-############################################################
-
-
-####
-##
-# Count Number of Events
-##
-####
-arrivals <- get_mon_arrivals(env, per_resource = T)
-arrivals %>% count(resource) 
-
-####
-##
-# Compute Costs!!!
-##
-####
-# 
-# source("./costs.R")
-# x <- costs(env, inputs)
-# 
-# # Look for reduced quality lives
-# x[x$QALY < 8.62,]
-# # Checkout why
-# arrivals[arrivals$name == 'patient1028',]
+  
 

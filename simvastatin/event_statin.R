@@ -3,7 +3,13 @@
 ## Assign Time to Simvastatin therapy
 days_till_statin <- function(attrs, inputs) 
 {
-  rweibull(1, inputs$simvastatin$vShape, inputs$simvastatin$vScale)
+  if (inputs$vDrugs$vSimvastatin)
+  {
+    rweibull(1, inputs$simvastatin$vShape, inputs$simvastatin$vScale)
+  } else 
+  {
+    inputs$vHorizon*365+1
+  }
 }
 
 statin_reactive_strategy <- function(traj, inputs)

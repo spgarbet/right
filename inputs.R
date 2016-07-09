@@ -155,17 +155,26 @@ warfarin = list(
 
 inputs <- list(
   # Population Parameters
-  vN           = 10000,   # Patients to simulate
+  vN           = 1000,   # Patients to simulate
+  vNIter       = 10,      # Number of Iterations (parallel processing)
   vLowerAge    = 40,      # Lower age to simulate coming in (uniform distribution)
   vUpperAge    = 40,      # Upper age to simulate
-  vHorizon     = 10,      # Length of simulation upon a patient entering
+  vHorizon     = 100,      # Length of simulation upon a patient entering
   vPctFemale   = 0.5,     # Percent Female
   
   # Strategies
   vPreemptive  = "None",  # Can be one of following: "None", "Panel", "PREDICT", or "Age >= 50"
-  vReactive    = "Panel", # Can be one of following: "None", "Single", "Panel"
+  vReactive    = "None", # Can be one of following: "None", "Single", "Panel"
+
+# Control Which Drugs Are Run in the Model 
+  vDrugs       = list(vSimvastatin = FALSE, 
+                      vWarfarin = FALSE,
+                      vClopidogrel = TRUE),
+
 # CURRENTLY PANEL IS FOR ALL DRUGS ???
-#  vPanel       = list(vSimvastatin = TRUE, vWarfarin=FALSE, vClopidogrel = FALSE),
+  vPanel       = list(vSimvastatin = TRUE, 
+                    vWarfarin=FALSE, 
+                    vClopidogrel = FALSE),
 
   # Drug specific model parameters
   clopidogrel = clopidogrel,

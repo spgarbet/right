@@ -20,6 +20,6 @@ ptm <- proc.time()
 arrivals <- get_mon_arrivals(sim.run, per_resource = T)
 (events <- arrivals %>% count(resource) %>%  data.frame()  ) %>%  filter(grepl("death|_fatal",resource)) 
 events %>% filter(grepl("_test",resource))
-
+events %>% filter(resource=="dapt_start")
 
 

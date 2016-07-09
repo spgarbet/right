@@ -39,6 +39,13 @@ clopidogrel = list(
     vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
 
     # Stent Thrombosis: Event Rates and Relative Risks
+    
+    # Relative Risk of ST for patients with loss of function allele who are treated with 
+    # Clopidogrel.
+    vRR.ST.LOF = 1.75, #(1.50-2.03) High Discrimination Scenario =  2.81 (1.81-4.37)
+    
+    # The Stent Thrombosis Risks are drawn from a piecewise exponential with the following
+    # durations and rates. 
     vRiskST30    = 0.0150, # (0.010-0.020)
     vRiskST365   = 0.0060, # (0.003-0.009)
     vRiskSTgt365 = 0.0022, # (0.001-0.003)
@@ -88,7 +95,7 @@ clopidogrel = list(
     vRR.RiskCABGTIMImajor.Prasugrel =  1.08, # (0.85-1.36)
     vRR.RiskCABGTIMImajor.Aspirin =  4.73,# (1.90-11.82)
 
-    vRR.ST.LOF = 1.75, #(1.50-2.03) High Discrimination Scenario =  2.81 (1.81-4.37)
+    
     vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
     vRR.Mort.LOF = 1.28, #(0.95-1.73)
     vRR.Bleed.LOF = 0.84, # (0.75-1.00)

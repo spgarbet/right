@@ -33,7 +33,7 @@ invisible(lapply(pkg, require, character.only = TRUE))
 # NOTE: This must be done at a global level for the simmer now() function to be available
 #       inside trajectories. Without this at a global level, the simulation won't work.
 ####
-env  <- simmer("RIGHT-v1.0")
+env  <- simmer("RIGHT-v1.1")
 
 ####
 ## 

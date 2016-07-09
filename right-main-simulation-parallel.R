@@ -133,8 +133,8 @@ preemptive_strategy <- function(traj, inputs)
       branch(
         function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
         continue = c(TRUE, TRUE),
-        create_trajectory() %>% timeout(0), # Do nothing
-        create_trajectory() %>% panel_test(inputs)
+        create_trajectory() %>% panel_test(inputs) , # Do nothing
+        create_trajectory() %>% timeout(0)
       )
   } else stop("Unhandled Preemptive Strategy")
 }

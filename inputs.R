@@ -163,7 +163,7 @@ inputs <- list(
   vPctFemale   = 0.5,     # Percent Female
   
   # Strategies
-  vPreemptive  = "None",  # Can be one of following: "None", "Panel", "PREDICT", or "Age >= 50"
+  vPreemptive  = "Age >= 50",  # Can be one of following: "None", "Panel", "PREDICT", or "Age >= 50"
   vReactive    = "None", # Can be one of following: "None", "Single", "Panel"
 
 # Control Which Drugs Are Run in the Model 

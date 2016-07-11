@@ -4,6 +4,21 @@
 ##
 ####
 
+# Function to Convert Nominal to Real Dollars
+
+library(quantmod)
+
+# Get CPI-U from FRED
+getSymbols("CPIAUCSL", src='FRED')
+avg.cpi <- apply.yearly(CPIAUCSL, mean)
+
+realdol = function(nominal,year=2016,base=2012)
+{
+  cf <- avg.cpi/as.numeric(avg.cpi[paste(base)])
+  return(as.numeric(nominal*cf[paste(year)]))
+}
+
+
 epsilon <- 0.000000000001
 
 
@@ -184,14 +199,14 @@ inputs <- list(
   # If these names match the event names from the simmer model, then computation can be generalized!
   # These must be DAILY costs
   costs = list(
-    panel_test      =   250,
-    single_test     =   100,
-    mild_myopathy   =   129,
-    mod_myopathy    =  2255/30, # Note this divided by duration
-    sev_myopathy    = 12811/30,
-    cvd             = 20347/30,
-    simvastatin     =   147/365,
-    alt_simvastatin = 173.1/365
+    panel_test      =   realdol(250,year=2016),
+    single_test     =   realdol(100,year=2016),
+    mild_myopathy   =   realdol(129,year=2012),
+    mod_myopathy    =  realdol(2255/30,year=2012), # Note this divided by duration
+    sev_myopathy    = realdol(12811/30,year=2012),
+    cvd             = realdol(20347/30,year=2012),
+    simvastatin     =   realdol(147/365,year=2012),
+    alt_simvastatin = realdol(173.1/365,year=2012)
   ),
   # Each listed duration will be corrected in the final data frame
   durations = list(

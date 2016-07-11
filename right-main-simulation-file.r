@@ -24,8 +24,6 @@ pkg = list("simmer",
            "msm")
 invisible(lapply(pkg, require, character.only = TRUE))
 
-
-
 ####
 ## 
 # Define Simulation Environment.
@@ -124,7 +122,7 @@ preemptive_strategy <- function(traj, inputs)
     traj %>%
       predict_test(inputs) %>%
       branch(
-        function(attrs) any_genotyped(attrs),
+        function(attrs) ifelse(any_genotyped(attrs),1,2),
         continue=rep(TRUE,2),
         create_trajectory() %>% timeout(0), # Nothing genotyped, do nothing
         create_trajectory() %>% panel_test(inputs) # Something was genotyped via PREDICT, do panel

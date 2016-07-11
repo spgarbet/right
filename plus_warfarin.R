@@ -149,6 +149,7 @@ cleanup_on_termination <- function(traj)
     #print_attrs() %>%
     release("n_patients") %>%
     cleanup_clopidogrel() %>%
+    cleanup_aspirin() %>% 
     cleanup_simvastatin() 
 }
 

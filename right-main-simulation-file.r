@@ -24,8 +24,6 @@ pkg = list("simmer",
            "msm")
 invisible(lapply(pkg, require, character.only = TRUE))
 
-
-
 ####
 ## 
 # Define Simulation Environment.

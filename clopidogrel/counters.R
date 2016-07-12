@@ -13,5 +13,9 @@ counters.dapt = c(
               "timi_ext_maj_nonfatal",
               "timi_int_maj_nonfatal",
               "timi_min_nonfatal",
-              "fatal_bleed"
+              "fatal_bleed",
+              "clopidogrel",
+              "ticagrelor",
+              "prasugrel"
+              
 )

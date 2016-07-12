@@ -1,19 +1,4 @@
-counters.dapt <- c(
-              "dapt_start",
-              "dapt_end",
-              "dapt_switched",
-              "aspirin",
-              "st_all",
-              "st_fatal",
-              "cabg",
-              "mi_nonfatal",
-              "mi_med_manage",
-              "revascularized",
-              "timi_ext_maj_nonfatal",
-              "timi_int_maj_nonfatal",
-              "timi_min_nonfatal",
-              "fatal_bleed"
-)
+
 
 assign_initial_clopidogrel_attributes <- function(traj,inputs) 
 {
@@ -27,7 +12,8 @@ assign_initial_clopidogrel_attributes <- function(traj,inputs)
     set_attribute("aRR.DAPT.ExtBleed",1) %>%
     set_attribute("aRR.DAPT.IntBleed",1) %>%
     set_attribute("aRR.DAPT.TIMIMinor",1) %>%
-    set_attribute("aRR.DAPT.FatalBleed",1)
+    set_attribute("aRR.DAPT.FatalBleed",1) %>% 
+    set_attribute("aDAPT.Rx",5)
 }
 
 assign_dapt_attributes <- function(traj,inputs=list()) 

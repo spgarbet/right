@@ -1,15 +1,20 @@
 
 
-annual_discount_rate <- 0.03
+annual_discount_rate <- epsilon
 cont_discount_rate   <- -log(1-annual_discount_rate) # Yearly Time Scale
 discounted_cost <- function(start_day, end_day, base_yearly_cost, rate = cont_discount_rate)
 {
   base_yearly_cost*(exp(-rate*start_day/365) - exp(-rate*end_day/365))/rate 
+  #(base_yearly_cost/365) / (1 + (rate/365))^(365*(start_day-end_day))
 }
 
-compile_statistics <- function(env, inputs)
+discounted_cost(start_day = 0,end_day=1,base_yearly_cost=250*365,rate=epsilon)
+
+compile_statistics <- function(env, inputs,replicates= FALSE)
 {
   arrivals <- get_mon_arrivals(env, per_resource = T)
+  
+  if (replicates) arrivals <- arrivals %>%  mutate(name = paste0(name,"_",replication))
   
   # Make all resources a factor (this allows for null events to still get summaries)
   arrivals$resource <- factor(arrivals$resource, counters)
@@ -53,9 +58,12 @@ compile_statistics <- function(env, inputs)
 #####################################################
 # Costing Algorithm
 #
-costs <- function(env, inputs)
+costs <- function(env, inputs,replicates= FALSE)
 {
+  
   arrivals <- compile_statistics(env, inputs)
+  
+  if (replicates) arrivals <- arrivals %>%  mutate(name = paste0(name,"_",replication))
   
   stats <- as.data.frame(do.call(rbind, lapply(split(arrivals, arrivals$name), FUN=function(x)
   {

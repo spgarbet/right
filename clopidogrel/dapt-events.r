@@ -15,10 +15,6 @@ days_till_dapt <- function(attrs, inputs)
 }
 
 
-# # Sanity Check: Should be ~4%
-#  x = c()
-#  for (i in 1:10000) x[i] = days_till_dapt(1); prop.table(table(x<=365))
-
 
 ######
 ## Assign DAPT Medication
@@ -53,7 +49,7 @@ assign_DAPT_medication <- function(traj,inputs)
 {
   traj %>%
     clopidogrel_reactive_strategy(inputs) %>%
-    set_attribute("aDAPT.Rx",0) %>%
+    set_attribute("aDAPT.Rx",1) %>%
     set_attribute("aDAPT.SecondLine",
                   function() {
                     if(inputs$clopidogrel$vDAPT.SecondLine == "Ticagrelor")       {return(2)} else
@@ -71,12 +67,15 @@ assign_DAPT_medication <- function(traj,inputs)
         return(1) # Default is to Clopidogrel, hence return 1 if no Hx of alternative drug, or if not switched.  
       },
       continue=rep(TRUE,3),
-      create_trajectory("sClopidogrel") %>%
+      create_trajectory("sClopidogrel") %>%  
+        seize("clopidogrel") %>% 
         set_attribute("aDAPT.Rx", 1),  
       create_trajectory("sTicagrelor")  %>%
+        seize('ticagrelor') %>% 
         set_attribute("aDAPT.Rx", 2) %>%
         mark("dapt_switched"),
-      create_trajectory("sPrasugrel") %>%
+      create_trajectory("sPrasugrel") %>% 
+        seize('prasugrel') %>% 
         set_attribute("aDAPT.Rx", 3) %>%
         mark("dapt_switched")
     ) %>%
@@ -85,12 +84,11 @@ assign_DAPT_medication <- function(traj,inputs)
     set_attribute("aDAPT.Rx.Hx",function(attrs) attrs[['aDAPT.Rx']]) %>%
     
     #Initiate Aspirin if Not Already Started
-    #TK Need to Seize Resource Until Death
      branch(
-       function(attrs) ifelse(attrs[['aAspirin']]==1 & attrs[["aDAPT.Rx"]] %in% c(1,2,3) ,1,2),
+       function(attrs) ifelse(attrs[['aAspirin']]==2 & attrs[["aDAPT.Rx"]] %in% c(1,2,3) ,1,2),
       continue=c(TRUE,TRUE),
-      create_trajectory() %>% timeout(0),
-      create_trajectory() %>% seize("aspirin") %>% set_attribute("aAspirin",1)
+      create_trajectory() %>% seize("aspirin") %>% set_attribute("aAspirin",1),
+      create_trajectory() %>% timeout(0)
      )
   }
 
@@ -105,6 +103,7 @@ dapt <- function(traj, inputs)
         set_attribute("aRRDAPT", inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
         set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
         set_attribute("aOnDAPT",1) %>%
+        set_attribute("aDAPTRxHx", 1) %>% 
         assign_DAPT_medication(inputs) %>%
 
         ####
@@ -157,7 +156,18 @@ dapt_end_time <- function(attrs,inputs) {
 dapt_end <- function(traj,inputs) 
 {
   traj %>%
-    create_trajectory()  %>% mark("dapt_end") %>% set_attribute("aOnDAPT",2)
+    branch(
+      function(attrs) ifelse(attrs[['aDAPT.Rx']] %in% c(1:3),attrs[['aDAPT.Rx']],4),
+      continue=rep(TRUE,4),
+      create_trajectory() %>% release("clopidogrel") ,
+      create_trajectory() %>% release("ticagrelor") ,
+      create_trajectory() %>% release("prasugrel") ,
+      create_trajectory() %>% timeout(0)
+    ) %>% 
+    
+    set_attribute("aDAPT.Rx",4) %>%   
+    set_attribute("aOnDAPT",2) 
+  
 }
 
 ####
@@ -179,7 +189,7 @@ time_to_ST <- function(attrs,inputs)
     # Relative Risk
     rr = attrs[["aRR.DAPT.ST"]]
     # Need to add in loss of function and gain of function RRs here too.
-    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.ST.LOF
+    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.ST.LOF
     if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.ST.Ticagrelor 
     if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.ST.Prasugrel
     if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.ST.Aspirin
@@ -215,7 +225,7 @@ ST_event = function(traj, inputs)
            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
            continue= c(TRUE,TRUE),
            # Discontinue DAPT Therapy if CABG, Continue With Aspirin
-           create_trajectory() %>% mark("cabg") %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+           create_trajectory() %>% mark("cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
            
            #* TO DO: Add in Brief 14 Day Utility Decrement
            
@@ -293,12 +303,12 @@ MI_event = function(traj, inputs)
           continue = c(TRUE, TRUE, TRUE),
           
           # CABG
-          create_trajectory() %>% mark("cabg") %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
+          create_trajectory() %>% mark("cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
           #* TO DO: Add in Brief 14 Day Utility Decrement
           #* TO DO: Confirm DAPT Therapy shut off with CABG.
           
           # Repeat PCI
-          create_trajectory() %>%
+          create_trajectory() %>% mark('revascularized') %>% 
             set_attribute("aRRDAPT", inputs$clopidogrel$vRRRepeat.DAPT)  %>%
             set_attribute("aNumDAPT", function(attrs)
               attrs[['aNumDAPT']] + 1) %>%
@@ -355,19 +365,19 @@ RV_event = function(traj, inputs)
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue = c(TRUE, TRUE),
-    create_trajectory() %>% mark("revascularized") %>%
+    create_trajectory() %>% 
     branch(
       function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.RV,
                                           1-inputs$clopidogrel$vPrCABG.RV)),
       continue= c(TRUE,TRUE),
       
       # CABG
-      create_trajectory() %>% mark("cabg") %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+      create_trajectory() %>% mark("cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
       #* TO DO: Add in Brief 14 Day Utility Decrement
       #* TO DO: Confirm DAPT Therapy shut off with CABG. 
       
       # Repeat PCI
-      create_trajectory() %>%  
+      create_trajectory() %>%  mark("revascularized") %>% 
         set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
         set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
         set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs, inputs))  

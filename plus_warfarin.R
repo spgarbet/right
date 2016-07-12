@@ -87,6 +87,9 @@ source('./simvastatin/event_cvd.R')
 source('./simvastatin/event_myopathy.R')
 source('./simvastatin/event_statin.R')
 
+#####
+## Warfarin
+
 initialize_patient <- function(traj, inputs)
 {
   traj %>%
@@ -111,7 +114,7 @@ predict_test <- function(traj, inputs)
 # No modification required for adding more drug models
 preemptive_strategy <- function(traj, inputs)
 {
-
+  
   # Note this doesn't have to use branch, because it's a global that every trajectory gets
   if        (inputs$vPreemptive == "None"     )
   {
@@ -124,7 +127,7 @@ preemptive_strategy <- function(traj, inputs)
     traj %>%
       predict_test(inputs) %>%
       branch(
-        function(attrs) any_genotyped(attrs),
+        function(attrs) ifelse(any_genotyped(attrs),1,2),
         continue=rep(TRUE,2),
         create_trajectory() %>% timeout(0), # Nothing genotyped, do nothing
         create_trajectory() %>% panel_test(inputs) # Something was genotyped via PREDICT, do panel
@@ -132,15 +135,14 @@ preemptive_strategy <- function(traj, inputs)
   } else if (inputs$vPreemptive == "Age >= 50")
   {
     traj %>%
-    branch(
-      function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
-      continue = c(TRUE, TRUE),
-      create_trajectory() %>% panel_test(inputs),
-      create_trajectory() %>% timeout(0) # Do nothing
-    )
+      branch(
+        function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
+        continue = c(TRUE, TRUE),
+        create_trajectory() %>% panel_test(inputs) , # Do nothing
+        create_trajectory() %>% timeout(0)
+      )
   } else stop("Unhandled Preemptive Strategy")
 }
-
 ####
 ## Cleanup 
 cleanup_on_termination <- function(traj)

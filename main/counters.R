@@ -1,6 +1,6 @@
 counters.gen <- c(
               "secular_death",
-              "n_patients",
+              "time_in_model",
               "panel_test",
               "single_test"
 )

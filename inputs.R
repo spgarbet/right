@@ -51,7 +51,7 @@ clopidogrel = list(
 
     vDAPT.Tx.Duration = 365, # (12mo-48mo)
 
-    vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
+    vProbabilityDAPTSwitch = 1, #0.55, # Source: VUMC PREDICT DATA
 
     # Stent Thrombosis: Event Rates and Relative Risks
     
@@ -172,8 +172,8 @@ inputs <- list(
   # Population Parameters
   vN           = 1000,   # Patients to simulate
   vNIter       = 10,      # Number of Iterations (parallel processing)
-  vLowerAge    = 40,      # Lower age to simulate coming in (uniform distribution)
-  vUpperAge    = 40,      # Upper age to simulate
+  vLowerAge    = 55,      # Lower age to simulate coming in (uniform distribution)
+  vUpperAge    = 55,      # Upper age to simulate
   vHorizon     = 100,      # Length of simulation upon a patient entering
   vPctFemale   = 0.5,     # Percent Female
   
@@ -182,14 +182,14 @@ inputs <- list(
   vReactive    = "None", # Can be one of following: "None", "Single", "Panel"
 
 # Control Which Drugs Are Run in the Model 
-  vDrugs       = list(vSimvastatin = TRUE, 
+  vDrugs       = list(vSimvastatin = FALSE, 
                       vWarfarin = FALSE,
                       vClopidogrel = TRUE),
 
 # CURRENTLY PANEL IS FOR ALL DRUGS ???
   vPanel       = list(vSimvastatin = TRUE, 
                     vWarfarin=FALSE, 
-                    vClopidogrel = FALSE),
+                    vClopidogrel = TRUE),
 
   # Drug specific model parameters
   clopidogrel = clopidogrel,
@@ -232,17 +232,11 @@ inputs <- list(
     mod_myopathy  = 30,
     sev_myopathy  = 30,
     cvd           = 30,
-    panel_test    =  1,
     single_test   =  1,
    
     timi_ext_maj_nonfatal = 14,
     timi_int_maj_nonfatal = 1,
     timi_min_nonfatal = 2,
-    #fatal_bleed     = 1,
-    #st_fatal        = 1,
-    #cabg_mi         = 1,
-    #mi_med_manage   = 1,
-    #mi_nonfatal     = 1,
     revasc_cabg     = 14,
     revasc_pci      = 7 
     

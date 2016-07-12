@@ -88,7 +88,7 @@ source('./simvastatin/event_statin.R')
 initialize_patient <- function(traj, inputs)
 {
   traj %>%
-    seize("n_patients")       %>%
+    seize("time_in_model")       %>%
     set_attribute("aGender",    function(attrs) sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
     set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
@@ -145,7 +145,7 @@ cleanup_on_termination <- function(traj)
 {
   traj %>% 
     #print_attrs() %>%
-    release("n_patients") %>%
+    release("time_in_model") %>%
     cleanup_clopidogrel() %>%
     cleanup_aspirin() %>% 
     cleanup_simvastatin() 

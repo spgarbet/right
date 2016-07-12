@@ -8,34 +8,26 @@ library(parallel)
 ####
 source("./right-main-simulation-parallel.R")
 inputs$vN = 200
-inputs$vNIter = 10
+inputs$vNIter = 1
  inputs$vReactive = "None"
- inputs$vPreemptive = "Panel"
+ inputs$vPreemptive = "None"
 source('./main/event_main_loop.R')
 # Run the Simulation
 s = 12345
 ptm <- proc.time()
   sim.run = exec.simulation(s=s)
 (timer2 = proc.time() - ptm)
-arrivals <- get_mon_arrivals(sim.run, per_resource = T) %>%  mutate(name = paste0(name,"_",replication))
-(events <- arrivals %>% count(resource) %>%  data.frame()  ) %>%  filter(grepl("death|_fatal",resource)) 
-
-
-#### Check Out Individual Patients
-(pt = arrivals %>% filter(resource=="revascularized") %>% filter(row_number()==2) %>% select(name) %>% as.character(.))
-
-arrivals %>% filter(name %in% pt) %>% group_by(name)
-
-attributes <- arrange(get_mon_attributes(sim.run),name,key,time) %>%  mutate(name = paste0(name,"_",replication)) 
-all.attributes <- spread(attributes %>% group_by(name,key,time) %>% summarize(first = mean(value)),key,first)
-
-all.attributes %>%  filter(name==pt) %>% select(time,contains("DAPT"),-contains("RR"))
 
 source("./costs.R")
+sim.run.stats = cost.qaly(sim.run,inputs)
+events = sim.run.stats[["arrivals"]]
+costs = sim.run.stats[["cost"]]
+qaly = sim.run.stats[["qaly"]]
+summ = sim.run.stats[["summary"]]
 
-stats = compile_statistics(env=sim.run,inputs=inputs,replicates=TRUE); stats %>% filter(name==pt)
+summ %>% summarise(qaly = mean(dQALY),cost=mean(dCOST))
 
-costs = costs(env=sim.run,inputs=inputs,replicates=TRUE) ; costs[pt,]
-
-
- 
+pt = events %>% filter(resource=="cabg_mi") %>% select(name) %>% filter(row_number()==1) %>% as.character()
+events %>% filter( name==pt )
+costs %>% filter(name==pt) 
+qaly %>% filter(name==pt)

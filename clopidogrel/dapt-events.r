@@ -225,7 +225,7 @@ ST_event = function(traj, inputs)
            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
            continue= c(TRUE,TRUE),
            # Discontinue DAPT Therapy if CABG, Continue With Aspirin
-           create_trajectory() %>% mark("cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+           create_trajectory() %>% mark("cabg_mi") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
            
            #* TO DO: Add in Brief 14 Day Utility Decrement
            
@@ -288,7 +288,7 @@ MI_event = function(traj, inputs)
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue = c(TRUE, TRUE),
-      create_trajectory() %>% mark("mi_nonfatal") %>%
+      create_trajectory() %>%
         branch(
           function(attrs)
             sample(
@@ -303,12 +303,12 @@ MI_event = function(traj, inputs)
           continue = c(TRUE, TRUE, TRUE),
           
           # CABG
-          create_trajectory() %>% mark("cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
+          create_trajectory() %>% mark("cabg_mi") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
           #* TO DO: Add in Brief 14 Day Utility Decrement
           #* TO DO: Confirm DAPT Therapy shut off with CABG.
           
           # Repeat PCI
-          create_trajectory() %>% mark('revascularized') %>% 
+          create_trajectory() %>% mark("mi_nonfatal") %>% 
             set_attribute("aRRDAPT", inputs$clopidogrel$vRRRepeat.DAPT)  %>%
             set_attribute("aNumDAPT", function(attrs)
               attrs[['aNumDAPT']] + 1) %>%
@@ -372,12 +372,12 @@ RV_event = function(traj, inputs)
       continue= c(TRUE,TRUE),
       
       # CABG
-      create_trajectory() %>% mark("cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+      create_trajectory() %>% mark("revasc_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
       #* TO DO: Add in Brief 14 Day Utility Decrement
       #* TO DO: Confirm DAPT Therapy shut off with CABG. 
       
       # Repeat PCI
-      create_trajectory() %>%  mark("revascularized") %>% 
+      create_trajectory() %>%  mark("revasc_pci") %>% 
         set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
         set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
         set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs, inputs))  

@@ -207,10 +207,22 @@ inputs <- list(
     cvd             = realdol(20347/30,year=2012),
     simvastatin     =   realdol(147/365,year=2012),
     alt_simvastatin = realdol(173.1/365,year=2012),
-    aspirin         = 1,
-    rx_clopidogrel     = 10/30,
-    rx_ticagrelor      = 500/30,
-    rx_prasugrel       = 500/30
+    
+    aspirin         = realdol(4/30,year=2011),
+    clopidogrel     = realdol(30/30,year=2011),
+    ticagrelor      = realdol(220/30,year=2011),
+    prasugrel       = realdol(261/30,year=2011),
+    timi_ext_maj_nonfatal = realdol(10120/14,2011),
+    timi_int_maj_nonfatal = realdol(20740,2011),
+    timi_min_nonfatal = realdol(79/2,2011),
+    fatal_bleed     = realdol(17920,2011),
+    st_fatal        = realdol(24540,2011),
+    cabg_mi            = realdol(67720,2011),
+    mi_med_manage   = realdol(17200,2011),
+    mi_nonfatal     = realdol(27840,2011),
+    revasc_cabg     = realdol(50560/14,2011),
+    revasc_pci      = realdol(20670/7,2011)
+    
     
 
   ),
@@ -221,13 +233,36 @@ inputs <- list(
     sev_myopathy  = 30,
     cvd           = 30,
     panel_test    =  1,
-    single_test   =  1
+    single_test   =  1,
+   
+    timi_ext_maj_nonfatal = 14,
+    timi_int_maj_nonfatal = 1,
+    timi_min_nonfatal = 2,
+    fatal_bleed     = 1,
+    st_fatal        = 1,
+    cabg_mi         = 1,
+    mi_med_manage   = 1,
+    mi_nonfatal     = 1,
+    revasc_cabg     = 14,
+    revasc_pci      = 7 
+    
   ),
   disutilities = list(
     mild_myopathy = 0.0100,
     mod_myopathy  = 0.0500,
     sev_myopathy  = 0.5300,
-    cvd           = 0.2445
+    cvd           = 0.2445,
+    
+    timi_ext_maj_nonfatal = .2,
+    timi_int_maj_nonfatal = .61,
+    timi_min_nonfatal = .2,
+    fatal_bleed     = 1,
+    st_fatal        = 1,
+    cabg_mi         = .12,
+    mi_med_manage   = .12,
+    mi_nonfatal     = .12,
+    revasc_cabg     = .5,
+    revasc_pci      = .5 
   )
   
 )   

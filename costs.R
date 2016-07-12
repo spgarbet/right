@@ -26,7 +26,7 @@ compile_statistics <- function(env, inputs,replicates= FALSE)
   }, value=inputs$durations, name=names(inputs$durations) )
   
   # Truncate to end of study or life
-  end_times <- arrivals[arrivals$resource == 'n_patients',]
+  end_times <- arrivals[arrivals$resource == 'time_in_model',]
   arrivals$end_time <- pmin(arrivals$end_time, 
      plyr::join(arrivals[,c("name","end_time")], end_times[,c("name","end_time")], by="name", match="first")[,3])
   # Correct durations for marked events
@@ -72,7 +72,7 @@ costs <- function(env, inputs,replicates= FALSE)
   
   stats <- as.data.frame(do.call(rbind, lapply(split(arrivals, arrivals$name), FUN=function(x)
   {
-    life <- x[x$resource=="n_patients",]
+    life <- x[x$resource=="time_in_model",]
     results <- c(sum(x$discounted_cost),
                 (sum(life$discounted_time) - sum(x$disutility))/365,
                 sum(life$activity_time)/365)
@@ -112,7 +112,7 @@ cost.qaly = function(env,inputs)
   }, value=inputs$durations, name=names(inputs$durations) )
   
   # Truncate to end of study or life
-  end_times <- arrivals[arrivals$resource == 'n_patients',]
+  end_times <- arrivals[arrivals$resource == 'time_in_model',]
   arrivals$end_time <- pmin(arrivals$end_time, 
                             plyr::join(arrivals[,c("name","end_time")], end_times[,c("name","end_time")], by="name", match="first")[,3])
   
@@ -154,9 +154,13 @@ cost.qaly = function(env,inputs)
   
   qaly.i <- qaly2  %>%  mutate(disutility=ifelse(is.na(disutility),0,disutility)) %>% mutate(utility=pmin(1-disutility)) %>% 
     mutate(time=lead(value)) %>% mutate(time=ifelse(row_number()>1,time-lag(time),time)) %>%  filter(!is.na(time)) %>% 
-    mutate(utility.d = discount_value(utility,A=value,B=max(time,value))) %>% group_by(name) %>% mutate(qaly.i = pmax(0,utility*time),QALY=sum(qaly.i)) 
+    mutate(utility.d = discount_value(utility,A=value,B=max(time,value))) %>% group_by(name) %>% mutate(qaly.i = pmax(0,utility*time),dQALY=sum(qaly.i)/365.25) %>% filter(qaly.i>0)
   
-  QALY = qaly.i %>% group_by(name) %>% summarise(dQALY = sum(qaly.i)/365); QALY
+  qaly.unadj <-  arrivals %>% filter(resource=="time_in_model") %>% tbl_df() %>% mutate(QALY=end_time/365.25) %>% select(name,QALY)
+  
+  qaly.i = qaly.i %>% merge(qaly.unadj,"name",all.x=TRUE)
+  
+  QALY = qaly.i %>% group_by(name) %>% summarise(dQALY = sum(qaly.i)/365.25) ; QALY
   COST = arrivals %>% group_by(name) %>% summarize(dCOST = sum(discounted_cost))
   
   qaly.cost = QALY %>% merge(COST,by="name",all.x=TRUE)

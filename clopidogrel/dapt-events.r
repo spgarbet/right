@@ -213,31 +213,28 @@ ST_event = function(traj, inputs)
     branch(
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
-      continue = c(TRUE, TRUE),
-    create_trajectory()  %>% mark("st_all") %>%
-    # Case Fatatliy
-     branch(
-       function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vSt.Case.Fatality,1-inputs$clopidogrel$vSt.Case.Fatality)),
-       continue=c(FALSE,TRUE),
-       create_trajectory() %>% mark("st_fatal") %>% cleanup_on_termination(),
-       create_trajectory() %>% 
-         branch(
-           function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
-           continue= c(TRUE,TRUE),
-           # Discontinue DAPT Therapy if CABG, Continue With Aspirin
-           create_trajectory() %>% mark("cabg_mi") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
-           
-           #* TO DO: Add in Brief 14 Day Utility Decrement
-           
-           # Reset Tx Duration to 1 year if PCI
-           create_trajectory() %>%  
-             set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
-             set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
-             set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) 
-           
-           #* TO DO: Add in Brief 7 Day Utility Decrement
-         )
-     ),
+        continue = c(TRUE, TRUE),
+        create_trajectory()  %>% 
+          # Case Fatatliy
+          branch(
+           function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vSt.Case.Fatality,1-inputs$clopidogrel$vSt.Case.Fatality)),
+           continue=c(FALSE,TRUE),
+           create_trajectory() %>% mark("st_fatal") %>% cleanup_on_termination(),
+           create_trajectory() %>% 
+             branch(
+               function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
+               continue= c(TRUE,TRUE),
+               # Discontinue DAPT Therapy if CABG, Continue With Aspirin
+               create_trajectory() %>% mark("cabg_mi") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+               # Reset Tx Duration to 1 year if PCI
+               create_trajectory() %>%  mark("revasc_pci") %>% 
+                 set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
+                 set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
+                 set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) 
+               
+               #* TO DO: Add in Brief 7 Day Utility Decrement
+             )
+       ),
   create_trajectory() %>% timeout(0)
   )
 }

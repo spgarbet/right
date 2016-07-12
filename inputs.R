@@ -232,17 +232,11 @@ inputs <- list(
     mod_myopathy  = 30,
     sev_myopathy  = 30,
     cvd           = 30,
-    panel_test    =  1,
     single_test   =  1,
    
     timi_ext_maj_nonfatal = 14,
     timi_int_maj_nonfatal = 1,
     timi_min_nonfatal = 2,
-    #fatal_bleed     = 1,
-    #st_fatal        = 1,
-    #cabg_mi         = 1,
-    #mi_med_manage   = 1,
-    #mi_nonfatal     = 1,
     revasc_cabg     = 14,
     revasc_pci      = 7 
     

@@ -3,20 +3,29 @@ counters.dapt = c(
               "dapt_start",
               "dapt_end",
               "dapt_switched",
-              "aspirin",
-              "st_all",
-              "st_fatal",
-              "cabg_mi",
-              "mi_nonfatal",
-              "mi_med_manage",
-              "revasc_pci",
-              "revasc_cabg",
-              "timi_ext_maj_nonfatal",
-              "timi_int_maj_nonfatal",
-              "timi_min_nonfatal",
-              "fatal_bleed",
               "clopidogrel",
               "ticagrelor",
-              "prasugrel"
+              "prasugrel",
+              "aspirin",
+
+              "revasc_event",
+              "revasc_pci",
+              "revasc_cabg",
+              
+              "bleed_event",
+              "bleed_ext_maj_nonfatal",
+              "bleed_int_maj_nonfatal",
+              "bleed_min_nonfatal",
+              "bleed_fatal",
+
+              "st_event",
+              "st_fatal",              
+              "st_pci",
+              "st_cabg",
+              
+              "mi_event",
+              "mi_cabg",
+              "mi_pci",
+              "mi_med_manage"            
               
 )

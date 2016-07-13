@@ -209,12 +209,12 @@ time_to_ST <- function(attrs,inputs)
 
 ST_event = function(traj, inputs) 
 {
-  traj %>%
+  traj %>% 
     branch(
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
         continue = c(TRUE, TRUE),
-        create_trajectory()  %>% 
+        create_trajectory()  %>%  mark("st_event") %>% 
           # Case Fatatliy
           branch(
            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vSt.Case.Fatality,1-inputs$clopidogrel$vSt.Case.Fatality)),
@@ -225,9 +225,9 @@ ST_event = function(traj, inputs)
                function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
                continue= c(TRUE,TRUE),
                # Discontinue DAPT Therapy if CABG, Continue With Aspirin
-               create_trajectory() %>% mark("cabg_mi") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+               create_trajectory() %>% mark("st_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
                # Reset Tx Duration to 1 year if PCI
-               create_trajectory() %>%  mark("revasc_pci") %>% 
+               create_trajectory() %>%  mark("st_pci") %>% 
                  set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
                  set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
                  set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) 
@@ -280,12 +280,12 @@ time_to_MI = function(attrs, inputs)
 
 MI_event = function(traj, inputs)
 {
-  traj %>%
+  traj %>% 
     branch(
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue = c(TRUE, TRUE),
-      create_trajectory() %>%
+      create_trajectory() %>% mark("mi_event") %>% 
         branch(
           function(attrs)
             sample(
@@ -300,12 +300,12 @@ MI_event = function(traj, inputs)
           continue = c(TRUE, TRUE, TRUE),
           
           # CABG
-          create_trajectory() %>% mark("cabg_mi") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
+          create_trajectory() %>% mark("mi_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
           #* TO DO: Add in Brief 14 Day Utility Decrement
           #* TO DO: Confirm DAPT Therapy shut off with CABG.
           
           # Repeat PCI
-          create_trajectory() %>% mark("mi_nonfatal") %>% 
+          create_trajectory() %>% mark("mi_pci") %>% 
             set_attribute("aRRDAPT", inputs$clopidogrel$vRRRepeat.DAPT)  %>%
             set_attribute("aNumDAPT", function(attrs)
               attrs[['aNumDAPT']] + 1) %>%
@@ -357,12 +357,12 @@ time_to_RV = function(attrs, inputs)
 
 RV_event = function(traj, inputs) 
 {
-  traj %>%
+  traj %>% 
     branch(
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue = c(TRUE, TRUE),
-    create_trajectory() %>% 
+    create_trajectory() %>% mark("revasc_event") %>% 
     branch(
       function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.RV,
                                           1-inputs$clopidogrel$vPrCABG.RV)),
@@ -427,12 +427,12 @@ time_to_ExtBleed = function(attrs, inputs)
 
 ExtBleed_event = function(traj, inputs)
 {
-  traj %>%
+  traj %>% 
     branch(
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
         continue=c(TRUE,TRUE),
-      create_trajectory() %>% mark("timi_ext_maj_nonfatal"),
+      create_trajectory() %>% mark("bleed_event") %>% mark("bleed_ext_maj_nonfatal"),
       create_trajectory() %>% timeout(0)
     )  
 }
@@ -472,7 +472,7 @@ IntBleed_event = function(traj, inputs)
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue=c(TRUE,TRUE),
-    create_trajectory() %>% mark("timi_int_maj_nonfatal"),
+    create_trajectory() %>% mark("bleed_event") %>% mark("bleed_int_maj_nonfatal"),
     create_trajectory() %>% timeout(0)
     )    # Make sure to add this to counters
 }
@@ -511,7 +511,7 @@ TIMIMinor_event = function(traj, inputs)
       function(attrs)
         ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
       continue=c(TRUE,TRUE),
-    create_trajectory() %>% mark("timi_min_nonfatal"),
+    create_trajectory() %>% mark("bleed_event") %>% mark("bleed_min_nonfatal"),
   create_trajectory() %>% timeout(0)
   )    # Make sure to add this to counters
 }
@@ -550,7 +550,7 @@ FatalBleed_event = function(traj, inputs)
     branch(
     function() 1,
     continue=c(FALSE), # False is patient death
-    create_trajectory("Fatal Bleed") %>% mark("fatal_bleed") %>% cleanup_on_termination()
+    create_trajectory("Fatal Bleed") %>% mark("bleed_event") %>% mark("bleed_fatal") %>% cleanup_on_termination()
   )
 }
 

@@ -51,7 +51,7 @@ clopidogrel = list(
 
     vDAPT.Tx.Duration = 365, # (12mo-48mo)
 
-    vProbabilityDAPTSwitch = 1, #0.55, # Source: VUMC PREDICT DATA
+    vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
 
     # Stent Thrombosis: Event Rates and Relative Risks
     
@@ -182,7 +182,7 @@ inputs <- list(
   vReactive    = "None", # Can be one of following: "None", "Single", "Panel"
 
 # Control Which Drugs Are Run in the Model 
-  vDrugs       = list(vSimvastatin = FALSE, 
+  vDrugs       = list(vSimvastatin = TRUE, 
                       vWarfarin = FALSE,
                       vClopidogrel = TRUE),
 

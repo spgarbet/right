@@ -3,7 +3,7 @@
 ## Assign Time to Simvastatin therapy
 days_till_statin <- function(attrs, inputs) 
 {
-  if (inputs$vDrugs$vSimvastatin)
+  if (inputs$vDrugs$vSimvastatin & attrs[['aStatinRxHx']]==0)
   {
     rweibull(1, inputs$simvastatin$vShape, inputs$simvastatin$vScale)
   } else 
@@ -41,11 +41,11 @@ statin_reactive_strategy <- function(traj, inputs)
 assign_statin <- function(traj, inputs)
 {
   traj %>%
-    set_attribute("aStartStatin", inputs$vHorizon*365+1) %>% # Don't assign again
     branch(
       function(attrs) attrs[["aStatinRxHx"]]+1,
       continue=rep(TRUE,2),
-      create_trajectory() %>%
+      create_trajectory() %>% timeout(0), # Due to prior history, don't prescribe again
+      create_trajectory() %>% mark("statin_any") %>% 
         set_attribute("aStatinRxHx", 1) %>% # Now they have a history of statin RX
         branch(
           function(attrs) 
@@ -58,20 +58,32 @@ assign_statin <- function(traj, inputs)
           },  
           continue = rep(TRUE,2),
           create_trajectory("Simvastatin") %>%
-            seize("simvastatin") %>%
+            seize("simvastatin") %>% 
             set_attribute("aCVDdrug", 1),
           create_trajectory("Alt. Simvastatin") %>%
-            seize("alt_simvastatin") %>%
+            seize("alt_simvastatin") %>% 
             set_attribute("aCVDdrug", 2)
-        ),
-      create_trajectory() %>% timeout(0) # Due to prior history, don't prescribe again
+        ) %>% 
+      branch(
+        function(attrs)
+        {
+          if (attrs[['aCVDdrug']]!=1 & attrs[['aGenotyped_CVD']] == 1) return(1)
+          return(2)
+          },
+        continue = c(TRUE,TRUE),
+        create_trajectory() %>% mark("statin_switched_PGx"),
+        create_trajectory() %>% timeout(0)
+      )
     )
 
 }
 
 statin <- function(traj, inputs)
 {
-  traj %>%
+  traj %>% mark("on_simvastatin") %>% set_attribute("aStatinRxHx", 1) %>% 
     statin_reactive_strategy(inputs) %>%
-    assign_statin(inputs)
+    assign_statin(inputs) %>%  
+    set_attribute("aMildMyoTime",function(attrs) now(env) + days_till_mild_myopathy(attrs,inputs)) %>%
+    set_attribute("aModMyoTime",function(attrs) now(env) + days_till_mod_myopathy(attrs,inputs)) %>%
+    set_attribute("aSevMyoTime",function(attrs) now(env) + days_till_sev_myopathy(attrs,inputs))
 }

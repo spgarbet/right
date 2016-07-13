@@ -7,8 +7,8 @@ stop_simvastatin_treatment <- function(traj)
     create_trajectory() %>% timeout(0),
     create_trajectory() %>% release("simvastatin"),
     create_trajectory() %>% release("alt_simvastatin")
-  ) %>%
-  set_attribute("CVDdrug", 0)
+  ) #%>%
+  #set_attribute("aCVDdrug", 0)
 }
 
 

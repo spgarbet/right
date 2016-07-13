@@ -267,18 +267,23 @@ counters <- c(counters.gen, counters.dapt, counters.simvastatin)
 exec.simulation = function(s=12345)
 {
   library(parallel)
-  RNGkind("L'Ecuyer-CMRG")
-  set.seed(s)
+  
+
   N <- inputs$vN
   traj <- simulation(env, inputs)
+  RNGkind("L'Ecuyer-CMRG")
+  set.seed(123)
   mc.reset.stream()
-  envs <-  mclapply(1:inputs$vNIter,mc.set.seed = TRUE, mc.cores = 8,function(i) {
+  envs <-  mclapply(1:inputs$vNIter,mc.set.seed = TRUE, mc.cores = 8,mc.preschedule=FALSE,function(i) {
     env %>% create_counters(counters) %>%
       add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
       run(365*inputs$vHorizon) %>% # Simulate 100 years.
       wrap()
   })
-}
-
+  envs
   
+}
+RNGkind("L'Ecuyer-CMRG")
+set.seed(123)
+
 

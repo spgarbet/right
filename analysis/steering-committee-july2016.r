@@ -6,18 +6,23 @@ vNN = 100
 
 Scenario.Name = "Baseline"
 source("./right-main-simulation-parallel.R")
-inputs$vNIter = 8
-inputs$vN = ceiling(vNN/inputs$vNIter)
+inputs$vNIter = 10
+inputs$vN = vNN #ceiling(vNN/inputs$vNIter)
 inputs$vReactive = "None"
 inputs$vPreemptive = "None"
 source('./main/event_main_loop.R')
-s = 12345
+s = 12345+proc.time()
 ptm <- proc.time()
 env  = exec.simulation(s=s)
 arrivals  <- get_mon_arrivals(env, per_resource = T) %>%  mutate(name = paste0(name,"_",replication))
 source("./costs.R")
 run.stats = cost.qaly(env,inputs)
 events = run.stats[["arrivals"]] %>% arrange(start_time,end_time)
+
+events  %>% filter(name %in% c("patient0_2","patient0_10")) %>% arrange(name)
+
+
+
 costs = run.stats[["cost"]]
 qaly = run.stats[["qaly"]]
 summary = run.stats[["summary"]]
@@ -32,8 +37,8 @@ Baseline_summary  %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))
 
 Scenario.Name = "React_Panel"
 source("./right-main-simulation-parallel.R")
-inputs$vNIter = 8
-inputs$vN = ceiling(vNN/inputs$vNIter)
+inputs$vNIter = 10
+inputs$vN = vNN #ceiling(vNN/inputs$vNIter)
 inputs$vReactive = "Panel"
 inputs$vPreemptive = "None"
 source('./main/event_main_loop.R')

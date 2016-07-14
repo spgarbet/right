@@ -16,13 +16,13 @@
 
 
 #setwd("~/Dropbox/Projects/right-simulation/")
-pkg = list("simmer",
-           "dplyr",
-           "ggplot2",
-           "reshape2",
-           "tidyr",
-           "msm")
-invisible(lapply(pkg, require, character.only = TRUE))
+# pkg = list("simmer",
+#            "dplyr",
+#            "ggplot2",
+#            "reshape2",
+#            "tidyr",
+#            "msm")
+# invisible(lapply(pkg, require, character.only = TRUE))
 
 ####
 ## 
@@ -31,15 +31,21 @@ invisible(lapply(pkg, require, character.only = TRUE))
 # NOTE: This must be done at a global level for the simmer now() function to be available
 #       inside trajectories. Without this at a global level, the simulation won't work.
 ####
-env  <- simmer("RIGHT-v1.1")
+# env  <- simmer("RIGHT-v1.1")
 
 ####
 ## 
 # Define Simulation Scenario
 ##
 ####
-source("./inputs.R")
+# source("./inputs.R")
 
+####
+##
+# CPI
+##
+###
+load("./main/cpi.Rdata")
 ####
 ## Secular Death
 source('./main/event_secular_death.R')
@@ -272,7 +278,7 @@ exec.simulation = function(s=12345)
   N <- inputs$vN
   traj <- simulation(env, inputs)
   RNGkind("L'Ecuyer-CMRG")
-  set.seed(123)
+  set.seed(s)
   mc.reset.stream()
   envs <-  mclapply(1:inputs$vNIter,mc.set.seed = TRUE, mc.cores = 8,mc.preschedule=FALSE,function(i) {
     env %>% create_counters(counters) %>%
@@ -283,7 +289,16 @@ exec.simulation = function(s=12345)
   envs
   
 }
-RNGkind("L'Ecuyer-CMRG")
-set.seed(123)
+#RNGkind("L'Ecuyer-CMRG")
 
+
+# attributes <- arrange(get_mon_attributes(env),name,key,time) %>% mutate(name=paste0(name,"_",replication))
+# first.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(first = first(value)),key,first)
+# last.attributes <- spread(attributes %>% group_by(name,key) %>% summarize(last = last(value)),key,last) 
+# all.attributes <- spread(attributes %>% group_by(name,key,time) %>% summarize(first = mean(value)),key,first)
+# 
+# pt = "patient1000_2"
+# attributes %>% filter(name==pt) %>% count(key) %>% data.frame()
+# events %>% filter(name==pt)
+# all.attributes  %>% filter(name==pt)  %>% select(time,contains("CVD"),contains("statin"))
 

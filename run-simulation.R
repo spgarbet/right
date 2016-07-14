@@ -10,7 +10,7 @@ library(parallel)
 
 
 source("./right-main-simulation-parallel.R")
-vNN = 20000
+vNN = 200
 inputs$vNIter = 8
 inputs$vN = ceiling(vNN/inputs$vNIter)
 inputs$vReactive = "None"

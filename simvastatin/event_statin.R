@@ -24,7 +24,13 @@ statin_reactive_strategy <- function(traj, inputs)
       function(attrs) attrs[['aGenotyped_CVD']],
       continue=c(TRUE, TRUE),
       create_trajectory() %>% timeout(0),
-      create_trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test")
+      create_trajectory()  %>% 
+        branch(
+          function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+          continue=c(TRUE,TRUE),
+          create_trajectory() %>% timeout(0),
+          create_trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test")
+        )
     )
   } else if (inputs$vReactive == "Panel")
   {
@@ -32,7 +38,13 @@ statin_reactive_strategy <- function(traj, inputs)
     branch(
       function(attrs) all_genotyped(attrs)+1,
       continue=c(TRUE, TRUE),
-      create_trajectory() %>% panel_test(), # Not all genotyped, then do it
+      create_trajectory() %>% 
+        branch(
+          function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+          continue=c(TRUE,TRUE),
+          create_trajectory() %>% timeout(0),
+          create_trajectory() %>% panel_test()
+        ), # Not all genotyped, then do it
       create_trajectory() %>% timeout(0)    # Already done, ignore
     )
   } else stop("Unhandled Reactive Statin Strategy")
@@ -85,5 +97,7 @@ statin <- function(traj, inputs)
     assign_statin(inputs) %>%  
     set_attribute("aMildMyoTime",function(attrs) now(env) + days_till_mild_myopathy(attrs,inputs)) %>%
     set_attribute("aModMyoTime",function(attrs) now(env) + days_till_mod_myopathy(attrs,inputs)) %>%
-    set_attribute("aSevMyoTime",function(attrs) now(env) + days_till_sev_myopathy(attrs,inputs))
+    set_attribute("aSevMyoTime",function(attrs) now(env) + days_till_sev_myopathy(attrs,inputs)) %>% 
+    set_attribute("aCVDTime",function(attrs) now(env) + days_till_cvd(attrs,inputs)) %>% 
+    set_attribute("aCVDReassess",function(attrs) now(env) + days_till_reassess_cvd(attrs,inputs))
 }

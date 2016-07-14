@@ -18,7 +18,7 @@ days_till_dapt <- function(attrs, inputs)
 
 ######
 ## Assign DAPT Medication
-
+# Reactive Strategy Now Probabilistic to make it more realistic (i.e., not all physicians order a test)
 clopidogrel_reactive_strategy <- function(traj, inputs)
 {
   if(inputs$vReactive == "None") 
@@ -31,7 +31,13 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
       function(attrs) attrs[['aGenotyped_CYP2C19']],
       continue=c(TRUE, TRUE),
       create_trajectory() %>% timeout(0),
-      create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test")
+      create_trajectory()  %>% 
+      branch(
+        function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+        continue=c(TRUE,TRUE),
+        create_trajectory() %>% timeout(0),
+        create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test")
+        )
     )
   } else if (inputs$vReactive == "Panel")
   {
@@ -39,7 +45,13 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
     branch(
       function(attrs) all_genotyped(attrs)+1,
       continue=c(TRUE, TRUE),
-      create_trajectory() %>% panel_test(), # Not all genotyped, then do it
+      create_trajectory() %>% 
+        branch(
+          function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+          continue=c(TRUE,TRUE),
+          create_trajectory() %>% timeout(0),
+          create_trajectory() %>% panel_test()
+        ), # Not all genotyped, then do it
       create_trajectory() %>% timeout(0)    # Already done, ignore
     )
   } else stop("Unhandled Reactive Clopidogrel Strategy")
@@ -60,7 +72,7 @@ assign_DAPT_medication <- function(traj,inputs)
     branch(
       function(attrs) {
         # The genotyped patients are switched with some probability.  
-        if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx.Hx']]==0 ) {
+        if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 ) {
           return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
         } else 
         if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 
@@ -69,14 +81,14 @@ assign_DAPT_medication <- function(traj,inputs)
       continue=rep(TRUE,3),
       create_trajectory("sClopidogrel") %>%  
         seize("clopidogrel") %>% 
-        set_attribute("aDAPT.Rx", 1),  
-      create_trajectory("sTicagrelor")  %>%
+        set_attribute("aDAPT.Rx", 1) %>% set_attribute("aTest",inputs$clopidogrel$vProbabilityDAPTSwitch),  
+      create_trajectory("sTicagrelor")  %>% 
         seize('ticagrelor') %>% 
-        set_attribute("aDAPT.Rx", 2) %>%
+        set_attribute("aDAPT.Rx", 2) %>% set_attribute("aSwitchedDAPT",1) %>% set_attribute("aTest",inputs$clopidogrel$vProbabilityDAPTSwitch) %>% 
         mark("dapt_switched"),
       create_trajectory("sPrasugrel") %>% 
         seize('prasugrel') %>% 
-        set_attribute("aDAPT.Rx", 3) %>%
+        set_attribute("aDAPT.Rx", 3) %>% set_attribute("aSwitchedDAPT",1) %>% set_attribute("aTest",inputs$clopidogrel$vProbabilityDAPTSwitch) %>% 
         mark("dapt_switched")
     ) %>%
     

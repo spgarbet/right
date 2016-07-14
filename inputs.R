@@ -5,19 +5,17 @@
 ####
 
 # Function to Convert Nominal to Real Dollars
-
-library(quantmod)
-
 # Get CPI-U from FRED
-getSymbols("CPIAUCSL", src='FRED')
-avg.cpi <- apply.yearly(CPIAUCSL, mean)
+ library(quantmod)
+ getSymbols("CPIAUCSL", src='FRED')
+ avg.cpi <- apply.yearly(CPIAUCSL, mean) 
+ #save(avg.cpi,file="./main/cpi.Rdata")
 
 realdol = function(nominal,year=2016,base=2012)
 {
   cf <- avg.cpi/as.numeric(avg.cpi[paste(base)])
   return(as.numeric(nominal*cf[paste(year)]))
 }
-
 
 epsilon <- 0.000000000001
 
@@ -52,7 +50,8 @@ clopidogrel = list(
     vDAPT.Tx.Duration = 365, # (12mo-48mo)
 
     vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
-
+    vProbabilityReactive = 0.25,
+    
     # Stent Thrombosis: Event Rates and Relative Risks
     
     # Relative Risk of ST for patients with loss of function allele who are treated with 
@@ -121,6 +120,7 @@ clopidogrel = list(
 simvastatin <- list(
     vPREDICTsens = 0.74,    
     vPREDICTspec = 0.61,
+    vProbabilityReactive = 0.25,
     
     # Weibull for statin prescription
     vScale = 80722.66,
@@ -172,8 +172,8 @@ inputs <- list(
   # Population Parameters
   vN           = 1000,   # Patients to simulate
   vNIter       = 10,      # Number of Iterations (parallel processing)
-  vLowerAge    = 55,      # Lower age to simulate coming in (uniform distribution)
-  vUpperAge    = 55,      # Upper age to simulate
+  vLowerAge    = 65,      # Lower age to simulate coming in (uniform distribution)
+  vUpperAge    = 65,      # Upper age to simulate
   vHorizon     = 100,      # Length of simulation upon a patient entering
   vPctFemale   = 0.5,     # Percent Female
   

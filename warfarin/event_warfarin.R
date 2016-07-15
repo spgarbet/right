@@ -1,0 +1,62 @@
+days_till_warfarin <- function(attrs, inputs)
+{
+  if (inputs$vDrugs$vWarfarin == TRUE)
+    {t2e <- min(c(attrs[["aTimetoWarfarin_AF"]],attrs[["aTimetoWarfarin_NonAF"]]))} 
+  else {t2e <- inputs$vHorizon*365+1}
+  return(t2e)
+} 
+
+warfarin_reactive_strategy <- function(traj, inputs)
+{
+  if(inputs$vReactive == "None") 
+  {
+    traj # Do nothing to trajectory
+  } else if (inputs$vReactive == "Single")
+  {
+    traj %>%
+      branch(
+        function(attrs) attrs[['aGenotyped_Warfarin']],
+        continue=c(TRUE, TRUE),
+        create_trajectory() %>% timeout(0),
+        create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test")
+      )
+  } else if (inputs$vReactive == "Panel")
+  {
+    traj %>%
+      branch(
+        function(attrs) all_genotyped(attrs)+1,
+        continue=c(TRUE, TRUE),
+        create_trajectory() %>% panel_test(), # Not all genotyped, then do it
+        create_trajectory() %>% timeout(0)    # Already done, ignore
+      )
+  } else stop("Unhandled Reactive Statin Strategy")
+}
+
+start_warfarin <- function(traj, inputs)
+{
+  traj %>%
+    seize("warfarin") %>% 
+    set_attribute("aTimeToStartWarfarin", inputs$vHorizon*365+1) %>% # cannot trigger "start warfarin" again
+    set_attribute("sWarfarinEvents", 1) %>%  #switch on warfarin events
+    set_attribute("aOnWarfarin", 1) %>% # start on warfarin 
+    set_attribute("sINRMonitor", 1) %>% # start monitoring INR in 90 days
+    #track those in range at the beginning 
+    branch(
+      function(attrs) attrs[["aInRange"]], 
+      continue=rep(TRUE, 2),
+      create_trajectory("Initial In Range") %>% seize("in_range"),
+      create_trajectory("Initial Out of Range") %>% seize("out_of_range")
+    )
+}
+
+
+warfarin <- function(traj, inputs)
+{
+  traj %>% mark("warfarin_start") %>% 
+    warfarin_reactive_strategy(inputs) %>%
+    start_warfarin(inputs) %>%
+    #downstream events
+    adj_clock()
+}
+
+

@@ -10,7 +10,7 @@ invisible(lapply(pkg, require, character.only = TRUE))
 # Set Number of Patients (per iteration)
 ##
 ####
-vNN = 12500
+vNN = 125
 load("./main/cpi.Rdata")
 
 ####
@@ -22,7 +22,9 @@ Scenario.Name = "Clopidogrel_Baseline"
 env  <- simmer(Scenario.Name)
 source("./inputs.R")
 inputs$vNIter = 8
-inputs$vN = vNN 
+inputs$vN = vNN
+inputs$vUpperAge    = 65
+inputs$vHorizon     = 65
 inputs$vReactive = "None"
 inputs$vPreemptive = "None"
 inputs$vDrugs       = list(vSimvastatin = FALSE, 
@@ -66,7 +68,8 @@ env  <- simmer(Scenario.Name)
 source("./inputs.R")
 inputs$vNIter = 8
 inputs$vN = vNN 
-
+inputs$vUpperAge    = 65
+inputs$vHorizon     = 65
 inputs$vReactive = "Panel"
 inputs$vPreemptive = "None"
 inputs$clopidogrel$vProbabilityReactive = 1
@@ -120,6 +123,8 @@ env  <- simmer(Scenario.Name)
 source("./inputs.R")
 inputs$vNIter = 8
 inputs$vN = vNN 
+inputs$vUpperAge    = 65
+inputs$vHorizon     = 65
 inputs$vReactive = "None"
 inputs$vPreemptive = "None"
 inputs$vDrugs       = list(vSimvastatin = TRUE, 
@@ -161,6 +166,8 @@ env  <- simmer(Scenario.Name)
 source("./inputs.R")
 inputs$vNIter = 8
 inputs$vN = vNN 
+inputs$vUpperAge    = 65
+inputs$vHorizon     = 65
 inputs$vReactive = "Panel"
 inputs$vPreemptive = "None"
 inputs$simvastatin$vProbabilityReactive  =1 
@@ -198,7 +205,7 @@ Statin.Compare  =        rbind.data.frame(cbind(strategy  = "Statom_Baseline",St
                                                cbind(strategy= "Statin_PGx",Statin_PGx_summary %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))))
 
 Statin.Compare %>% filter(!grepl("Perf",strategy)) %>%  arrange(dCOST)  %>% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY),dominated = as.integer(ICER<0))
-merge((Statin_Baseline_eventcount <- Statin_Baseline_events %>% count(resource) %>% data.frame()),(Statin_PGx_eventcount <- Statin_PGx_events %>% count(resource) %>% data.frame()),"resource") %>% mutate(diff=n.y-n.x)
+
 
 
 

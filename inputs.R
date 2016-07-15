@@ -28,8 +28,8 @@ clopidogrel = list(
     vDAPT.SecondLine = "Ticagrelor",
 
     # Prognostic Model
-    vSensitivityPrDAPT = 0.74,
-    vSpecificityPrDAPT = 0.61,
+    vSensitivityPrDAPT = .9,#0.74,
+    vSpecificityPrDAPT = .9,#0.61,
 
     # Population-Level Allele Frequency Distribution
     vCYP2C19.Poor    = 0.21, # (0.15-0.40)
@@ -118,8 +118,8 @@ clopidogrel = list(
 )
 
 simvastatin <- list(
-    vPREDICTsens = 0.74,    
-    vPREDICTspec = 0.61,
+    vPREDICTsens = .9,#0.74,    
+    vPREDICTspec = .9,#0.61,
     vProbabilityReactive = 0.25,
     
     # Weibull for statin prescription
@@ -165,15 +165,82 @@ simvastatin <- list(
 )
 
 warfarin = list(
-    yadda_yadda = TRUE # ... More here
+  vPREDICTsens = 0.74, # need inputs    
+  vPREDICTspec = 0.61, # need inputs
+  
+  # start warfarin
+  aLP_Warfarin = 1,
+  vshape_timetowarfarinAF = 0.66,
+  vscale_timetowarfarinAF = 2284.25,
+  vscale_timetowarfarin_nonAF = 34933.44,
+  
+  # INR: initial & time to get in range
+  vMedianTimetoINR	= 0.0239, 
+  vMedianTimetoINR_PGx	= 0.033,
+  vINRfreq = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_freq,
+  vINRvalue = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_value,
+  
+  # adverse events: bleed
+  vAF_Risk_Bleed_3 = 0.0741, # risk of bleeing events for INR < 3 & AF indication
+  vAF_Risk_Bleed_3to4 = 0.3081,
+  vAF_Risk_Bleed_Over4 =	0.99, # cannot run this: 1.9364 ???? 
+  vRRBleed_AF = 1,
+  vNonAF_Risk_Bleed_3 = 0.0741,
+  vNonAF_Risk_Bleed_3to4 = 0.3081,
+  vNonAF_Risk_Bleed_Over4 = 0.99, # cannot run this: 1.9364 ???? 
+  vRRBleed_NonAF = 1,
+  vTimeDurBleed = 365,
+  
+  vRisk_MajorBleed	= 0.138, # prob of major bleeding among all bleeding events
+  ##prob distribution of six types of major bleeding events
+  vR_Bleed_ICH	= 0.144, 
+  vR_Bleed_ICH_Fatal = 0.156,
+  vR_Bleed_GI	= 0.557,
+  vR_Bleed_GI_Fatal	= 0.043,
+  vR_Bleed_Other = 0.098,
+  vR_Bleed_Other_Fatal = 0.002,
+  
+  # adverse event: stroke
+  vAF_Risk_Stroke_1.5 = 0.077,
+  vAF_Risk_Stroke_1.5to2 =	0.019,
+  vAF_Risk_Stroke_Over2 =	0.006,
+  vRRStroke_AF = 1,
+  vNonAF_Risk_Stroke_3 =	0.00001,
+  vNonAF_Risk_Stroke_Over3 =	0.006,
+  vRRStroke_NonAF = 1,
+  vTimeDurStroke = 365,
+  
+  ## prob distribution of three types of stroke events, among which major deficit stops warfarin and goes back to main model
+  vR_Stroke_MinorDeficit_2 = 0.4116,
+  vR_Stroke_MajorDeficit_2 = 0.4284,
+  vR_Stroke_Fatal_2 = 0.16,
+  vR_Stroke_MinorDeficit_Over2 = 0.5358,
+  vR_Stroke_MajorDeficit_Over2 = 0.4042,
+  vR_Stroke_Fatal_Over2 = 0.06,
+  
+  # adverse event: DVTPE
+  vAF_Risk_DVTPE_3 = 0.000001,
+  vAF_Risk_DVTPE_Over3 =	0.1,
+  vRRDVTPE_AF = 1,
+  vNonAF_Risk_DVTPE_3 =	0.3,
+  vNonAF_Risk_DVTPE_Over3 =	0.5,
+  vRRDVTPE_NonAF = 1,
+  vTimeDurDVTPE = 365,
+  
+  ## prob distribution of three types of DVTPE events
+  vR_DVT = 0.4,
+  vR_PE = 0.1,
+  vR_DVTPE_Fatal = 0.5,
+  vPrSwitchDrug = 0.5 # used in random drawing subjects to switch drug upon DVTPE events
 )
+
 
 inputs <- list(
   # Population Parameters
   vN           = 1000,   # Patients to simulate
   vNIter       = 10,      # Number of Iterations (parallel processing)
-  vLowerAge    = 65,      # Lower age to simulate coming in (uniform distribution)
-  vUpperAge    = 65,      # Upper age to simulate
+  vLowerAge    = 40,      # Lower age to simulate coming in (uniform distribution)
+  vUpperAge    = 85,      # Upper age to simulate
   vHorizon     = 100,      # Length of simulation upon a patient entering
   vPctFemale   = 0.5,     # Percent Female
   
@@ -188,7 +255,7 @@ inputs <- list(
 
 # CURRENTLY PANEL IS FOR ALL DRUGS ???
   vPanel       = list(vSimvastatin = TRUE, 
-                    vWarfarin=FALSE, 
+                    vWarfarin=TRUE, 
                     vClopidogrel = TRUE),
 
   # Drug specific model parameters

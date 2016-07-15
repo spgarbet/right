@@ -55,13 +55,15 @@ source('./main/event_secular_death.R')
 all_genotyped <- function(attrs)
 {
   attrs[['aGenotyped_CVD']]     == 1 &&  # Simvastatin
-    attrs[['aGenotyped_CYP2C19']] == 1     # Clopidogrel
+    attrs[['aGenotyped_CYP2C19']] == 1 &&  # Clopidogrel
+    attrs[['aGenotyped_Warfarin']] == 1    # Warfarin  
 }
 
 any_genotyped <- function(attrs)
 {
   attrs[['aGenotyped_CVD']]     == 1 ||
-    attrs[['aGenotyped_CYP2C19']] == 1
+    attrs[['aGenotyped_CYP2C19']] == 1 ||
+    attrs[['aGenotyped_Warfarin']] == 1 
 }
 
 panel_test <- function(traj, inputs)
@@ -69,8 +71,10 @@ panel_test <- function(traj, inputs)
   traj %>% 
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
     set_attribute('aGenotyped_CVD',     1)  %>%
+    set_attribute('aGenotyped_Warfarin', 1) %>%
     mark("panel_test")
 }
+
 
 
 #####
@@ -91,6 +95,18 @@ source('./simvastatin/event_cvd.R')
 source('./simvastatin/event_myopathy.R')
 source('./simvastatin/event_statin.R')
 
+## Warfarin
+source('./warfarin/counters.R')
+source('./warfarin/initial-patient-attributes.R')
+source('./warfarin/PGx-attributes.R')
+source('./warfarin/cleanup.R')
+source('./warfarin/event_warfarin.R')
+source('./warfarin/event_in_range.R')
+source('./warfarin/event_90days.R')
+source('./warfarin/event_bleed.R')
+source('./warfarin/event_stroke.R')
+source('./warfarin/event_DVTPE.R')
+
 initialize_patient <- function(traj, inputs)
 {
   traj %>%
@@ -99,14 +115,16 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
     assign_clopidogrel_attributes(inputs) %>%
-    assign_simvastatin_attributes(inputs)
+    assign_simvastatin_attributes(inputs) %>%
+    assign_warfarin_attributes(inputs) 
 }
 
 predict_test <- function(traj, inputs)
 {
   traj %>%
     predict_clopidogrel(inputs) %>%
-    predict_simvastatin(inputs) 
+    predict_simvastatin(inputs) %>%
+    predict_warfarin(inputs)
 }
 
 # Must Be Run After The Initial Event Times Have Been Determined 
@@ -260,13 +278,46 @@ event_registry <- list(
        attr          = "aFatalBleed",
        time_to_event = time_to_FatalBleed,
        func          = FatalBleed_event,
-       reactive      = FALSE)
+       reactive      = FALSE),
+  
+  #### Warfarin Events
+  list(name          = "Start Warfarin",
+       attr          = "aTimeToStartWarfarin",
+       time_to_event = days_till_warfarin,
+       func          = warfarin,
+        reactive      = FALSE)#,
+  # list(name          = "Get in range",
+  #      attr          = "aTimeToInRange",
+  #      time_to_event = days_till_in_range,
+  #      func          = get_in_range,
+  #      reactive      = FALSE),
+  # list(name          = "Pass 90 days",
+  #      attr          = "aTimeTo90d",
+  #      time_to_event = days_till_90d,
+  #      func          = reach_90d,
+  #      reactive      = FALSE),
+  # list(name          = "Bleed",
+  #      attr          = "aTimeToBleed",
+  #      time_to_event = days_till_bleed,
+  #      func          = bleed_event,
+  #      reactive      = FALSE),
+  # list(name          = "Stroke",
+  #      attr          = "aTimeToStroke",
+  #      time_to_event = days_till_stroke,
+  #      func          = stroke_event,
+  #      reactive      = FALSE),
+  # list(name          = "DVTPE",
+  #      attr          = "aTimeToDVTPE",
+  #      time_to_event = days_till_DVTPE,
+  #      func          = DVTPE_event,
+  #      reactive      = FALSE)
+  
 )
 
 #####
 ## Counters
 source("./main/counters.R")
-counters <- c(counters.gen, counters.dapt, counters.simvastatin)
+counters <- c(counters.gen, counters.dapt, counters.simvastatin,counters.warfarin)
 
 #####################################################################
 

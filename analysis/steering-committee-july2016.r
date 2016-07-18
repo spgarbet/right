@@ -10,7 +10,7 @@ invisible(lapply(pkg, require, character.only = TRUE))
 # Set Number of Patients (per iteration)
 ##
 ####
-vNN = 125
+vNN = 12500
 load("./main/cpi.Rdata")
 
 ####

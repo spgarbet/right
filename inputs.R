@@ -138,8 +138,8 @@ simvastatin <- list(
     # 5-year Mild Myopathy Risks
     vMildMyoBaseNoVar=1e-7, # No Drug Risk of mild myopathy
     vMildMyoSimNoVar=0.05,  # Simvastatin Mild Myopathy Baseline Risk
-    vMildMyoSimMedVar=1,    # Rel Risk|Medium metabolizer
-    vMildMyoSimPoorVar=1,   # Rel Risk|Poor metabolizer
+    vMildMyoSimMedVar=2.55,    # Rel Risk|Medium metabolizer
+    vMildMyoSimPoorVar=9.46,   # Rel Risk|Poor metabolizer
     vMildMyoAltNoVar=0.05,  # Alternate Drug Mild Myopathy Baseline Risk
     vMildMyoAltMedVar=1,    # Rel Risk|Medium metabolizer
     vMildMyoAltPoorVar=1,    # Rel Risk|Poor metabolizer

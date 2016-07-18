@@ -10,7 +10,7 @@ invisible(lapply(pkg, require, character.only = TRUE))
 # Set Number of Patients (per iteration)
 ##
 ####
-vNN = 125
+vNN = 12500
 load("./main/cpi.Rdata")
 
 ####
@@ -24,7 +24,8 @@ source("./inputs.R")
 inputs$vNIter = 8
 inputs$vN = vNN
 inputs$vUpperAge    = 65
-inputs$vHorizon     = 65
+inputs$vLowerAge    = 65
+inputs$vHorizon     = 100
 inputs$vReactive = "None"
 inputs$vPreemptive = "None"
 inputs$vDrugs       = list(vSimvastatin = FALSE, 
@@ -69,7 +70,8 @@ source("./inputs.R")
 inputs$vNIter = 8
 inputs$vN = vNN 
 inputs$vUpperAge    = 65
-inputs$vHorizon     = 65
+inputs$vLowerAge    = 65
+inputs$vHorizon     = 100
 inputs$vReactive = "Panel"
 inputs$vPreemptive = "None"
 inputs$clopidogrel$vProbabilityReactive = 1
@@ -102,16 +104,6 @@ assign(paste0(Scenario.Name,"_summary"),summary)
 
 Clopidogrel_PGx_events %>% count(resource) %>% data.frame()
 
-Clopidogrel.Compare  =        rbind.data.frame(cbind(strategy  = "Clopidogrel_Baseline",Clopidogrel_Baseline_summary  %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))) ,
-                                   cbind(strategy= "Clopidogrel_PGx",Clopidogrel_PGx_summary %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))))
-
-Clopidogrel.Compare %>% filter(!grepl("Perf",strategy)) %>%  arrange(dCOST)  %>% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY),dominated = as.integer(ICER<0))
-merge((Clopidogrel_Baseline_eventcount <- Clopidogrel_Baseline_events %>% count(resource) %>% data.frame()),(Clopidogrel_PGx_eventcount <- Clopidogrel_PGx_events %>% count(resource) %>% data.frame()),"resource") %>% mutate(diff=n.y-n.x)
-
-
-
-
-
 
 ####
 ##
@@ -124,7 +116,8 @@ source("./inputs.R")
 inputs$vNIter = 8
 inputs$vN = vNN 
 inputs$vUpperAge    = 65
-inputs$vHorizon     = 65
+inputs$vHorizon     = 100
+inputs$vLowerAge    = 65
 inputs$vReactive = "None"
 inputs$vPreemptive = "None"
 inputs$vDrugs       = list(vSimvastatin = TRUE, 
@@ -167,7 +160,8 @@ source("./inputs.R")
 inputs$vNIter = 8
 inputs$vN = vNN 
 inputs$vUpperAge    = 65
-inputs$vHorizon     = 65
+inputs$vLowerAge    = 65
+inputs$vHorizon     = 100
 inputs$vReactive = "Panel"
 inputs$vPreemptive = "None"
 inputs$simvastatin$vProbabilityReactive  =1 
@@ -200,6 +194,13 @@ assign(paste0(Scenario.Name,"_summary"),summary)
 
 Statin_PGx_events %>% count(resource) %>% data.frame()
 
+
+
+Clopidogrel.Compare  =        rbind.data.frame(cbind(strategy  = "Clopidogrel_Baseline",Clopidogrel_Baseline_summary  %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))) ,
+                                               cbind(strategy= "Clopidogrel_PGx",Clopidogrel_PGx_summary %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))))
+
+Clopidogrel.Compare %>% filter(!grepl("Perf",strategy)) %>%  arrange(dCOST)  %>% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY),dominated = as.integer(ICER<0))
+# merge((Clopidogrel_Baseline_eventcount <- Clopidogrel_Baseline_events %>% count(resource) %>% data.frame()),(Clopidogrel_PGx_eventcount <- Clopidogrel_PGx_events %>% count(resource) %>% data.frame()),"resource") %>% mutate(diff=n.y-n.x)
 
 Statin.Compare  =        rbind.data.frame(cbind(strategy  = "Statom_Baseline",Statin_Baseline_summary  %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))) ,
                                                cbind(strategy= "Statin_PGx",Statin_PGx_summary %>% summarise(dQALY = mean(dQALY), dCOST=mean(dCOST))))

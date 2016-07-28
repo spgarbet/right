@@ -4,9 +4,11 @@ adj_clock <- function(traj)
   traj %>%
     set_attribute("aTimeToInRange",function(attrs) now(env) + days_till_in_range(attrs,inputs)) %>% # event: get in range
     set_attribute("aTimeTo90d",function(attrs) now(env) + days_till_90d(attrs,inputs)) %>% # event: reach 90 days
-    set_attribute("aTimeToBleed",function(attrs) now(env) + days_till_bleed(attrs,inputs)) %>% # event: bleed
+    set_attribute("aTimeToMajorBleed",function(attrs) now(env) + days_till_major_bleed(attrs,inputs)) %>% # event: major bleeding
+    set_attribute("aTimeToMinorBleed",function(attrs) now(env) + days_till_minor_bleed(attrs,inputs)) %>% # event: minor bleeding
     set_attribute("aTimeToStroke",function(attrs) now(env) + days_till_stroke(attrs,inputs)) %>% # event: stroke
-    set_attribute("aTimeToDVTPE",function(attrs) now(env) + days_till_DVTPE(attrs,inputs)) # event: DVTPE
+    set_attribute("aTimeToDVTPE",function(attrs) now(env) + days_till_DVTPE(attrs,inputs)) %>% # event: DVTPE
+    set_attribute("aTimeTo6m",function(attrs) now(env) + days_till_6m(attrs,inputs)) # event: 6m stop warfarin for Non-AF patients
 }  
 
 #stop accumulating in/out range time, call it when pass 90 days or death

@@ -33,23 +33,12 @@ DVTPE_event <- function(traj, inputs)
       function() sample(1:3, 1, prob=vDVTPE_freq),
       continue=c(TRUE,TRUE,FALSE),
       create_trajectory("DVT") %>% set_attribute("aTypeofDVTPE", 1) %>%
-        mark("DVT") %>% 
-        set_attribute("aRand01Switch", function() runif(1)),
+        mark("DVT"),
       create_trajectory("PE") %>% set_attribute("aTypeofDVTPE", 2) %>%
-        mark("PE") %>%  set_attribute("aRand01Switch", function() runif(1)),
+        mark("PE"),
       create_trajectory("DVTPE_Fatal") %>% 
         set_attribute("aTypeofDVTPE", 3) %>% 
         mark("DVTPE_Fatal") %>% cleanup_on_termination()
-    ) %>%
-    
-    # subjects who experience non-fatal DVTPE randomly switch drug, sent back to main model (at risk for other drugs, add redraw later)
-    branch(
-      function(attrs) switch_drug(attrs[["aRand01Switch"]]),
-      continue=rep(TRUE,2),
-      create_trajectory("switch") %>% mark("pass_DVTPE_switch") %>%
-        set_attribute("sWarfarinEvents", 2) %>% #switch off
-        cleanup_warfarin(),
-      create_trajectory("") %>% timeout(0)
     )
 }
 

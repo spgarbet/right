@@ -106,6 +106,7 @@ source('./warfarin/event_90days.R')
 source('./warfarin/event_bleed.R')
 source('./warfarin/event_stroke.R')
 source('./warfarin/event_DVTPE.R')
+source('./warfarin/event_6m_NonAF.R')
 
 initialize_patient <- function(traj, inputs)
 {
@@ -172,7 +173,8 @@ cleanup_on_termination <- function(traj)
     release("time_in_model") %>%
     cleanup_clopidogrel() %>%
     cleanup_aspirin() %>% 
-    cleanup_simvastatin() 
+    cleanup_simvastatin() %>%
+    cleanup_warfarin()
 }
 
 terminate_simulation <- function(traj, inputs)
@@ -285,32 +287,42 @@ event_registry <- list(
        attr          = "aTimeToStartWarfarin",
        time_to_event = days_till_warfarin,
        func          = warfarin,
-        reactive      = FALSE)#,
-  # list(name          = "Get in range",
-  #      attr          = "aTimeToInRange",
-  #      time_to_event = days_till_in_range,
-  #      func          = get_in_range,
-  #      reactive      = FALSE),
-  # list(name          = "Pass 90 days",
-  #      attr          = "aTimeTo90d",
-  #      time_to_event = days_till_90d,
-  #      func          = reach_90d,
-  #      reactive      = FALSE),
-  # list(name          = "Bleed",
-  #      attr          = "aTimeToBleed",
-  #      time_to_event = days_till_bleed,
-  #      func          = bleed_event,
-  #      reactive      = FALSE),
-  # list(name          = "Stroke",
-  #      attr          = "aTimeToStroke",
-  #      time_to_event = days_till_stroke,
-  #      func          = stroke_event,
-  #      reactive      = FALSE),
-  # list(name          = "DVTPE",
-  #      attr          = "aTimeToDVTPE",
-  #      time_to_event = days_till_DVTPE,
-  #      func          = DVTPE_event,
-  #      reactive      = FALSE)
+        reactive      = FALSE),
+  list(name          = "Get in range",
+       attr          = "aTimeToInRange",
+       time_to_event = days_till_in_range,
+       func          = get_in_range,
+       reactive      = FALSE),
+  list(name          = "Pass 90 days",
+        attr          = "aTimeTo90d",
+        time_to_event = days_till_90d,
+        func          = reach_90d,
+        reactive      = FALSE),
+  list(name          = "Pass 6 months",
+       attr          = "aTimeTo6m",
+       time_to_event = days_till_6m,
+       func          = reach_6m_NonAF,
+       reactive      = FALSE),
+  list(name          = "Major Bleed",
+       attr          = "aTimeToMajorBleed",
+       time_to_event = days_till_major_bleed,
+       func          = major_bleed_event,
+       reactive      = FALSE),
+  list(name          = "Minor Bleed",
+       attr          = "aTimeToMinorBleed",
+       time_to_event = days_till_minor_bleed,
+       func          = minor_bleed_event,
+       reactive      = FALSE),
+   list(name          = "Stroke",
+        attr          = "aTimeToStroke",
+        time_to_event = days_till_stroke,
+        func          = stroke_event,
+        reactive      = FALSE),
+   list(name          = "DVTPE",
+        attr          = "aTimeToDVTPE",
+        time_to_event = days_till_DVTPE,
+        func          = DVTPE_event,
+        reactive      = FALSE)
   
 )
 

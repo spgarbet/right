@@ -181,17 +181,26 @@ warfarin = list(
   vINRvalue = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_value,
   
   # adverse events: bleed
-  vAF_Risk_Bleed_3 = 0.0741, # risk of bleeing events for INR < 3 & AF indication
-  vAF_Risk_Bleed_3to4 = 0.3081,
-  vAF_Risk_Bleed_Over4 =	0.99, # cannot run this: 1.9364 ???? 
-  vRRBleed_AF = 1,
-  vNonAF_Risk_Bleed_3 = 0.0741,
-  vNonAF_Risk_Bleed_3to4 = 0.3081,
-  vNonAF_Risk_Bleed_Over4 = 0.99, # cannot run this: 1.9364 ???? 
-  vRRBleed_NonAF = 1,
-  vTimeDurBleed = 365,
+  vAF_Risk_Major_Bleed_3 = 0.0004875, # risk of bleeing events for INR < 3 & AF indication
+  vAF_Risk_Major_Bleed_3to4 = 0.004875,
+  vAF_Risk_Major_Bleed_Over4 =	0.039,
+  vRRMajorBleed_AF = 1,
+  vNonAF_Risk_Major_Bleed_3 = 0.0004875,
+  vNonAF_Risk_Major_Bleed_3to4 = 0.004875,
+  vNonAF_Risk_Major_Bleed_Over4 = 0.039, 
+  vRRMajorBleed_NonAF = 1,
   
-  vRisk_MajorBleed	= 0.138, # prob of major bleeding among all bleeding events
+  vAF_Risk_Minor_Bleed_3 = 0.003046875, # risk of bleeing events for INR < 3 & AF indication
+  vAF_Risk_Minor_Bleed_3to4 = 0.03046875,
+  vAF_Risk_Minor_Bleed_Over4 =	0.24375,
+  vRRMinorBleed_AF = 1,
+  vNonAF_Risk_Minor_Bleed_3 = 0.003046875,
+  vNonAF_Risk_Minor_Bleed_3to4 = 0.03046875,
+  vNonAF_Risk_Minor_Bleed_Over4 =	0.24375,
+  vRRMinorBleed_NonAF = 1,
+  
+  vTimeDurBleed = 365,
+
   ##prob distribution of six types of major bleeding events
   vR_Bleed_ICH	= 0.144, 
   vR_Bleed_ICH_Fatal = 0.156,
@@ -219,8 +228,8 @@ warfarin = list(
   vR_Stroke_Fatal_Over2 = 0.06,
   
   # adverse event: DVTPE
-  vAF_Risk_DVTPE_3 = 0.000001,
-  vAF_Risk_DVTPE_Over3 =	0.1,
+  vAF_Risk_DVTPE_3 = 0.1,
+  vAF_Risk_DVTPE_Over3 =	0.000001,
   vRRDVTPE_AF = 1,
   vNonAF_Risk_DVTPE_3 =	0.3,
   vNonAF_Risk_DVTPE_Over3 =	0.5,
@@ -249,9 +258,9 @@ inputs <- list(
   vReactive    = "None", # Can be one of following: "None", "Single", "Panel"
 
 # Control Which Drugs Are Run in the Model 
-  vDrugs       = list(vSimvastatin = TRUE, 
-                      vWarfarin = FALSE,
-                      vClopidogrel = TRUE),
+  vDrugs       = list(vSimvastatin = FALSE, 
+                      vWarfarin = TRUE,
+                      vClopidogrel = FALSE),
 
 # CURRENTLY PANEL IS FOR ALL DRUGS ???
   vPanel       = list(vSimvastatin = TRUE, 

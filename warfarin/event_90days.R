@@ -17,9 +17,6 @@ reach_90d <- function(traj, inputs)
     
     stop_monitor_INR() %>%
     adj_clock()
-  
-    #add in continued warfarin time by indication????
-    
 }
 
 

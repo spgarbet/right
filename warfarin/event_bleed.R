@@ -5,23 +5,23 @@ t2e_rexp <- function(risk,rr,time) #used in bleed, stroke, DVTPE
   return(t2e)
 }
 
-
-days_till_bleed <- function(attrs, inputs)
+###major bleed
+days_till_major_bleed <- function(attrs, inputs)
 { 
   switch = attrs[["sWarfarinEvents"]]
   if(switch==1) {
     x = attrs[["aINR"]]
     if(attrs[["aWarfarinIndication"]]==1) #AF
     { 
-      if(x<3)                return(t2e_rexp(inputs$warfarin$vAF_Risk_Bleed_3,inputs$warfarin$vRRBleed_AF,inputs$warfarin$vTimeDurBleed))
-      else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vAF_Risk_Bleed_3to4,inputs$warfarin$vRRBleed_AF,inputs$warfarin$vTimeDurBleed))
-      else                   return(t2e_rexp(inputs$warfarin$vAF_Risk_Bleed_Over4,inputs$warfarin$vRRBleed_AF,inputs$warfarin$vTimeDurBleed))
+      if(x<3)                return(t2e_rexp(inputs$warfarin$vAF_Risk_Major_Bleed_3,inputs$warfarin$vRRMajorBleed_AF,inputs$warfarin$vTimeDurBleed))
+      else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vAF_Risk_Major_Bleed_3to4,inputs$warfarin$vRRMajorBleed_AF,inputs$warfarin$vTimeDurBleed))
+      else                   return(t2e_rexp(inputs$warfarin$vAF_Risk_Major_Bleed_Over4,inputs$warfarin$vRRMajorBleed_AF,inputs$warfarin$vTimeDurBleed))
     }
     else #Non-AF
     { 
-      if(x<3)                return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Bleed_3,inputs$warfarin$vRRBleed_NonAF,inputs$warfarin$vTimeDurBleed))
-      else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Bleed_3to4,inputs$warfarin$vRRBleed_NonAF,inputs$warfarin$vTimeDurBleed))
-      else                   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Bleed_Over4,inputs$warfarin$vRRBleed_NonAF,inputs$warfarin$vTimeDurBleed))
+      if(x<3)                return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Major_Bleed_3,inputs$warfarin$vRRMajorBleed_NonAF,inputs$warfarin$vTimeDurBleed))
+      else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Major_Bleed_3to4,inputs$warfarin$vRRMajorBleed_NonAF,inputs$warfarin$vTimeDurBleed))
+      else                   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Major_Bleed_Over4,inputs$warfarin$vRRMajorBleed_NonAF,inputs$warfarin$vTimeDurBleed))
     }
   }
   else {return(inputs$vHorizon*365+1)}
@@ -30,13 +30,9 @@ days_till_bleed <- function(attrs, inputs)
 vMajorBleedfreq <- c(inputs$warfarin$vR_Bleed_ICH, inputs$warfarin$vR_Bleed_ICH_Fatal, inputs$warfarin$vR_Bleed_GI, 
                      inputs$warfarin$vR_Bleed_GI_Fatal, inputs$warfarin$vR_Bleed_Other, inputs$warfarin$vR_Bleed_Other_Fatal)
 
-bleed_event <- function(traj, inputs)
+major_bleed_event <- function(traj, inputs)
 {
   traj %>%
-    branch(
-      function() sample(1:2, 1, prob=c(inputs$warfarin$vRisk_MajorBleed, 1-inputs$warfarin$vRisk_MajorBleed)),
-      continue=rep(TRUE,2),
-      create_trajectory("major bleed") %>% 
         branch(
           function() sample(1:6, 1, prob=vMajorBleedfreq),
           continue=rep(c(TRUE,FALSE),3),
@@ -52,12 +48,36 @@ bleed_event <- function(traj, inputs)
             set_attribute("aTypeofBleed",5) %>% mark("MajorBleed_Other"),
           create_trajectory("Other_Fatal") %>%
             set_attribute("aTypeofBleed",6) %>% mark("MajorBleed_Other_Fatal") %>% cleanup_on_termination()
-        ),
-      create_trajectory("minor bleed") %>% mark("MinorBleed")
-    )
-  
+        )
 }  
 
 
+###minor bleed
+days_till_minor_bleed <- function(attrs, inputs)
+{ 
+  switch = attrs[["sWarfarinEvents"]]
+  if(switch==1) {
+    x = attrs[["aINR"]]
+    if(attrs[["aWarfarinIndication"]]==1) #AF
+    { 
+      if(x<3)                return(t2e_rexp(inputs$warfarin$vAF_Risk_Minor_Bleed_3,inputs$warfarin$vRRMinorBleed_AF,inputs$warfarin$vTimeDurBleed))
+      else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vAF_Risk_Minor_Bleed_3to4,inputs$warfarin$vRRMinorBleed_AF,inputs$warfarin$vTimeDurBleed))
+      else                   return(t2e_rexp(inputs$warfarin$vAF_Risk_Minor_Bleed_Over4,inputs$warfarin$vRRMinorBleed_AF,inputs$warfarin$vTimeDurBleed))
+    }
+    else #Non-AF
+    { 
+      if(x<3)                return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Minor_Bleed_3,inputs$warfarin$vRRMinorBleed_NonAF,inputs$warfarin$vTimeDurBleed))
+      else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Minor_Bleed_3to4,inputs$warfarin$vRRMinorBleed_NonAF,inputs$warfarin$vTimeDurBleed))
+      else                   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_Minor_Bleed_Over4,inputs$warfarin$vRRMinorBleed_NonAF,inputs$warfarin$vTimeDurBleed))
+    }
+  }
+  else {return(inputs$vHorizon*365+1)}
+}
+
+minor_bleed_event <- function(traj, inputs)
+{
+  traj %>%
+  mark("MinorBleed")
+}  
 
 

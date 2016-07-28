@@ -11,22 +11,11 @@ assign_warfarin_indication <- function(traj, inputs)
       create_trajectory("AF") %>% set_attribute("aWarfarinIndication", 1),
       create_trajectory("Non-AF") %>% set_attribute("aWarfarinIndication", 2)
     ) %>%
-    set_attribute("aOnWarfarin", 2) # not on warfarin yet
+    set_attribute("aOnWarfarin", 2) %>% # not on warfarin yet
+    set_attribute("aINRInitial", 0) %>% #not on warfarin yet
+    set_attribute("aINR", function(attrs) attrs[["aINRInitial"]]) %>% #not on warfarin yet
+    set_attribute("aInRange", 1) #not on warfarin yet
 }
-
-assign_initial_INR <- function(traj, inputs) # INR attributes only used upon start of warfarin
-{
-  traj %>%
-    set_attribute("aINRInitial", 
-                  function() sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)) %>%
-    set_attribute("aINR", function(attrs) attrs[["aINRInitial"]]) %>%
-    set_attribute("aInRange", function(attrs) INR_status(attrs[["aINRInitial"]]))
-}
-
-INR_status <- function(x) {
-  if (x>=2 & x<= 3) {return(1)} 
-  else {return(2)}
-}  
 
 assign_initial_switch <- function(traj)
 {
@@ -41,6 +30,5 @@ assign_warfarin_attributes <- function(traj, inputs)
 {
   traj %>%
     assign_warfarin_indication(inputs) %>%
-    assign_initial_INR(inputs) %>%
     assign_initial_switch()
 }

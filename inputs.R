@@ -165,8 +165,8 @@ simvastatin <- list(
 )
 
 warfarin = list(
-  vPREDICTsens = 0.74, # need inputs    
-  vPREDICTspec = 0.61, # need inputs
+  vPREDICTsens = 1, # need inputs    
+  vPREDICTspec = 1, # need inputs
   
   # start warfarin
   aLP_Warfarin = 1,
@@ -297,9 +297,25 @@ inputs <- list(
     mi_med_manage   = realdol(17200,2011),
     mi_nonfatal     = realdol(27840,2011),
     revasc_cabg     = realdol(50560/14,2011),
-    revasc_pci      = realdol(20670/7,2011)
+    revasc_pci      = realdol(20670/7,2011),
     
-    
+    warfarin        = realdol(71/90,year=2007),
+    #bleeding events: sharing w/ chlopidigrel model??
+    MajorBleed_ICH	= realdol(20740,year=2011),
+    MajorBleed_GI	  = realdol(2328,year=2011),
+    MajorBleed_Other = realdol(6154,year=2011),
+    MajorBleed_ICH_Fatal =	realdol(17920,year=2011),
+    MajorBleed_GI_Fatal =	realdol(17920,year=2011),
+    MajorBleed_Other_Fatal =	realdol(17920,year=2011),
+    MinorBleed = realdol(79/2,year=2011),
+    Stroke_MajorDeficit = realdol(21537,year=2007),
+    Stroke_MinorDeficit = realdol(15499,year=2007),
+    Stroke_Fatal    = realdol(10396,year=2007),
+    DVT	= realdol(7594,year=2004), 
+    PE =	realdol(13018,year=2004),
+    DVTPE_Fatal =	realdol(7000,year=2004),
+    out_of_range = realdol(29/3,year=2007),
+    in_range = realdol(29/7,year=2007)
 
   ),
   # Each listed duration will be corrected in the final data frame
@@ -314,7 +330,23 @@ inputs <- list(
     timi_int_maj_nonfatal = 1,
     timi_min_nonfatal = 2,
     revasc_cabg     = 14,
-    revasc_pci      = 7 
+    revasc_pci      = 7,
+    
+    MajorBleed_ICH	= 1,
+    MajorBleed_GI	= 14,
+    MajorBleed_Other =	14,
+    MajorBleed_ICH_Fatal =	1,
+    MajorBleed_GI_Fatal =	1,
+    MajorBleed_Other_Fatal =	1,
+    MinorBleed = 2,
+    Stroke_MajorDeficit = 1,
+    Stroke_MinorDeficit = 1,
+    Stroke_Fatal = 1, 
+    DVT	= 1,
+    PE =	1,
+    DVTPE_Fatal =	1,
+    out_of_range = realdol(29/3,year=2005),
+    in_range = realdol(29/7,year=2005)
     
   ),
   disutilities = list(
@@ -332,7 +364,26 @@ inputs <- list(
     mi_med_manage   = .12,
     mi_nonfatal     = .12,
     revasc_cabg     = .5,
-    revasc_pci      = .5 
+    revasc_pci      = .5,
+    
+    MajorBleed_ICH	= 0.61,
+    MajorBleed_GI	  = 0.1511,
+    MajorBleed_Other = 0.1511,
+    MajorBleed_ICH_Fatal = 1, 
+    MajorBleed_GI_Fatal =	1, 
+    MajorBleed_Other_Fatal = 1,
+    MinorBleed      = 0.2,
+    Stroke_MajorDeficit = 0.64,
+    Stroke_MinorDeficit = 0.24,
+    Stroke_Fatal   = 1, 
+    DVT         	 = 0.79,
+    PE             = 0.79,
+    DVTPE_Fatal    = 1,
+    out_of_range = 0.012/3,
+    in_range = 0.012/7,
+    
+    secular_death = 1
+  
   )
   
 )   

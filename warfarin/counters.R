@@ -18,5 +18,7 @@ counters.warfarin = c(
   "DVT",
   "PE",
   "pass_DVTPE_switch",
-  "warfarin_start"
+  "warfarin_start",
+  "Initial_InRange",
+  "Initial_OutRange"
 )

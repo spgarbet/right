@@ -1,3 +1,4 @@
+
 assign_warfarin_indication <- function(traj, inputs) 
 {
   traj %>%
@@ -11,10 +12,37 @@ assign_warfarin_indication <- function(traj, inputs)
       create_trajectory("AF") %>% set_attribute("aWarfarinIndication", 1),
       create_trajectory("Non-AF") %>% set_attribute("aWarfarinIndication", 2)
     ) %>%
-    set_attribute("aOnWarfarin", 2) %>% # not on warfarin yet
-    set_attribute("aINRInitial", 0) %>% #not on warfarin yet
-    set_attribute("aINR", function(attrs) attrs[["aINRInitial"]]) %>% #not on warfarin yet
-    set_attribute("aInRange", 1) #not on warfarin yet
+    set_attribute("aOnWarfarin", 2) # not on warfarin yet
+}
+
+initial_INR <- function() {sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)}
+INR_status <- function(x) {
+  if (x>=2 & x<= 3) {return(1)} 
+  else {return(2)}
+}  
+
+assign_initial_INR <- function(traj,inputs)
+{
+  traj %>%
+    set_attribute("aINR", 0) %>%
+    branch(
+      function(attrs) {
+        t2w = min(c(attrs[["aTimetoWarfarin_AF"]], attrs[["aTimetoWarfarin_NonAF"]]))
+        age       <- attrs[["aAge"]]
+        death_age <- ageAtDeath(age, attrs[["aGender"]])
+        t2d = 365*(death_age-age)
+        if(t2w < t2d) {return(1)}
+        else          {return(2)}
+      },
+      continue=rep(TRUE,2),
+      create_trajectory("will get warfarin") %>% 
+        #assign initial INR
+        set_attribute("aINRInitial", 
+                      function() sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)),
+      create_trajectory("") %>% 
+        set_attribute("aINRInitial", 0)
+    ) %>%
+    set_attribute("aInRange", function(attrs) INR_status(attrs[["aINRInitial"]]))
 }
 
 assign_initial_switch <- function(traj)
@@ -30,5 +58,6 @@ assign_warfarin_attributes <- function(traj, inputs)
 {
   traj %>%
     assign_warfarin_indication(inputs) %>%
-    assign_initial_switch()
+    assign_initial_INR(inputs) %>%
+    assign_initial_switch() 
 }

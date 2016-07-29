@@ -33,13 +33,6 @@ warfarin_reactive_strategy <- function(traj, inputs)
   } else stop("Unhandled Reactive Statin Strategy")
 }
 
-INR_status <- function(x) {
-  if (x>=2 & x<= 3) {return(1)} 
-  else {return(2)}
-}  
-
-assign_inital_INR <- function() sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)
-
 start_warfarin <- function(traj, inputs)
 {
   traj %>%
@@ -48,19 +41,15 @@ start_warfarin <- function(traj, inputs)
     set_attribute("sWarfarinEvents", 1) %>%  #switch on warfarin events
     set_attribute("aOnWarfarin", 1) %>% # start on warfarin 
     set_attribute("sINRMonitor", 1) %>% # start monitoring INR in 90 days
-    #assign initial INR
-    set_attribute("aINRInitial", function() assign_inital_INR()) %>%
     set_attribute("aINR", function(attrs) attrs[["aINRInitial"]]) %>%
     #mark initial INR cat 
     branch(
-      function(attrs) INR_status(attrs[["aINRInitial"]]),
+      function(attrs) attrs[["aInRange"]],
       continue=rep(TRUE, 2),
-      create_trajectory("Initial In Range") %>% 
-        seize("in_range") %>%
-        set_attribute("aInRange", 1),
-      create_trajectory("Initial Out of Range") %>% 
-        seize("out_of_range") %>%
-        set_attribute("aInRange", 2)
+      create_trajectory("Initial In Range") %>% mark("Initial_InRange") %>%
+        seize("in_range"),
+      create_trajectory("Initial Out of Range") %>% mark("Initial_OutRange") %>%
+        seize("out_of_range") 
     )
 }
 

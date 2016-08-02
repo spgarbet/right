@@ -181,26 +181,34 @@ warfarin = list(
   vINRvalue = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_value,
   
   # adverse events: bleed
-  vAF_Risk_Major_Bleed_3 = 0.0004875, # risk of bleeing events for INR < 3 & AF indication
-  vAF_Risk_Major_Bleed_3to4 = 0.004875,
-  vAF_Risk_Major_Bleed_Over4 =	0.039,
+  vAF_Risk_Major_Bleed_3 = 0.01497, # risk of bleeing events for INR < 3 & AF indication
+  vAF_Risk_Major_Bleed_3to4 = 0.06224,
+  vAF_Risk_Major_Bleed_Over4 = 0.39118,
   vRRMajorBleed_AF = 1,
-  vNonAF_Risk_Major_Bleed_3 = 0.0004875,
+  vNonAF_Risk_Major_Bleed_3 = 0.01497,
   vNonAF_Risk_Major_Bleed_3to4 = 0.004875,
-  vNonAF_Risk_Major_Bleed_Over4 = 0.039, 
+  vNonAF_Risk_Major_Bleed_Over4 = 0.39118, 
   vRRMajorBleed_NonAF = 1,
   
-  vAF_Risk_Minor_Bleed_3 = 0.003046875, # risk of bleeing events for INR < 3 & AF indication
-  vAF_Risk_Minor_Bleed_3to4 = 0.03046875,
-  vAF_Risk_Minor_Bleed_Over4 =	0.24375,
+  vAF_Risk_Minor_Bleed_3 = 0.0973, # risk of bleeing events for INR < 3 & AF indication
+  vAF_Risk_Minor_Bleed_3to4 = 0.4046,
+  vAF_Risk_Minor_Bleed_Over4 = 0.9999,
   vRRMinorBleed_AF = 1,
-  vNonAF_Risk_Minor_Bleed_3 = 0.003046875,
-  vNonAF_Risk_Minor_Bleed_3to4 = 0.03046875,
-  vNonAF_Risk_Minor_Bleed_Over4 =	0.24375,
+  vNonAF_Risk_Minor_Bleed_3 = 0.0973,
+  vNonAF_Risk_Minor_Bleed_3to4 = 0.4046,
+  vNonAF_Risk_Minor_Bleed_Over4 =	0.9999,
   vRRMinorBleed_NonAF = 1,
   
   vTimeDurBleed = 365,
 
+  #adjusted estimates:
+  # V1:    90d risk is 1.95 * other time
+  # major: 0.01497 0.06224 0.39118 
+  # minor: 0.0973 0.4046 0.9999
+  # V2:    90d risk is 1.95 * average 1 yr
+  # major: 0.01852 0.07702 0.48409 
+  # minor: 0.1204 0.5007 0.9999
+  
   ##prob distribution of six types of major bleeding events
   vR_Bleed_ICH	= 0.144, 
   vR_Bleed_ICH_Fatal = 0.156,

@@ -41,7 +41,7 @@ stroke_event <- function(traj, inputs)
           create_trajectory("major deficit") %>%
             set_attribute("aTypeofStroke", 2) %>% mark("Stroke_MajorDeficit") %>% mark("pass_stroke_switch") %>% 
             set_attribute("sWarfarinEvents", 2) %>% #switch off
-            cleanup_warfarin(),
+            cleanup_warfarin() %>% adj_clock(),
           
           create_trajectory("fatal") %>%
             set_attribute("aTypeofStroke", 3) %>% mark("Stroke_Fatal") %>% cleanup_on_termination()
@@ -57,7 +57,7 @@ stroke_event <- function(traj, inputs)
           create_trajectory("major deficit") %>%
             set_attribute("aTypeofStroke", 2) %>% mark("Stroke_MajorDeficit") %>% mark("pass_stroke_switch") %>%
             set_attribute("sWarfarinEvents", 2) %>% #switch off
-            cleanup_warfarin(),
+            cleanup_warfarin() %>% adj_clock() ,
           
           create_trajectory("fatal") %>%
             set_attribute("aTypeofStroke", 3) %>% mark("Stroke_Fatal") %>% cleanup_on_termination()

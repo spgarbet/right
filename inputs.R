@@ -344,9 +344,7 @@ inputs <- list(
     Stroke_Fatal = 1, 
     DVT	= 1,
     PE =	1,
-    DVTPE_Fatal =	1,
-    out_of_range = realdol(29/3,year=2005),
-    in_range = realdol(29/7,year=2005)
+    DVTPE_Fatal =	1
     
   ),
   disutilities = list(

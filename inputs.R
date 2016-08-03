@@ -181,7 +181,7 @@ warfarin = list(
   vINRvalue = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_value,
   
   # adverse events: bleed
-  vAF_Risk_Major_Bleed_3 = 0.01497, # risk of bleeing events for INR < 3 & AF indication
+  vAF_Risk_Major_Bleed_3 = 0.01497, # risk of bleeding events for INR < 3 & AF indication
   vAF_Risk_Major_Bleed_3to4 = 0.06224,
   vAF_Risk_Major_Bleed_Over4 = 0.39118,
   vRRMajorBleed_AF = 1,
@@ -190,7 +190,7 @@ warfarin = list(
   vNonAF_Risk_Major_Bleed_Over4 = 0.39118, 
   vRRMajorBleed_NonAF = 1,
   
-  vAF_Risk_Minor_Bleed_3 = 0.0973, # risk of bleeing events for INR < 3 & AF indication
+  vAF_Risk_Minor_Bleed_3 = 0.0973, # risk of bleeding events for INR < 3 & AF indication
   vAF_Risk_Minor_Bleed_3to4 = 0.4046,
   vAF_Risk_Minor_Bleed_Over4 = 0.9999,
   vRRMinorBleed_AF = 1,

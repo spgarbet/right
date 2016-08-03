@@ -33,6 +33,17 @@ warfarin_reactive_strategy <- function(traj, inputs)
   } else stop("Unhandled Reactive Statin Strategy")
 }
 
+initial_INR <- function(x) 
+{
+  set.seed(x) 
+  sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)
+}
+
+INR_status <- function(x) {
+  if (x>=2 & x<= 3) {return(1)} 
+  else {return(2)}
+}  
+
 start_warfarin <- function(traj, inputs)
 {
   traj %>%
@@ -41,7 +52,12 @@ start_warfarin <- function(traj, inputs)
     set_attribute("sWarfarinEvents", 1) %>%  #switch on warfarin events
     set_attribute("aOnWarfarin", 1) %>% # start on warfarin 
     set_attribute("sINRMonitor", 1) %>% # start monitoring INR in 90 days
+    
+    #assign initial INR
+    set_attribute("aINRInitial", function(attrs) initial_INR(attrs[["aSeed"]])) %>%
     set_attribute("aINR", function(attrs) attrs[["aINRInitial"]]) %>%
+    set_attribute("aInRange", function(attrs) INR_status(attrs[["aINRInitial"]])) %>%
+    
     #mark initial INR cat 
     branch(
       function(attrs) attrs[["aInRange"]],

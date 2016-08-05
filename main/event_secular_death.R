@@ -1,5 +1,6 @@
 ## Secular Death, Weibull Model
-source('./main/age-weibull.R')
+#source('./main/age-weibull.R')
+source('./main/age-gompertz.R')
 
 # Given attributes of a patient (trajectory), it returns in days 
 # how long till the patient would die a secular death.

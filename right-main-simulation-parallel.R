@@ -120,6 +120,14 @@ initialize_patient <- function(traj, inputs)
     assign_warfarin_attributes(inputs) 
 }
 
+predict_draw <- function(traj, inputs)
+{
+  traj %>%
+    predict_clopidogrel_draw(inputs) %>%
+    predict_simvastatin_draw(inputs) %>%
+    predict_warfarin_draw(inputs)
+}
+
 predict_test <- function(traj, inputs)
 {
   traj %>%
@@ -134,6 +142,8 @@ predict_test <- function(traj, inputs)
 # No modification required for adding more drug models
 preemptive_strategy <- function(traj, inputs)
 {
+  traj <- predict_draw(traj, inputs) # Always execute predict random draw to keep seeded random number
+                             # states the same
   
   # Note this doesn't have to use branch, because it's a global that every trajectory gets
   if        (inputs$vPreemptive == "None"     )

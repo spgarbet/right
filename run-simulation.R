@@ -1,6 +1,7 @@
 rm(list=ls())
 library(parallel)
 
+
 ####
 ##
 # Setup and Run the Simulation.
@@ -8,6 +9,7 @@ library(parallel)
 ####
 # Get Info on Random Patient Who Experiences a Certain Event
 
+source("./inputs.R")
 
 source("./right-main-simulation-parallel.R")
 vNN = 200

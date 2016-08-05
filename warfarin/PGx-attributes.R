@@ -1,5 +1,5 @@
 
-predict_warfarin <- function(traj, inputs)
+predict_warfarin_draw <- function(traj, inputs)
 {
   # First, Get the Probability That the Risk Score Returns a Value Above the Threshold
   # Note: the sensitivity and specificty are defined over a fixed horizon (I think three years), not the model horizon.
@@ -11,8 +11,14 @@ predict_warfarin <- function(traj, inputs)
     
     # All this routine needs to do is set the genotyped attribute correctly
     # The main loop code will pick this up and triggers a "panel_test" if needed.
-    set_attribute("aGenotyped_Warfarin", function(attrs)
+    set_attribute("aGenotyped_Warfarin_PREDICT", function(attrs)
       sample(1:2, 1, prob = c(attrs[['aPrWarfarin.Score.Eq1']], 1 - attrs[['aPrWarfarin.Score.Eq1']])))
+}
+
+
+predict_warfarin <- function(traj, inputs)
+{
+  traj %>% set_attribute("aGenotyped_Warfarin", function(attrs) attrs[["aGenotyped_Warfarin_PREDICT"]])
 }
 
 

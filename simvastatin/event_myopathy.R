@@ -6,16 +6,25 @@ switch_statin <- function(inputs)
     branch(
       function(attrs) attrs[["aCVDdrug"]]+1,
       continue=rep(TRUE,3),
-      create_trajectory() %>% timeout(0), # Already no treatment
-      create_trajectory("Switch to Second Line") %>%
+      create_trajectory() %>% timeout(0), # Already no treatment, nothing to do
+      create_trajectory("Switch to Second Line") %>% # Switch from Simvastatin -> Alternate
         mark("sim_switched") %>%
         release("simvastatin") %>%
         seize("alt_simvastatin") %>%
+        set_attribute("aStatinRxHx", 2) %>% # 2nd prescription
         set_attribute("aCVDdrug", 2),
-      create_trajectory("Stopped Treatment") %>%
-        mark("sim_stopped") %>%
-        release("alt_simvastatin") %>%
-        set_attribute("aCVDdrug", 0)
+      create_trajectory("Evaluate Alternate Treatment") %>%  # On Alternate
+        branch(
+          function(attrs) min(attrs[["aStatinRxHx"]], 2), # 1 = 2nd round of alternate, 2+ = Stop
+          continue=c(TRUE,TRUE),
+          create_trajectory("Continuing Alternate Treatment") %>%
+            set_attribute("aStatinRxHx", 2), # 2nd prescription
+          # Stop
+          create_trajectory("Stopping Statin Treatment") %>%  
+            mark("sim_stopped") %>%
+            release("alt_simvastatin") %>%
+            set_attribute("aCVDdrug", 0)
+        )
   )
 }
 

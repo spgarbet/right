@@ -54,10 +54,10 @@ assign_statin <- function(traj, inputs)
 {
   traj %>%
     branch(
-      function(attrs) attrs[["aStatinRxHx"]]+1,
-      continue=rep(TRUE,2),
-      create_trajectory() %>% timeout(0), # Due to prior history, don't prescribe again
-      create_trajectory() %>% mark("statin_any") %>% 
+      function(attrs) min(attrs[["aStatinRxHx"]]+1, 2), # 0 = No history, 1+ prior history
+      continue=c(TRUE,TRUE),
+      create_trajectory() %>%
+        mark("statin_any") %>% 
         set_attribute("aStatinRxHx", 1) %>% # Now they have a history of statin RX
         branch(
           function(attrs) 
@@ -76,23 +76,24 @@ assign_statin <- function(traj, inputs)
             seize("alt_simvastatin") %>% 
             set_attribute("aCVDdrug", 2)
         ) %>% 
-      branch(
-        function(attrs)
-        {
-          if (attrs[['aCVDdrug']]!=1 & attrs[['aGenotyped_CVD']] == 1) return(1)
-          return(2)
+        branch(
+          function(attrs)
+          {
+            if (attrs[['aCVDdrug']]!=1 & attrs[['aGenotyped_CVD']] == 1) return(1)
+            return(2)
           },
-        continue = c(TRUE,TRUE),
-        create_trajectory() %>% mark("statin_switched_PGx"),
-        create_trajectory() %>% timeout(0)
-      )
+          continue = c(TRUE,TRUE),
+          create_trajectory() %>% mark("statin_switched_PGx"),
+          create_trajectory() %>% timeout(0)
+        ),
+      create_trajectory() %>% timeout(0) # Due to prior history, don't do anything, as this has already been dealt with
     )
-
 }
 
 prescribe_statin <- function(traj, inputs)
 {
-  traj %>% mark("on_simvastatin") %>% set_attribute("aStatinRxHx", 1) %>% 
+  traj %>%
+    set_attribute("aStatinRxHx", 1) %>% 
     statin_reactive_strategy(inputs) %>%
     assign_statin(inputs) %>%  
     set_attribute("aMildMyoTime",function(attrs) now(env) + days_till_mild_myopathy(attrs,inputs)) %>%

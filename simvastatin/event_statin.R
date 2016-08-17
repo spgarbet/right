@@ -90,7 +90,7 @@ assign_statin <- function(traj, inputs)
 
 }
 
-statin <- function(traj, inputs)
+prescribe_statin <- function(traj, inputs)
 {
   traj %>% mark("on_simvastatin") %>% set_attribute("aStatinRxHx", 1) %>% 
     statin_reactive_strategy(inputs) %>%

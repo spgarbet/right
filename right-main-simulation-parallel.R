@@ -217,7 +217,7 @@ event_registry <- list(
   list(name          = "Start of Statin",
        attr          = "aStartStatin",
        time_to_event = days_till_statin,
-       func          = statin,
+       func          = prescribe_statin,
        reactive      = FALSE),
   list(name          = "Mild Myopathy",
        attr          = "aMildMyoTime",
@@ -296,7 +296,7 @@ event_registry <- list(
   list(name          = "Start Warfarin",
        attr          = "aTimeToStartWarfarin",
        time_to_event = days_till_warfarin,
-       func          = warfarin,
+       func          = prescribe_warfarin,
         reactive      = FALSE),
   list(name          = "Get in range",
        attr          = "aTimeToInRange",
@@ -356,7 +356,7 @@ exec.simulation = function(s=12345)
   envs <-  mclapply(1:inputs$vNIter,mc.set.seed = TRUE, mc.cores = 8,mc.preschedule=FALSE,function(i) {
     env %>% create_counters(counters) %>%
       add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
-      run(365*inputs$vHorizon) %>% # Simulate 100 years.
+      run(365*inputs$vHorizon) %>%
       wrap()
   })
   envs

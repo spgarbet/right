@@ -69,7 +69,7 @@ start_warfarin <- function(traj, inputs)
     )
 }
 
-warfarin <- function(traj, inputs)
+prescribe_warfarin <- function(traj, inputs)
 {
   traj %>% 
     mark("warfarin_start") %>% 

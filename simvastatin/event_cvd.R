@@ -42,7 +42,6 @@ days_till_cvd <- function(attrs, inputs)
   # {
   #   return(inputs$vHorizon*365+ 1) # No CVD present above background rate
   # }
-  hx         <- attrs[['aStatinRxHx']]
   drug       <- attrs[['aCVDdrug']]
   gender     <- attrs[['aGender']]
   bracket    <- age_bracket(attrs)
@@ -72,7 +71,7 @@ days_till_cvd <- function(attrs, inputs)
   
   rate <- -log(1-prob)*rr/time_frame
   
-  if(hx==1) {rexp(1, rate)} else {inputs$vHorizon*365+1}
+  if(drug>=1) {rexp(1, rate)} else {inputs$vHorizon*365+1}
 }
 
 cvd <- function(traj,inputs)

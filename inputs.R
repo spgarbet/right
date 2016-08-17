@@ -255,10 +255,10 @@ warfarin = list(
 inputs <- list(
   # Population Parameters
   vN           = 1000,   # Patients to simulate
-  vNIter       = 10,      # Number of Iterations (parallel processing)
+  vNIter       = 4,      # Number of Iterations (parallel processing)
   vLowerAge    = 40,      # Lower age to simulate coming in (uniform distribution)
   vUpperAge    = 85,      # Upper age to simulate
-  vHorizon     = 100,      # Length of simulation upon a patient entering
+  vHorizon     = 10,      # Length of simulation upon a patient entering
   vPctFemale   = 0.5,     # Percent Female
   
   # Strategies
@@ -266,8 +266,8 @@ inputs <- list(
   vReactive    = "None", # Can be one of following: "None", "Single", "Panel"
 
 # Control Which Drugs Are Run in the Model 
-  vDrugs       = list(vSimvastatin = FALSE, 
-                      vWarfarin = TRUE,
+  vDrugs       = list(vSimvastatin = TRUE, 
+                      vWarfarin = FALSE,
                       vClopidogrel = FALSE),
 
 # CURRENTLY PANEL IS FOR ALL DRUGS ???

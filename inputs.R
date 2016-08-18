@@ -118,8 +118,8 @@ clopidogrel = list(
 )
 
 simvastatin <- list(
-    vPREDICTsens = .9,#0.74,    
-    vPREDICTspec = .9,#0.61,
+    vPREDICTsens = .23,#0.74,    
+    vPREDICTspec = .93,#0.61,
     vProbabilityReactive = 0.25,
     
     # Weibull for statin prescription

@@ -342,6 +342,13 @@ source("./main/counters.R")
 counters <- c(counters.gen, counters.dapt, counters.simvastatin,counters.warfarin)
 
 #####################################################################
+####
+##
+# Setup and Run the Simulation.
+##
+####
+source('./main/event_main_loop.R')
+#####################################################################
 
 exec.simulation = function(s=12345)
 {
@@ -356,7 +363,7 @@ exec.simulation = function(s=12345)
   envs <-  mclapply(1:inputs$vNIter,mc.set.seed = TRUE, mc.cores = 8,mc.preschedule=FALSE,function(i) {
     env %>% create_counters(counters) %>%
       add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
-      run(365*inputs$vHorizon) %>%
+      run(365*inputs$vHorizon+1) %>%
       wrap()
   })
   envs

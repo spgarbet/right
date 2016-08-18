@@ -1,20 +1,14 @@
 days_till_DVTPE <- function(attrs, inputs)
 { 
   switch = attrs[["sWarfarinEvents"]]
-  if(switch==1) {
+  ind = attrs[["aWarfarinIndication"]]
+  if(switch==1 & ind==2)  #Non-AF
+  { 
     x = attrs[["aINR"]]
-    if(attrs[["aWarfarinIndication"]]==1) #AF
-    { 
-      if(x<3)                return(t2e_rexp(inputs$warfarin$vAF_Risk_DVTPE_3,inputs$warfarin$vRRDVTPE_AF,inputs$warfarin$vTimeDurDVTPE))
-      else                   return(t2e_rexp(inputs$warfarin$vAF_Risk_DVTPE_Over3,inputs$warfarin$vRRDVTPE_AF,inputs$warfarin$vTimeDurDVTPE))
-    }
-    else #Non-AF
-    { 
-      if(x<3)                return(t2e_rexp(inputs$warfarin$vNonAF_Risk_DVTPE_3,inputs$warfarin$vRRDVTPE_NonAF,inputs$warfarin$vTimeDurDVTPE))
-      else                   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_DVTPE_Over3,inputs$warfarin$vRRDVTPE_NonAF,inputs$warfarin$vTimeDurDVTPE))
-    }
+    if(x<2)                return(t2e_rexp(inputs$warfarin$vAF_Risk_DVTPE_2,inputs$warfarin$vRRDVTPE_AF,inputs$warfarin$vTimeDurDVTPE))
+    else                   return(t2e_rexp(inputs$warfarin$vAF_Risk_DVTPE_Over2,inputs$warfarin$vRRDVTPE_AF,inputs$warfarin$vTimeDurDVTPE))
   }
-  else {return(inputs$vHorizon*365+1)}
+  else {return(inputs$vHorizon*365+1)} 
 }
 
 vDVTPE_freq <- c(inputs$warfarin$vR_DVT, inputs$warfarin$vR_PE, inputs$warfarin$vR_DVTPE_Fatal)

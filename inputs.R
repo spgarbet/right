@@ -236,12 +236,9 @@ warfarin = list(
   vR_Stroke_Fatal_Over2 = 0.06,
   
   # adverse event: DVTPE
-  vAF_Risk_DVTPE_3 = 0.1,
-  vAF_Risk_DVTPE_Over3 =	0.000001,
+  vAF_Risk_DVTPE_2 = 0.019,
+  vAF_Risk_DVTPE_Over2 =	0.007,
   vRRDVTPE_AF = 1,
-  vNonAF_Risk_DVTPE_3 =	0.3,
-  vNonAF_Risk_DVTPE_Over3 =	0.5,
-  vRRDVTPE_NonAF = 1,
   vTimeDurDVTPE = 365,
   
   ## prob distribution of three types of DVTPE events

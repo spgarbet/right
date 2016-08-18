@@ -343,14 +343,14 @@ source('./main/event_main_loop.R')
 
 ############################################################
 set.seed(12345)
-
+env  <- simmer("RIGHT-v1.1")
 ptm <- proc.time()
 traj <- simulation(env, inputs)
 env %>% create_counters(counters)
 
 env %>%
   add_generator("patient", traj, at(rep(0, inputs$vN)), mon=2) %>%
-  run(365*inputs$vHorizon+10) %>% # Simulate just past horizon
+  run(365*inputs$vHorizon+1) %>% # Simulate just past horizon
   wrap()
 (timer = proc.time() - ptm)
 ############################################################

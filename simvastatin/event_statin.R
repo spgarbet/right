@@ -53,7 +53,6 @@ statin_reactive_strategy <- function(traj, inputs)
 assign_statin <- function(traj, inputs)
 {
   traj %>%
-    timeout(function(attrs) {cat("assign_statin", attrs[["aStatinRxHx"]], "\n"); 0}) %>%
     branch(
       function(attrs) min(attrs[["aStatinRxHx"]]+1, 2), # 0 = No history, 1+ prior history
       continue=c(TRUE,TRUE),
@@ -95,10 +94,5 @@ prescribe_statin <- function(traj, inputs)
 {
   traj %>%
     statin_reactive_strategy(inputs) %>%
-    assign_statin(inputs) %>%  
-    set_attribute("aMildMyoTime",function(attrs) now(env) + days_till_mild_myopathy(attrs,inputs)) %>%
-    set_attribute("aModMyoTime",function(attrs) now(env) + days_till_mod_myopathy(attrs,inputs)) %>%
-    set_attribute("aSevMyoTime",function(attrs) now(env) + days_till_sev_myopathy(attrs,inputs)) %>% 
-    set_attribute("aCVDTime",function(attrs) now(env) + days_till_cvd(attrs,inputs)) %>% 
-    set_attribute("aCVDReassess",function(attrs) now(env) + days_till_reassess_cvd(attrs,inputs))
+    assign_statin(inputs)
 }

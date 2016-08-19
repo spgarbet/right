@@ -186,7 +186,7 @@ warfarin = list(
   vAF_Risk_Major_Bleed_Over4 = 0.39118,
   vRRMajorBleed_AF = 1,
   vNonAF_Risk_Major_Bleed_3 = 0.01497,
-  vNonAF_Risk_Major_Bleed_3to4 = 0.004875,
+  vNonAF_Risk_Major_Bleed_3to4 = 0.06224,
   vNonAF_Risk_Major_Bleed_Over4 = 0.39118, 
   vRRMajorBleed_NonAF = 1,
   

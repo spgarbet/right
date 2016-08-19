@@ -1,3 +1,4 @@
+#t2e_rexp function defined in event_bleed
 days_till_DVTPE <- function(attrs, inputs)
 { 
   switch = attrs[["sWarfarinEvents"]]
@@ -5,8 +6,8 @@ days_till_DVTPE <- function(attrs, inputs)
   if(switch==1 & ind==2)  #Non-AF
   { 
     x = attrs[["aINR"]]
-    if(x<2)                return(t2e_rexp(inputs$warfarin$vAF_Risk_DVTPE_2,inputs$warfarin$vRRDVTPE_AF,inputs$warfarin$vTimeDurDVTPE))
-    else                   return(t2e_rexp(inputs$warfarin$vAF_Risk_DVTPE_Over2,inputs$warfarin$vRRDVTPE_AF,inputs$warfarin$vTimeDurDVTPE))
+    if(x<2)                return(t2e_rexp(inputs$warfarin$vNonAF_Risk_DVTPE_2,inputs$warfarin$vRRDVTPE_NonAF,inputs$warfarin$vTimeDurDVTPE))
+    else                   return(t2e_rexp(inputs$warfarin$vNonAF_Risk_DVTPE_Over2,inputs$warfarin$vRRDVTPE_NonAF,inputs$warfarin$vTimeDurDVTPE))
   }
   else {return(inputs$vHorizon*365+1)} 
 }

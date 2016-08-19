@@ -235,17 +235,16 @@ warfarin = list(
   vR_Stroke_MajorDeficit_Over2 = 0.4042,
   vR_Stroke_Fatal_Over2 = 0.06,
   
-  # adverse event: DVTPE
-  vAF_Risk_DVTPE_2 = 0.019,
-  vAF_Risk_DVTPE_Over2 =	0.007,
-  vRRDVTPE_AF = 1,
+  # adverse event: DVTPE, only for NonAF patients
+  vNonAF_Risk_DVTPE_2 = 0.019,
+  vNonAF_Risk_DVTPE_Over2 =	0.007,
+  vRRDVTPE_NonAF = 1,
   vTimeDurDVTPE = 365,
   
   ## prob distribution of three types of DVTPE events
   vR_DVT = 0.4,
   vR_PE = 0.1,
-  vR_DVTPE_Fatal = 0.5,
-  vPrSwitchDrug = 0.5 # used in random drawing subjects to switch drug upon DVTPE events
+  vR_DVTPE_Fatal = 0.5
 )
 
 

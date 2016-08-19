@@ -1,3 +1,4 @@
+#t2e_rexp function defined in event_bleed
 days_till_stroke <- function(attrs, inputs)
 { 
   switch = attrs[["sWarfarinEvents"]]

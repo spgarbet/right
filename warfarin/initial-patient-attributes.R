@@ -1,20 +1,3 @@
-
-assign_warfarin_indication <- function(traj, inputs) 
-{
-  traj %>%
-    set_attribute("aTimetoWarfarin_AF", function() rweibull(1,inputs$warfarin$vshape_timetowarfarinAF,inputs$warfarin$vscale_timetowarfarinAF)) %>% 
-    set_attribute("aTimetoWarfarin_NonAF", function() rweibull(1,inputs$warfarin$vshape_timetowarfarinAF,inputs$warfarin$vscale_timetowarfarin_nonAF)) %>%
-    branch(
-      function(attrs) {
-        if(attrs[["aTimetoWarfarin_AF"]] < attrs[["aTimetoWarfarin_NonAF"]]) {return(1)}
-        else                                                                 {return(2)}},
-      continue=rep(TRUE,2),
-      create_trajectory("AF") %>% set_attribute("aWarfarinIndication", 1),
-      create_trajectory("Non-AF") %>% set_attribute("aWarfarinIndication", 2)
-    ) %>%
-    set_attribute("aOnWarfarin", 2) # not on warfarin yet
-}
-
 set_INR_seed <- function() {sample(seq(inputs$vN), 1, replace=TRUE)}
 
 assign_initial_INR <- function(traj,inputs)
@@ -23,10 +6,12 @@ assign_initial_INR <- function(traj,inputs)
     set_attribute("aINR", 0) %>%
     set_attribute("aINRInitial", 0) %>% 
     set_attribute("aInRange", 2) %>%
-    set_attribute("aSeed", function() set_INR_seed())
+    set_attribute("aSeed", function() set_INR_seed()) %>%
+    set_attribute("aOnWarfarin", 2) %>% # not on warfarin yet
+    set_attribute("aWarfarinIndication", 1) # not on warfarin yet, first set as 1
 }
 
-assign_initial_switch <- function(traj)
+assign_initial_switch <- function(traj,inputs)
 {
   traj %>%
     set_attribute("sWarfarinEvents", 2) %>%  # warfarin events, switch: off
@@ -38,7 +23,6 @@ assign_initial_switch <- function(traj)
 assign_warfarin_attributes <- function(traj, inputs)
 {
   traj %>%
-    assign_warfarin_indication(inputs) %>%
-    assign_initial_INR() %>%
-    assign_initial_switch() 
+    assign_initial_INR(inputs) %>%
+    assign_initial_switch(inputs) 
 }

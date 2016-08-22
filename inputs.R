@@ -169,10 +169,10 @@ warfarin = list(
   vPREDICTspec = 1, # need inputs
   
   # start warfarin
+  vpct_afib = 0.09, # add last observed % w/ a.fib among those on warfarin
   aLP_Warfarin = 1,
-  vshape_timetowarfarinAF = 0.66,
-  vscale_timetowarfarinAF = 2284.25,
-  vscale_timetowarfarin_nonAF = 34933.44,
+  vshape_timetowarfarin = 0.66,
+  vscale_timetowarfarin = 33471.45,
   
   # INR: initial & time to get in range
   vMedianTimetoINR	= 0.0239, 

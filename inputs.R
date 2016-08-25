@@ -165,8 +165,8 @@ simvastatin <- list(
 )
 
 warfarin = list(
-  vPREDICTsens = 1, # need inputs    
-  vPREDICTspec = 1, # need inputs
+  vPREDICTsens = 0.23, # need inputs    
+  vPREDICTspec = 0.93, # need inputs
   
   # start warfarin
   vpct_afib = 0.09, # add last observed % w/ a.fib among those on warfarin
@@ -177,6 +177,7 @@ warfarin = list(
   # INR: initial & time to get in range
   vMedianTimetoINR	= 0.0239, 
   vMedianTimetoINR_PGx	= 0.033,
+  vMedianTimetoINR_PGx_delay = 0.02888, 
   vINRfreq = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_freq,
   vINRvalue = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_value,
   

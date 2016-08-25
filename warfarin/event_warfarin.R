@@ -39,6 +39,13 @@ initial_INR <- function(x)
   sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)
 }
 
+assign_indication <- function(x) 
+{
+  set.seed(x) 
+  sample(1:2, 1, prob=c(inputs$warfarin$vpct_afib, 1-inputs$warfarin$vpct_afib))
+}
+
+
 INR_status <- function(x) {
   if (x>=2 & x<= 3) {return(1)} 
   else {return(2)}
@@ -54,12 +61,7 @@ start_warfarin <- function(traj, inputs)
     set_attribute("sINRMonitor", 1) %>% # start monitoring INR in 90 days
     
     #assign indication
-    branch(
-      function(attrs) sample(1:2, 1, prob=c(inputs$warfarin$vpct_afib, 1-inputs$warfarin$vpct_afib)),
-      continue=rep(TRUE,2),
-      create_trajectory("AF") %>% set_attribute("aWarfarinIndication", 1),
-      create_trajectory("Non-AF") %>% set_attribute("aWarfarinIndication", 2)
-    ) %>%
+    set_attribute("aWarfarinIndication", function(attrs) assign_indication(attrs[["aSeed"]])) %>%
     
     #assign initial INR
     set_attribute("aINRInitial", function(attrs) initial_INR(attrs[["aSeed"]])) %>%

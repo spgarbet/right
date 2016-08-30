@@ -165,18 +165,19 @@ simvastatin <- list(
 )
 
 warfarin = list(
-  vPREDICTsens = 1, # need inputs    
-  vPREDICTspec = 1, # need inputs
+  vPREDICTsens = 0.23, # need inputs    
+  vPREDICTspec = 0.93, # need inputs
   
   # start warfarin
+  vpct_afib = 0.09, # add last observed % w/ a.fib among those on warfarin
   aLP_Warfarin = 1,
-  vshape_timetowarfarinAF = 0.66,
-  vscale_timetowarfarinAF = 2284.25,
-  vscale_timetowarfarin_nonAF = 34933.44,
+  vshape_timetowarfarin = 0.66,
+  vscale_timetowarfarin = 33471.45,
   
   # INR: initial & time to get in range
   vMedianTimetoINR	= 0.0239, 
   vMedianTimetoINR_PGx	= 0.033,
+  vMedianTimetoINR_PGx_delay = 0.02888, 
   vINRfreq = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_freq,
   vINRvalue = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_value,
   
@@ -186,7 +187,7 @@ warfarin = list(
   vAF_Risk_Major_Bleed_Over4 = 0.39118,
   vRRMajorBleed_AF = 1,
   vNonAF_Risk_Major_Bleed_3 = 0.01497,
-  vNonAF_Risk_Major_Bleed_3to4 = 0.004875,
+  vNonAF_Risk_Major_Bleed_3to4 = 0.06224,
   vNonAF_Risk_Major_Bleed_Over4 = 0.39118, 
   vRRMajorBleed_NonAF = 1,
   

@@ -2,7 +2,7 @@ days_till_warfarin <- function(attrs, inputs)
 {
   on = attrs[["aOnWarfarin"]]
   if (inputs$vDrugs$vWarfarin == TRUE & on==2)
-    {t2e <- min(c(attrs[["aTimetoWarfarin_AF"]],attrs[["aTimetoWarfarin_NonAF"]]))} 
+    {t2e <- rweibull(1,inputs$warfarin$vshape_timetowarfarin,inputs$warfarin$vscale_timetowarfarin)} 
   else {t2e <- inputs$vHorizon*365+1}
   return(t2e)
 } 
@@ -39,6 +39,13 @@ initial_INR <- function(x)
   sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)
 }
 
+assign_indication <- function(x) 
+{
+  set.seed(x) 
+  sample(1:2, 1, prob=c(inputs$warfarin$vpct_afib, 1-inputs$warfarin$vpct_afib))
+}
+
+
 INR_status <- function(x) {
   if (x>=2 & x<= 3) {return(1)} 
   else {return(2)}
@@ -52,6 +59,9 @@ start_warfarin <- function(traj, inputs)
     set_attribute("sWarfarinEvents", 1) %>%  #switch on warfarin events
     set_attribute("aOnWarfarin", 1) %>% # start on warfarin 
     set_attribute("sINRMonitor", 1) %>% # start monitoring INR in 90 days
+    
+    #assign indication
+    set_attribute("aWarfarinIndication", function(attrs) assign_indication(attrs[["aSeed"]])) %>%
     
     #assign initial INR
     set_attribute("aINRInitial", function(attrs) initial_INR(attrs[["aSeed"]])) %>%

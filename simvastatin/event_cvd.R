@@ -10,28 +10,54 @@
 ##
 ## Trying to look at replacing the CVD event generator
 
+mean_us_chol <- function(age, gender)
+{
+  if(age <= 44.0)
+  {
+    if(gender == 1) 191 else 187
+  } else if(age <= 64.0)
+  {
+    if(gender == 1) 200 else 212
+  } else if(age <= 74.0)
+  {
+    if(gender == 1) 184 else 206
+  } else 
+  {
+    if(gender == 1) 173 else 201
+  }
+}
+
+mean_us_sys_bp <- function(age, gender) 
+{
+  if(gender == 1)
+  {
+    if(age <= 59.0) 124 else 133
+  } else
+  {
+    if(age <= 59.0) 122 else 139
+  }
+}
+
+us_prevalence_diabetes <- function(age)
+{
+  if(age <= 44.0)
+  {
+    0.037
+  } else if (age <= 64.0)
+  {
+    0.162
+  } else
+  {
+    0.268
+  }
+}
+
 # This causes a reassessment of CVD risk based on age
 days_till_reassess_cvd <- function(attrs,inputs) { 2.5*365 }
 
 reassess_cvd <- function(traj,inputs)
 {
   traj # Does nothing, but triggers reassessment, via reactive events
-}
-
-age_bracket <- function(attrs)
-{
-  age <- attrs[['aAge']]
-  
-  if (age <= 40) { return(1) } else
-  if (age <= 45) { return(2) } else
-  if (age <= 50) { return(3) } else
-  if (age <= 55) { return(4) } else
-  if (age <= 60) { return(5) } else
-  if (age <= 65) { return(6) } else
-  if (age <= 70) { return(7) } else
-  if (age <= 75) { return(8) }
-  
-  return(9)
 }
 
 days_till_cvd <- function(attrs, inputs)
@@ -44,34 +70,40 @@ days_till_cvd <- function(attrs, inputs)
   # }
   drug       <- attrs[['aCVDdrug']]
   gender     <- attrs[['aGender']]
-  bracket    <- age_bracket(attrs)
+  age        <- attrs[['aAge']]
+  
+  tot_chol      <- mean_us_chol(age, gender)
+  sys_bp        <- mean_us_sys_bp(age, gender)
+  diabetes_prob <- us_prevalence_diabetes(age)
+  
   time_frame <- 3650 # Rates are over 10 years
-  probCVDf <- c(0.02071300,
-                0.03951050,
-                0.05464350,
-                0.06501275,
-                0.12643400,
-                0.15508900,
-                0.18232800,
-                0.20793550,
-                0.23554300)
-  probCVDm <- c(0.04010200,
-                0.06818350,
-                0.09897900,
-                0.01326720,
-                0.19648750,
-                0.23077900,
-                0.27363950,
-                0.30658550,
-                0.34763400)
   
   rr <- if(drug==0) {1} else {0.65}
   
-  prob <- if(gender == 1) {probCVDm[bracket]} else {probCVDf[bracket]}
+  prob <- if(gender == 1)
+  {
+    cvd_prob_10_year_male_framingham(
+      age,
+      tot_chol=tot_chol,
+      hdl_chol=47,  # http://jama.jamanetwork.com/article.aspx?articleid=1383233
+      systolic_bp=sys_bp, 
+      smoker=0.205,  # http://www.cdc.gov/nchs/data/hus/hus14.pdf#061
+      diabetic=diabetes_prob)
+  } else
+  {
+    cvd_prob_10_year_female_framingham(
+      age,
+      tot_chol=tot_chol,
+      hdl_chol=57,  # http://jama.jamanetwork.com/article.aspx?articleid=1383233
+      systolic_bp=sys_bp, 
+      smoker=0.153,  # http://www.cdc.gov/nchs/data/hus/hus14.pdf#061
+      diabetic=diabetes_prob)
+  }
   
   rate <- -log(1-prob)*rr/time_frame
   
-  if(drug>=1) {rexp(1, rate)} else {inputs$vHorizon*365+1}
+  # WAT? if(drug>=1) {rexp(1, rate)} else {inputs$vHorizon*365+1}
+  rexp(1, rate)
 }
 
 cvd <- function(traj,inputs)

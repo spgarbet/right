@@ -26,7 +26,7 @@ statin_reactive_strategy <- function(traj, inputs)
       create_trajectory() %>% timeout(0),
       create_trajectory()  %>% 
         branch(
-          function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+          function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
           continue=c(TRUE,TRUE),
           create_trajectory() %>% timeout(0),
           create_trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test")
@@ -40,7 +40,7 @@ statin_reactive_strategy <- function(traj, inputs)
       continue=c(TRUE, TRUE),
       create_trajectory() %>% 
         branch(
-          function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+          function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
           continue=c(TRUE,TRUE),
           create_trajectory() %>% timeout(0),
           create_trajectory() %>% panel_test()

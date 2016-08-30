@@ -130,7 +130,9 @@ simvastatin <- list(
     vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
     vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
     
-    vProbSimvastatinAlt = 1,  # Prob. of Alt | Variant
+    vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
+  
+    vProbSimvastatinAlt = 1.00,  # Prob. of Alt | Variant
     vProbSimStopMild = 0.23,  # Prob. of Stop | Mild Myo
     vProbSimStopMod  = 0.23,  # Prob. of Stop | Mod Myo
     vProbSimStopSev  = 1.00,  # Prob. of Stop | Sev Myo

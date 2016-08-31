@@ -53,7 +53,7 @@ us_prevalence_diabetes <- function(age)
 }
 
 # This causes a reassessment of CVD risk based on age
-days_till_reassess_cvd <- function(attrs,inputs) { 2.5*365 }
+days_till_reassess_cvd <- function(attrs,inputs) { 365 }
 
 reassess_cvd <- function(traj,inputs)
 {
@@ -102,8 +102,14 @@ days_till_cvd <- function(attrs, inputs)
   
   rate <- -log(1-prob)*rr/time_frame
   
-  # WAT? if(drug>=1) {rexp(1, rate)} else {inputs$vHorizon*365+1}
-  rexp(1, rate)
+  # Only include CVD (and thus tracking) if they are in Simvastatin study, i.e. taking a statin
+  if(drug>=1)
+  {
+    rexp(1, rate)
+  } else {
+    inputs$vHorizon*365+1
+  }
+  #rexp(1, rate)
 }
 
 cvd <- function(traj,inputs)

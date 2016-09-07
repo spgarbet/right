@@ -122,7 +122,7 @@ simvastatin <- list(
     vPREDICTsens = 1-dbinom(0, 10, 0.23), # 10 years simulation, PREDICT draw every visit
     #vPREDICTspec = .93,
     vPREDICTspec = dbinom(0, 10, 1-0.93), # 10 year simulation, PREDICT draw every visit
-    vProbabilityReactive = 0.25,
+    vProbabilityRead = 1.00, # probability of physician using test results
     
     # Weibull for statin prescription
     vScale = 80722.66,

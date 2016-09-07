@@ -130,17 +130,17 @@ gompertz.parameters <- structure(list(Age = 0:109, male.shape = c(0.083909966614
 # Note that the gender values flipped here (1 is now female)
 ageAtDeath <- function(currentAge, gender)
 {
-  currentAge <- floor(currentAge)
+  currentAge_f <- floor(currentAge) #negative time to secular death issue
   
   if(gender == 1 || gender == 'F' || gender == 'Female' || gender == 'f' || gender == 'female')
   {
-    shape <- gompertz.parameters$female_shape[currentAge+1]
-    rate  <- gompertz.parameters$female_rate[currentAge+1]
+    shape <- gompertz.parameters$female_shape[currentAge_f+1]
+    rate  <- gompertz.parameters$female_rate[currentAge_f+1]
   }
   else
   {
-    shape <- gompertz.parameters$male_shape[currentAge+1]
-    rate  <- gompertz.parameters$male_rate[currentAge+1]
+    shape <- gompertz.parameters$male_shape[currentAge_f+1]
+    rate  <- gompertz.parameters$male_rate[currentAge_f+1]
   }
   
   min(currentAge + rgompertz(1, shape, rate), 110)

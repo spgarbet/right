@@ -149,7 +149,7 @@ preemptive_strategy <- function(traj, inputs)
     traj %>%
       predict_test(inputs) %>%
       branch(
-        function(attrs) ifelse(any_genotyped(attrs),1,2),
+        function(attrs) ifelse(any_genotyped(attrs),2,1),
         continue=rep(TRUE,2),
         create_trajectory() %>% timeout(0), # Nothing genotyped, do nothing
         create_trajectory() %>% panel_test(inputs) # Something was genotyped via PREDICT, do panel

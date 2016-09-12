@@ -13,8 +13,8 @@ predict_clopidogrel_draw <- function(traj, inputs)
   # TO DO: Fix teh Sensitivity and Specificity to reflect what was done for PREDICT (e.g., 5 years)
   traj %>%
     set_attribute("aPrDAPT.Score.Eq1",  function(attrs)
-      inputs$simvastatin$vPREDICTsens * (attrs[['aTimeDAPTInitialized']] <= 365*5) + 
-      (1 - inputs$simvastatin$vPREDICTspec) * (1 - (attrs[["aTimeDAPTInitialized"]] < 365*5))) %>%
+      inputs$clopidogrel$vPREDICTsens * (attrs[['aTimeDAPTInitialized']] <= 365*5) + 
+      (1 - inputs$clopidogrel$vPREDICTspec) * (1 - (attrs[["aTimeDAPTInitialized"]] < 365*5))) %>%
     set_attribute("aGenotyped_CYP2C19_PREDICT", function(attrs)
         sample(1:2, 1, prob = c(attrs[['aPrDAPT.Score.Eq1']], 1 - attrs[['aPrDAPT.Score.Eq1']])))
 }

@@ -22,8 +22,10 @@ epsilon <- 0.000000000001
 
 
 clopidogrel = list(
-#    vPREDICTsens = 0.3,    
-#    vPREDICTspec = 0.3,
+    vPREDICTsens = 1-dbinom(0, 10, 0.23), # 10 years simulation, PREDICT draw every visit
+    vPREDICTspec = dbinom(0, 10, 1-0.93), # 10 year simulation, PREDICT draw every visit
+    vProbabilityRead = 1.00, # probability of physician using test results
+    vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
 
     vDAPT.SecondLine = "Ticagrelor",
 
@@ -50,7 +52,6 @@ clopidogrel = list(
     vDAPT.Tx.Duration = 365, # (12mo-48mo)
 
     vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
-    vProbabilityReactive = 0.25,
     
     # Stent Thrombosis: Event Rates and Relative Risks
     
@@ -123,6 +124,7 @@ simvastatin <- list(
     #vPREDICTspec = .93,
     vPREDICTspec = dbinom(0, 10, 1-0.93), # 10 year simulation, PREDICT draw every visit
     vProbabilityRead = 1.00, # probability of physician using test results
+    vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
     
     # Weibull for statin prescription
     vScale = 80722.66,
@@ -131,8 +133,6 @@ simvastatin <- list(
     #
     vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers
     vPoorMetabolizer = 0.021,   # Prevalence of poor metabolizers
-    
-    vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
   
     vProbSimvastatinAlt = 1.00,  # Prob. of Alt | Variant
     vProbSimStopMild = 0.23,  # Prob. of Stop | Mild Myo
@@ -169,8 +169,10 @@ simvastatin <- list(
 )
 
 warfarin = list(
-  vPREDICTsens = 0.23, # need inputs    
-  vPREDICTspec = 0.93, # need inputs
+  vPREDICTsens = 1-dbinom(0, 10, 0.23), # 10 years simulation, PREDICT draw every visit
+  vPREDICTspec = dbinom(0, 10, 1-0.93), # 10 year simulation, PREDICT draw every visit
+  vProbabilityRead = 1.00, # probability of physician using test results
+  vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
   
   # start warfarin
   vpct_afib = 0.09, # add last observed % w/ a.fib among those on warfarin

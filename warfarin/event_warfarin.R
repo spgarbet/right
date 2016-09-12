@@ -7,19 +7,45 @@ days_till_warfarin <- function(attrs, inputs)
   return(t2e)
 } 
 
+#for all genotyped patients through preemptive strategies (Panel or PREDICT), physician can choose to use or ignore the test results
+#under reactive strategies, physician can also choose to order test for those not genotyped
 warfarin_reactive_strategy <- function(traj, inputs)
 {
   if(inputs$vReactive == "None") 
   {
-    traj # Do nothing to trajectory
+    traj %>%
+      branch(
+        function(attrs) attrs[['aGenotyped_Warfarin']],
+        continue=c(TRUE, TRUE),
+        create_trajectory("have test results") %>%  
+          branch(
+            function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
+            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 2) #ignore test results, treat as non-genotyped
+          ),
+        create_trajectory("not have") %>% timeout(0)
+      )
   } else if (inputs$vReactive == "Single")
   {
     traj %>%
       branch(
         function(attrs) attrs[['aGenotyped_Warfarin']],
         continue=c(TRUE, TRUE),
-        create_trajectory() %>% timeout(0),
-        create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test")
+        create_trajectory("have test results") %>%  
+          branch(
+            function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
+            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 2) #ignore test results, treat as non-genotyped
+          ),
+        create_trajectory("not have") %>% 
+          branch(
+            function(attrs) sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0),
+            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test")
+          )
       )
   } else if (inputs$vReactive == "Panel")
   {
@@ -27,10 +53,22 @@ warfarin_reactive_strategy <- function(traj, inputs)
       branch(
         function(attrs) all_genotyped(attrs)+1,
         continue=c(TRUE, TRUE),
-        create_trajectory() %>% panel_test(), # Not all genotyped, then do it
-        create_trajectory() %>% timeout(0)    # Already done, ignore
+        create_trajectory("not panel tested") %>% 
+          branch(
+            function(attrs) sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0),
+            create_trajectory() %>% panel_test()
+          ), # Not all genotyped, then do it
+        create_trajectory("panel tested") %>% 
+          branch(
+            function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
+            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 2) #ignore test results, treat as non-genotyped
+          ) 
       )
-  } else stop("Unhandled Reactive Statin Strategy")
+  } else stop("Unhandled Reactive Warfarin Strategy")
 }
 
 initial_INR <- function(x) 

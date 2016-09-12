@@ -18,42 +18,67 @@ days_till_dapt <- function(attrs, inputs)
 
 ######
 ## Assign DAPT Medication
-# Reactive Strategy Now Probabilistic to make it more realistic (i.e., not all physicians order a test)
+#for all genotyped patients through preemptive strategies (Panel or PREDICT), physician can choose to use or ignore the test results
+#under reactive strategies, physician can also choose to order test for those not genotyped
 clopidogrel_reactive_strategy <- function(traj, inputs)
 {
   if(inputs$vReactive == "None") 
   {
-    traj # Do nothing to trajectory
+    traj %>%
+      branch(
+        function(attrs) attrs[['aGenotyped_CYP2C19']],
+        continue=c(TRUE, TRUE),
+        create_trajectory("have test results") %>%  
+          branch(
+            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vProbabilityRead, 1-inputs$clopidogrel$vProbabilityRead)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
+            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 2) #ignore test results, treat as non-genotyped
+          ),
+        create_trajectory("not have") %>% timeout(0)
+      )
   } else if (inputs$vReactive == "Single")
   {
     traj %>%
-    branch(
-      function(attrs) attrs[['aGenotyped_CYP2C19']],
-      continue=c(TRUE, TRUE),
-      create_trajectory() %>% timeout(0),
-      create_trajectory()  %>% 
       branch(
-        function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
-        continue=c(TRUE,TRUE),
-        create_trajectory() %>% timeout(0),
-        create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test")
-        )
-    )
+        function(attrs) attrs[['aGenotyped_CYP2C19']],
+        continue=c(TRUE, TRUE),
+        create_trajectory("have test results") %>%  
+          branch(
+            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vProbabilityRead, 1-inputs$clopidogrel$vProbabilityRead)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
+            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 2) #ignore test results, treat as non-genotyped
+          ),
+        create_trajectory("not have") %>% 
+          branch(
+            function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0),
+            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test")
+          )
+      )
   } else if (inputs$vReactive == "Panel")
   {
     traj %>%
-    branch(
-      function(attrs) all_genotyped(attrs)+1,
-      continue=c(TRUE, TRUE),
-      create_trajectory() %>% 
-        branch(
-          function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
-          continue=c(TRUE,TRUE),
-          create_trajectory() %>% timeout(0),
-          create_trajectory() %>% panel_test()
-        ), # Not all genotyped, then do it
-      create_trajectory() %>% timeout(0)    # Already done, ignore
-    )
+      branch(
+        function(attrs) all_genotyped(attrs)+1,
+        continue=c(TRUE, TRUE),
+        create_trajectory("not panel tested") %>% 
+          branch(
+            function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0),
+            create_trajectory() %>% panel_test()
+          ), # Not all genotyped, then do it
+        create_trajectory("panel tested") %>% 
+          branch(
+            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vProbabilityRead, 1-inputs$clopidogrel$vProbabilityRead)),
+            continue=c(TRUE,TRUE),
+            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
+            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 2) #ignore test results, treat as non-genotyped
+          ) 
+      )
   } else stop("Unhandled Reactive Clopidogrel Strategy")
 }
 

@@ -65,7 +65,8 @@ panel_test <- function(traj, inputs)
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
     set_attribute('aGenotyped_CVD',     1)  %>%
     set_attribute('aGenotyped_Warfarin', 1) %>%
-    mark("panel_test")
+    mark("panel_test") %>%
+    set_attribute("aPredicted", 2) # Z.Z: add this attribute to differentiate people picked up by PREDICT vs Reactive, matters in warfarin model
 }
 
 #####
@@ -113,7 +114,8 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
     assign_clopidogrel_attributes(inputs) %>%
     assign_simvastatin_attributes(inputs) %>%
-    assign_warfarin_attributes(inputs)
+    assign_warfarin_attributes(inputs) %>%
+    set_attribute("aPredicted", 2)
 }
 
 predict_draw <- function(traj, inputs)
@@ -147,7 +149,7 @@ preemptive_strategy <- function(traj, inputs)
     traj # Do nothing
   } else if (inputs$vPreemptive == "Panel"    )
   {
-    traj %>% panel_test(inputs)
+    traj %>% panel_test(inputs) %>% set_attribute("aPredicted", 1)
   } else if (inputs$vPreemptive == "PREDICT"  )
   {
     traj %>%
@@ -156,7 +158,7 @@ preemptive_strategy <- function(traj, inputs)
         function(attrs) ifelse(any_genotyped(attrs),2,1),
         continue=rep(TRUE,2),
         create_trajectory() %>% timeout(0), # Nothing genotyped, do nothing
-        create_trajectory() %>% panel_test(inputs) # Something was genotyped via PREDICT, do panel
+        create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) # Something was genotyped via PREDICT, do panel
       )
   } else if (inputs$vPreemptive == "Age >= 50")
   {
@@ -164,7 +166,7 @@ preemptive_strategy <- function(traj, inputs)
     branch(
       function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
       continue = c(TRUE, TRUE),
-      create_trajectory() %>% panel_test(inputs), 
+      create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1), 
       create_trajectory() %>% timeout(0)  # Do nothing
     )
   } else stop("Unhandled Preemptive Strategy")

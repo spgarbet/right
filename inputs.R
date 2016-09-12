@@ -259,10 +259,10 @@ inputs <- list(
   # Population Parameters
   vN           = 1000,   # Patients to simulate
   vNIter       = 4,      # Number of Iterations (parallel processing)
-  vLowerAge    = 40,      # Lower age to simulate coming in (uniform distribution)
-  vUpperAge    = 85,      # Upper age to simulate
+  #vLowerAge    = 40,      # Lower age to simulate coming in (uniform distribution)
+  #vUpperAge    = 85,      # Upper age to simulate
   vHorizon     = 10,      # Length of simulation upon a patient entering
-  vPctFemale   = 0.5,     # Percent Female
+  #vPctFemale   = 0.5,     # Percent Female
   
   # Strategies
   vPreemptive  = "None",  # Can be one of following: "None", "Panel", "PREDICT", or "Age >= 50"

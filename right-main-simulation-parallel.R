@@ -109,12 +109,16 @@ source('./warfarin/event_stroke.R')
 source('./warfarin/event_DVTPE.R')
 source('./warfarin/event_6m_NonAF.R')
 
+load('./main/NHANES_pop_11_14.rda')
 initialize_patient <- function(traj, inputs)
 {
   traj %>%
     seize("time_in_model")       %>%
-    set_attribute("aGender",    function(attrs) sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
-    set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
+    set_attribute("aNo", function(attrs) sample(1:nrow(NHANES_pop), 1, prob=1/NHANES_pop$wt)) %>%
+    set_attribute("aGender",    function(attrs) NHANES_pop$gender[attrs[['aNo']]]) %>% 
+    set_attribute("aAge",       function(attrs) NHANES_pop$age[attrs[['aNo']]]) %>% 
+    #set_attribute("aGender",    function(attrs) sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
+    #set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
     assign_clopidogrel_attributes(inputs) %>%
     assign_simvastatin_attributes(inputs) %>%

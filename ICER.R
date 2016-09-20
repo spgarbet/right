@@ -1,3 +1,8 @@
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
+library(tidyr)
+
 icer <- function(results) 
 {
   x <- results %>% arrange(dCOST) %>% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY)) 
@@ -34,3 +39,22 @@ icer <- function(results)
   out = plyr::rbind.fill(x, str.dom, ext.dom) %>% arrange(dCOST)
   out
 }
+
+cost_plane <- function(sum, title) {
+  dt <- sum
+  dt$line <- 1
+  if (any(names(dt) %in% "dominated")==TRUE)
+  {dt$line[dt$dominated==1] <- 0 }
+  if (any(names(dt) %in% "ext.dominated")==TRUE)
+  {dt$line[dt$ext.dominated==1] <- 0}
+  if (any(names(dt) %in% "Y")==TRUE) 
+  {dt <- dt %>% mutate(label=paste0(preemptive,"-",reactive,"-",X,"-",Y))} # With sensitivity analyses
+  if (any(names(dt) %in% "Y")==FALSE) 
+  {dt <- dt %>% mutate(label=paste0(preemptive,"-",reactive))}
+  ggplot(dt, aes(x=dQALY,y=dCOST)) + geom_point() + 
+    geom_line(data=dt[dt$line==1,]) + 
+    geom_label_repel(aes(label=label)) +
+    ggtitle(title)
+}
+
+

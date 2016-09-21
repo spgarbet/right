@@ -22,8 +22,8 @@ epsilon <- 0.000000000001
 
 
 clopidogrel = list(
-    vPREDICTsens = 1-dbinom(0, 10, 0.23), # 10 years simulation, PREDICT draw every visit
-    vPREDICTspec = dbinom(0, 10, 1-0.93), # 10 year simulation, PREDICT draw every visit
+    vPREDICTsens = 0.23,
+    vPREDICTspec = 0.93,
     vProbabilityRead = 1.00, # probability of physician using test results
     vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
 
@@ -119,10 +119,8 @@ clopidogrel = list(
 )
 
 simvastatin <- list(
-    #vPREDICTsens = .23,    
-    vPREDICTsens = 1-dbinom(0, 10, 0.23), # 10 years simulation, PREDICT draw every visit
-    #vPREDICTspec = .93,
-    vPREDICTspec = dbinom(0, 10, 1-0.93), # 10 year simulation, PREDICT draw every visit
+    vPREDICTsens = 0.23,
+    vPREDICTspec = 0.93,
     vProbabilityRead = 1.00, # probability of physician using test results
     vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
     
@@ -169,8 +167,9 @@ simvastatin <- list(
 )
 
 warfarin = list(
-  vPREDICTsens = 1-dbinom(0, 10, 0.23), # 10 years simulation, PREDICT draw every visit
-  vPREDICTspec = dbinom(0, 10, 1-0.93), # 10 year simulation, PREDICT draw every visit
+  vPREDICTsens = 0.23,
+  vPREDICTspec = 0.93,
+
   vProbabilityRead = 1.00, # probability of physician using test results
   vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
   

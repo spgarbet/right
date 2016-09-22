@@ -18,38 +18,20 @@ statin_reactive_strategy <- function(traj, inputs)
 {
   if(inputs$vReactive == "None") 
   {
-    traj %>%
-      branch(
-        function(attrs) attrs[['aGenotyped_CVD']],
-        continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$simvastatin$vProbabilityRead, 1-inputs$simvastatin$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_CVD", 2) #ignore test results, treat as non-genotyped
-          ),
-        create_trajectory("not have") %>% timeout(0)
-      )
+    traj %>% timeout(0)
   } else if (inputs$vReactive == "Single")
   {
     traj %>%
       branch(
         function(attrs) attrs[['aGenotyped_CVD']],
         continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$simvastatin$vProbabilityRead, 1-inputs$simvastatin$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_CVD", 2) #ignore test results, treat as non-genotyped
-          ),
-        create_trajectory("not have") %>% 
+        create_trajectory("have test results") %>%  timeout(0),
+        create_trajectory("not have") %>% # Use probability of ordering test
           branch(
             function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
               continue=c(TRUE,TRUE),
               create_trajectory() %>% timeout(0),
-              create_trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test")
+              create_trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
               )
       )
   } else if (inputs$vReactive == "Panel")
@@ -58,20 +40,14 @@ statin_reactive_strategy <- function(traj, inputs)
     branch(
       function(attrs) all_genotyped(attrs)+1,
       continue=c(TRUE, TRUE),
-      create_trajectory("not panel tested") %>% 
+      create_trajectory("not panel tested") %>% # Use probability of ordering test
         branch(
           function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
           continue=c(TRUE,TRUE),
           create_trajectory() %>% timeout(0),
-          create_trajectory() %>% panel_test()
-        ), # Not all genotyped, then do it
-      create_trajectory("panel tested") %>% 
-        branch(
-          function(attrs) sample(1:2,1,prob=c(inputs$simvastatin$vProbabilityRead, 1-inputs$simvastatin$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_CVD", 2) #ignore test results, treat as non-genotyped
-        ) 
+          create_trajectory() %>% panel_test() %>% set_attribute("aOrdered_test", 2)
+        ),
+      create_trajectory("panel tested") %>% timeout(0)
     )
   } else stop("Unhandled Reactive Statin Strategy")
 }
@@ -88,8 +64,15 @@ assign_statin <- function(traj, inputs)
         branch(
           function(attrs) 
           {
-            # If not genotyped or wildtype gene, return 1 for simvastatin
-            if(attrs[['aGenotyped_CVD']] != 1 || attrs[['aCVDgenotype']] == 1) return(1)
+            # If not genotyped, use probabilty of alternate prescription
+            if(attrs[['aGenotyped_CVD']] != 1)
+              return(sample(1:2, 1, prob=c(1-inputs$simvastatin$vProbSimvastatinAlt, inputs$simvastatin$vProbSimvastatinAlt)))
+            else if(attrs[['aCVDgenotype' ]] != 1 && 
+                   (attrs[['aOrdered_test']] == 2 || runif(1) < inputs$simvastatin$vProbabilityRead) )
+            # If not wildtype gene use probability of prescriber using information
+            {
+              return(2)
+            }
             
             # Otherwise, run probability of prescribing alternate
             sample(1:2, 1, prob=c(1-inputs$simvastatin$vProbSimvastatinAlt, inputs$simvastatin$vProbSimvastatinAlt))

@@ -122,8 +122,7 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
     assign_clopidogrel_attributes(inputs) %>%
     assign_simvastatin_attributes(inputs) %>%
-    assign_warfarin_attributes(inputs) %>%
-    set_attribute("aPredicted", 2) # Z.Z: add this attribute to differentiate people picked up by PREDICT vs Reactive, matters in warfarin model
+    assign_warfarin_attributes(inputs)
 }
 
 predict_draw <- function(traj, inputs)

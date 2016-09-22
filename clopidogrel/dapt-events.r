@@ -24,38 +24,20 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
 {
   if(inputs$vReactive == "None") 
   {
-    traj %>%
-      branch(
-        function(attrs) attrs[['aGenotyped_CYP2C19']],
-        continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vProbabilityRead, 1-inputs$clopidogrel$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 2) #ignore test results, treat as non-genotyped
-          ),
-        create_trajectory("not have") %>% timeout(0)
-      )
+    traj %>% timeout(0)
   } else if (inputs$vReactive == "Single")
   {
     traj %>%
       branch(
         function(attrs) attrs[['aGenotyped_CYP2C19']],
         continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vProbabilityRead, 1-inputs$clopidogrel$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 2) #ignore test results, treat as non-genotyped
-          ),
+        create_trajectory("have test results") %>%  timeout(0),
         create_trajectory("not have") %>% 
           branch(
             function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
             continue=c(TRUE,TRUE),
             create_trajectory() %>% timeout(0),
-            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test")
+            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
           )
       )
   } else if (inputs$vReactive == "Panel")
@@ -69,15 +51,9 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
             function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
             continue=c(TRUE,TRUE),
             create_trajectory() %>% timeout(0),
-            create_trajectory() %>% panel_test()
-          ), # Not all genotyped, then do it
-        create_trajectory("panel tested") %>% 
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vProbabilityRead, 1-inputs$clopidogrel$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_CYP2C19", 2) #ignore test results, treat as non-genotyped
-          ) 
+            create_trajectory() %>% panel_test() %>% set_attribute("aOrdered_test", 2)
+          ), 
+        create_trajectory("panel tested") %>% timeout(0)
       )
   } else stop("Unhandled Reactive Clopidogrel Strategy")
 }
@@ -97,10 +73,10 @@ assign_DAPT_medication <- function(traj,inputs)
     branch(
       function(attrs) {
         # The genotyped patients are switched with some probability.  
-        if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 ) {
+        if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1 && 
+          (attrs[['aOrdered_test']] == 2 || runif(1) < inputs$clopidogrel$vProbabilityRead)) {
           return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
-        } else 
-        if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 
+        } else if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 
         return(1) # Default is to Clopidogrel, hence return 1 if no Hx of alternative drug, or if not switched.  
       },
       continue=rep(TRUE,3),
@@ -142,6 +118,7 @@ dapt <- function(traj, inputs)
         set_attribute("aOnDAPT",1) %>%
         set_attribute("aDAPTRxHx", 1) %>% 
         assign_DAPT_medication(inputs) %>%
+        set_attribute("aOrdered_test", 1) %>%
 
         ####
         ##

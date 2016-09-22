@@ -48,5 +48,6 @@ assign_clopidogrel_attributes <- function(traj, inputs)
   traj %>%
     assign_initial_clopidogrel_attributes(inputs) %>%
     assign_dapt_attributes(inputs) %>%
-    assign_CYP2C19_status(inputs)
+    assign_CYP2C19_status(inputs) %>%
+    set_attribute("aOrdered_test", 1)      # Did a physician order a test 1=NO, 2= YES
 }

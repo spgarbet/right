@@ -16,7 +16,10 @@ assign_initial_switch <- function(traj,inputs)
   traj %>%
     set_attribute("sWarfarinEvents", 2) %>%  # warfarin events, switch: off
     set_attribute("sINRMonitor", 2) %>%      # monitor INR range, switch: off
-    set_attribute("aGenotyped_Warfarin", 2)  # initially not genotyped, then depends on PREDICT 
+    set_attribute("aGenotyped_Warfarin", 2) %>% # initially not genotyped, then depends on PREDICT
+    set_attribute("aOrdered_test", 1) %>% # whether order test this time, 1 - NO, 2 - YES
+    set_attribute("aReadWarfarinTest", 1) %>% # whether use test result if available, 1 - YES, 2 - NO
+    set_attribute("aWTestAvail", 2) #whether test result available at time of prescription, 1 - YES, NO - 2
 }  
 
 #wrap

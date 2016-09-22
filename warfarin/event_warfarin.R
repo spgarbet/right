@@ -13,38 +13,20 @@ warfarin_reactive_strategy <- function(traj, inputs)
 {
   if(inputs$vReactive == "None") 
   {
-    traj %>%
-      branch(
-        function(attrs) attrs[['aGenotyped_Warfarin']],
-        continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 2) #ignore test results, treat as non-genotyped
-          ),
-        create_trajectory("not have") %>% timeout(0)
-      )
+    traj #
   } else if (inputs$vReactive == "Single")
   {
     traj %>%
       branch(
         function(attrs) attrs[['aGenotyped_Warfarin']],
         continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 2) #ignore test results, treat as non-genotyped
-          ),
+        create_trajectory("have test results") %>%  timeout(0),
         create_trajectory("not have") %>% 
           branch(
             function(attrs) sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive)),
             continue=c(TRUE,TRUE),
             create_trajectory() %>% timeout(0),
-            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test")
+            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
           )
       )
   } else if (inputs$vReactive == "Panel")
@@ -60,13 +42,7 @@ warfarin_reactive_strategy <- function(traj, inputs)
             create_trajectory() %>% timeout(0),
             create_trajectory() %>% panel_test()
           ), # Not all genotyped, then do it
-        create_trajectory("panel tested") %>% 
-          branch(
-            function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead)),
-            continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0), #physician reads and utilizes test results
-            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 2) #ignore test results, treat as non-genotyped
-          ) 
+        create_trajectory("panel tested") %>% timeout(0)
       )
   } else stop("Unhandled Reactive Warfarin Strategy")
 }
@@ -114,15 +90,30 @@ start_warfarin <- function(traj, inputs)
         seize("in_range"),
       create_trajectory("Initial Out of Range") %>% mark("Initial_OutRange") %>%
         seize("out_of_range") 
-    )
+    ) %>%
+    
+    #decide whether to use test results
+    branch(
+      function(attrs) 
+      {  
+       #if genotyped and already tested, use probability of using the test
+        if(attrs[["aGenotyped_Warfarin"]]==1 & attrs[["aOrdered_test"]] == 1) return(1)
+        return(2) #either not genotyped, or order reactive test this time
+      },
+      continue = c(TRUE,TRUE),
+      create_trajectory() %>% set_attribute("aReadWarfarinTest", function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead))),
+      create_trajectory() %>% timeout(0)
+    ) 
 }
 
 prescribe_warfarin <- function(traj, inputs)
 {
   traj %>% 
-    mark("warfarin_start") %>% 
+    mark("warfarin_start") %>%
+    set_attribute("aWTestAvail", function(attrs) attrs[["aGenotyped_Warfarin"]]) %>% #before reactive strategy, know whether test available
     warfarin_reactive_strategy(inputs) %>%
     start_warfarin(inputs) %>%
+    set_attribute("aOrdered_test", 1) %>%
     #downstream events
     adj_clock()
 }

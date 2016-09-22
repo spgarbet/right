@@ -64,14 +64,13 @@ assign_statin <- function(traj, inputs)
         branch(
           function(attrs) 
           {
-            # If not genotyped, use probabilty of alternate prescription
-            if(attrs[['aGenotyped_CVD']] != 1)
-              return(sample(1:2, 1, prob=c(1-inputs$simvastatin$vProbSimvastatinAlt, inputs$simvastatin$vProbSimvastatinAlt)))
-            else if(attrs[['aCVDgenotype' ]] != 1 && 
+            # If not genotyped, return 1 for simvastatin
+            if(attrs[['aGenotyped_CVD']] != 1) return(1)
+            else if(attrs[['aCVDgenotype' ]] == 1 && 
                    (attrs[['aOrdered_test']] == 2 || runif(1) < inputs$simvastatin$vProbabilityRead) )
-            # If not wildtype gene use probability of prescriber using information
+            # If known to be wildtype (reactive test or use previous test), use simvastatin
             {
-              return(2)
+              return(1)
             }
             
             # Otherwise, run probability of prescribing alternate
@@ -103,5 +102,6 @@ prescribe_statin <- function(traj, inputs)
 {
   traj %>%
     statin_reactive_strategy(inputs) %>%
-    assign_statin(inputs)
+    assign_statin(inputs) %>%
+    set_attribute("aOrdered_test", 2)
 }

@@ -328,13 +328,12 @@ inputs <- list(
     in_range = realdol(29/7,year=2007)
 
   ),
-  # Each listed duration will be corrected in the final data frame
+  # Each listed duration will be corrected in the final data frame (temp disutility)
   durations = list(
     mild_myopathy =  1,
     mod_myopathy  = 30,
     sev_myopathy  = 30,
     cvd           = 30,
-    single_test   =  1,
    
     timi_ext_maj_nonfatal = 14,
     timi_int_maj_nonfatal = 1,
@@ -342,19 +341,9 @@ inputs <- list(
     revasc_cabg     = 14,
     revasc_pci      = 7,
     
-    MajorBleed_ICH	= 1,
     MajorBleed_GI	= 14,
     MajorBleed_Other =	14,
-    MajorBleed_ICH_Fatal =	1,
-    MajorBleed_GI_Fatal =	1,
-    MajorBleed_Other_Fatal =	1,
-    MinorBleed = 2,
-    Stroke_MajorDeficit = 1,
-    Stroke_MinorDeficit = 1,
-    Stroke_Fatal = 1, 
-    DVT	= 1,
-    PE =	1,
-    DVTPE_Fatal =	1
+    MinorBleed = 2
     
   ),
   disutilities = list(
@@ -392,10 +381,63 @@ inputs <- list(
     
     secular_death = 1
   
-  )
+  ),
+# Each listed duration will be corrected in the final data frame (temp disutility)
+durations = list(
+  mild_myopathy =  1,
+  mod_myopathy  = 30,
+  sev_myopathy  = 30,
+  cvd           = 30,
+  
+  timi_ext_maj_nonfatal = 14,
+  timi_int_maj_nonfatal = 1,
+  timi_min_nonfatal = 2,
+  revasc_cabg     = 14,
+  revasc_pci      = 7,
+  
+  MajorBleed_GI	= 14,
+  MajorBleed_Other =	14,
+  MinorBleed = 2
+  
+),
+# Each shows whether the event permanently decreases utility (type==0) vs temporarily(type==1)
+type= list(
+  mild_myopathy = 1,
+  mod_myopathy  = 1,
+  sev_myopathy  = 1,
+  cvd           = 1,
+  
+  timi_ext_maj_nonfatal = 1,
+  timi_int_maj_nonfatal = 1,
+  timi_min_nonfatal = 1,
+  fatal_bleed     = 0,
+  st_fatal        = 0,
+  cabg_mi         = 0,
+  mi_med_manage   = 0,
+  mi_nonfatal     = 0,
+  revasc_cabg     = 1,
+  revasc_pci      = 1,
+  
+  MajorBleed_ICH	= 0,
+  MajorBleed_GI	  = 1,
+  MajorBleed_Other = 1,
+  MajorBleed_ICH_Fatal = 0, 
+  MajorBleed_GI_Fatal =	0, 
+  MajorBleed_Other_Fatal = 0,
+  MinorBleed      = 1,
+  Stroke_MajorDeficit = 0,
+  Stroke_MinorDeficit = 0,
+  Stroke_Fatal   = 0, 
+  DVT         	 = 0,
+  PE             = 0,
+  DVTPE_Fatal    = 0,
+  out_of_range = 1,
+  in_range = 1,
+  
+  secular_death = 0
   
 )   
-
+)
 
 
 

@@ -9,7 +9,6 @@ counters <- c(counters.gen, counters.dapt, counters.simvastatin, counters.warfar
 inputs$vN <- 100000
 
 ###########
-#source('costs.R')
 library(plyr)
 library(dplyr)
 library(tidyr)
@@ -33,6 +32,15 @@ discount_value = function(value,ar=annual_discount_rate,A,B)
 }
 
 discount = function(value,ar=annual_discount_rate,A) value / (1+ar)^(A/365.25)
+
+cost_cat <- data.frame(resource=c("panel_test","single_test",
+                                  "clopidogrel","ticagrelor","prasugrel","aspirin","warfarin","simvastatin","alt_simvastatin",
+                                  "revasc_event","revasc_pci","revasc_cabg","bleed_ext_maj_nonfatal","bleed_int_maj_nonfatal","bleed_min_nonfatal","bleed_fatal",
+                                  "st_fatal","st_pci","st_cabg","mi_cabg","mi_pci","mi_med_manage","mild_myopathy","mod_myopathy","sev_myopathy","rahbdo_death",
+                                  "cvd","cvd_death","out_of_range","in_range","MajorBleed_ICH","MajorBleed_ICH_Fatal","MajorBleed_GI","MajorBleed_GI_Fatal","MajorBleed_Other",
+                                  "MajorBleed_Other_Fatal","MinorBleed","Stroke_MinorDeficit","Stroke_MajorDeficit","Stroke_Fatal","DVTPE_Fatal","DVT","PE"),
+                       cat=c(rep(1,2),rep(2,7),rep(3,34))
+)
 
 cost.qaly <- function(raw,inputs) 
 {
@@ -99,11 +107,13 @@ cost.qaly <- function(raw,inputs)
   qaly.i <- qaly2 %>% select(name, value, time, utility) %>%
     mutate(qaly.d = discount_value(utility,A=value,B=time)) #discounted QALY for each period of time 
   
-  QALY = qaly.i %>% group_by(name) %>% summarise(dQALY = sum(qaly.d)/365.25)
-  COST = arrivals %>% group_by(name) %>% summarise(dCOST = sum(discounted_cost))
+  QALY = qaly.i %>% group_by(name) %>% dplyr::summarise(dQALY = sum(qaly.d)/365.25)
+  COST = arrivals %>% filter(discounted_cost>0) %>% group_by(name,resource) %>% dplyr::summarise(dCOST = sum(discounted_cost)) %>% merge(cost_cat,by="resource",all.x = TRUE)
   avgsum <- data.frame(    dQALY = sum(QALY$dQALY)/inputs$vN,
-                           dCOST = sum(COST$dCOST)/inputs$vN )
-  
+                           dCOST = sum(COST$dCOST)/inputs$vN,
+                           dCOST.test = sum(COST$dCOST[COST$cat==1])/inputs$vN,
+                           dCOST.drug = sum(COST$dCOST[COST$cat==2])/inputs$vN,
+                           dCOST.event = sum(COST$dCOST[COST$cat==3])/inputs$vN)
   return(avgsum)
 }
 

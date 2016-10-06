@@ -1,6 +1,7 @@
 warfarin_out <- function(raw,inputs) 
 {
-  if(inputs$vDrugs$vWarfarin==TRUE) {
+  li <- unique(raw$resource)
+  if(any(li=="warfarin")) {
   t1 <- raw %>% filter(resource %in% c("in_range","out_of_range")) %>% 
     select(name, preemptive, reactive, resource, activity_time) %>%
     arrange(name) #in/out time among warfarin users

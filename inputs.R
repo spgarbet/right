@@ -175,7 +175,7 @@ warfarin = list(
   
   # start warfarin
   vpct_afib = 0.09, # add last observed % w/ a.fib among those on warfarin
-  aLP_Warfarin = 1,
+  #aLP_Warfarin = 1,
   vshape_timetowarfarin = 0.66,
   vscale_timetowarfarin = 33471.45,
   
@@ -312,8 +312,8 @@ inputs <- list(
     warfarin        = realdol(71/90,year=2007),
     #bleeding events: sharing w/ chlopidigrel model??
     MajorBleed_ICH	= realdol(20740,year=2011),
-    MajorBleed_GI	  = realdol(2328,year=2011),
-    MajorBleed_Other = realdol(6154,year=2011),
+    MajorBleed_GI	  = realdol(2328/14,year=2011),
+    MajorBleed_Other = realdol(6154/14,year=2011),
     MajorBleed_ICH_Fatal =	realdol(17920,year=2011),
     MajorBleed_GI_Fatal =	realdol(17920,year=2011),
     MajorBleed_Other_Fatal =	realdol(17920,year=2011),

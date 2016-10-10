@@ -1,0 +1,35 @@
+"param","descrip","value"
+"vPREDICTsens","sensitivity of PREDICT",0.23
+"vPREDICTspec","specificity of PREDICT",0.93
+"vProbabilityRead","Probability of physician using available test result at time of prescription",1
+"vProbabilityReactive","Probability of physician ordering test for patient not yet genotyped at time of prescription",1
+"vScale","Weibull scale for time to statin",80722.66
+"vShape","Weibull shape for time to statin",0.52
+"vMedMetabolizer","Prevalence of medium metabolizers",0.249
+"vPoorMetabolizer","Prevalence of poor metabolizers",0.021
+"vProbSimvastatinAlt","Probability of prescribing alternate",1
+"vProbSimStopMild","Probability of stopping statin when experience mild myopathy",0.23
+"vProbSimStopMod","Probability of stopping statin when experience moderate myopathy",0.23
+"vProbSimStopSev","Probability of stopping statin when experience severe myopathy",1
+"vMildMyoBaseNoVar","No Drug Risk of mild myopathy",1e-07
+"vMildMyoSimNoVar","Simvastatin Mild Myopathy Baseline Risk",0.05
+"vMildMyoSimMedVar","Simvastatin user: relative risk of mild myopathy for medium metabolizer",2.55
+"vMildMyoSimPoorVar","Simvastatin user: relative risk of mild myopathy for poor metabolizer",9.46
+"vMildMyoAltNoVar","Alternate Drug Mild Myopathy Baseline Risk",0.05
+"vMildMyoAltMedVar","Alternate user: relative risk of mild myopathy for medium metabolizer",1
+"vMildMyoAltPoorVar","Alternate user: relative risk of mild myopathy for poor metabolizer",1
+"vModMyoBaseNoVar","No Drug Risk of moderate myopathy",1e-10
+"vModMyoSimNoVar","Simvastatin Moderate Myopathy Baseline Risk",0.00011
+"vModMyoSimMedVar","Simvastatin user: relative risk of moderate myopathy for medium metabolizer",2.55
+"vModMyoSimPoorVar","Simvastatin user: relative risk of moderate myopathy for poor metabolizer",9.56
+"vModMyoAltNoVar","Alternate Drug Moderate Myopathy Baseline Risk",0.00011
+"vModMyoAltMedVar","Alternate user: relative risk of moderate myopathy for medium metabolizer",1.08
+"vModMyoAltPoorVar","Alternate user: relative risk of moderate myopathy for poor metabolizer",4.05
+"vSevMyoBaseNoVar","No Drug Risk of severe myopathy",1e-16
+"vSevMyoSimNoVar","Simvastatin Severe Myopathy Baseline Risk",3.4e-05
+"vSevMyoSimMedVar","Simvastatin user: relative risk of severe myopathy for medium metabolizer",2.55
+"vSevMyoSimPoorVar","Simvastatin user: relative risk of severe myopathy for poor metabolizer",9.56
+"vSevMyoAltNoVar","Alternate Drug Severe Myopathy Baseline Risk",3.4e-05
+"vSevMyoAltMedVar","Alternate user: relative risk of severe myopathy for medium metabolizer",1.08
+"vSevMyoAltPoorVar","Alternate user: relative risk of severe myopathy for poor metabolizer",4.05
+"vProbRahbdoDeath","Severe myopathy case fatality",0.1

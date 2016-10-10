@@ -162,7 +162,7 @@ sev_myopathy <- function(traj,inputs)
   traj %>%
   mark("sev_myopathy") %>%
   branch(
-    function() sample(1:2, 1, prob=c(0.1, 0.9)),
+    function() sample(1:2, 1, prob=c(inputs$simvastatin$vProbRahbdoDeath, 1-inputs$simvastatin$vProbRahbdoDeath)),
     continue = c(FALSE, TRUE),
     create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_termination(),
     create_trajectory("Do we stop treatment?") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)

@@ -30,8 +30,8 @@ clopidogrel = list(
     vDAPT.SecondLine = "Ticagrelor",
 
     # Prognostic Model
-    vSensitivityPrDAPT = .9,#0.74,
-    vSpecificityPrDAPT = .9,#0.61,
+    #vSensitivityPrDAPT = .9,#0.74,
+    #vSpecificityPrDAPT = .9,#0.61,
 
     # Population-Level Allele Frequency Distribution
     vCYP2C19.Poor    = 0.21, # (0.15-0.40)
@@ -89,7 +89,6 @@ clopidogrel = list(
     vRiskIntBleed = 0.0015, # (0.001-0.002)
     vRiskTIMIMinor = 0.0200, # (0.010-0.060)
     vRiskFatalBleed = 0.0015, # (0.001-0.003)
-    vRiskCABGTIMImajor = 0.0350, # (0.013-0.097)
     vRR.ExtBleed.Ticagrelor = 1.30, # (1.05-1.61)
     vRR.ExtBleed.Prasugrel = 1.22, #(0.93-1.6)
     vRR.ExtBleed.Aspirin =  0.72, #(0.60-1.00)
@@ -105,12 +104,14 @@ clopidogrel = list(
     vRR.FatalBleed.Ticagrelor = 1.35, #( 0.62-0.95)
     vRR.FatalBleed.Prasugrel =  0.87, # (0.48-1.59)
     vRR.FatalBleed.Aspirin =  4.19, # (1.58-11.11)
-
+    
+    #currently unused
+    vRiskCABGTIMImajor = 0.022, # (0.013-0.031) 
     vRR.RiskCABGTIMImajor.Ticagrelor = 1.08, # (0.61-1.91)
     vRR.RiskCABGTIMImajor.Prasugrel =  1.08, # (0.85-1.36)
     vRR.RiskCABGTIMImajor.Aspirin =  4.73,# (1.90-11.82)
 
-    
+    #currently unused
     vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
     vRR.Mort.LOF = 1.28, #(0.95-1.73)
     vRR.Bleed.LOF = 0.84, # (0.75-1.00)
@@ -162,7 +163,9 @@ simvastatin <- list(
     vSevMyoSimPoorVar=9.56,   # Rel Risk|Poor metabolizer
     vSevMyoAltNoVar=0.000034, # Alternate Drug Mild Myopathy Baseline Risk
     vSevMyoAltMedVar=1.08,    # Rel Risk|Medium metabolizer
-    vSevMyoAltPoorVar=4.05   # Rel Risk|Poor metabolizer
+    vSevMyoAltPoorVar=4.05,   # Rel Risk|Poor metabolizer
+    
+    vProbRahbdoDeath = 0.1 # Case fatality for severe myopathy
 
 )
 
@@ -298,14 +301,14 @@ inputs <- list(
     clopidogrel     = realdol(30/30,year=2011),
     ticagrelor      = realdol(220/30,year=2011),
     prasugrel       = realdol(261/30,year=2011),
-    timi_ext_maj_nonfatal = realdol(10120/14,2011),
-    timi_int_maj_nonfatal = realdol(20740,2011),
-    timi_min_nonfatal = realdol(79/2,2011),
-    fatal_bleed     = realdol(17920,2011),
+    bleed_ext_maj_nonfatal = realdol(10120/14,2011),
+    bleed_int_maj_nonfatal = realdol(20740,2011),
+    bleed_min_nonfatal = realdol(79/2,2011),
+    bleed_fatal     = realdol(17920,2011),
     st_fatal        = realdol(24540,2011),
-    cabg_mi            = realdol(67720,2011),
+    mi_cabg           = realdol(67720,2011),
     mi_med_manage   = realdol(17200,2011),
-    mi_nonfatal     = realdol(27840,2011),
+    mi_pci     = realdol(27840,2011), 
     revasc_cabg     = realdol(50560/14,2011),
     revasc_pci      = realdol(20670/7,2011),
     
@@ -335,9 +338,8 @@ inputs <- list(
     sev_myopathy  = 30,
     cvd           = 30,
    
-    timi_ext_maj_nonfatal = 14,
-    timi_int_maj_nonfatal = 1,
-    timi_min_nonfatal = 2,
+    bleed_ext_maj_nonfatal = 14,
+    bleed_min_nonfatal = 2,
     revasc_cabg     = 14,
     revasc_pci      = 7,
     
@@ -352,14 +354,14 @@ inputs <- list(
     sev_myopathy  = 0.5300,
     cvd           = 0.2445,
     
-    timi_ext_maj_nonfatal = .2,
-    timi_int_maj_nonfatal = .61,
-    timi_min_nonfatal = .2,
-    fatal_bleed     = 1,
+    bleed_ext_maj_nonfatal = .2,
+    bleed_int_maj_nonfatal = .61,
+    bleed_min_nonfatal = .2,
+    bleed_fatal     = 1,
     st_fatal        = 1,
-    cabg_mi         = .12,
+    mi_cabg         = .12,
     mi_med_manage   = .12,
-    mi_nonfatal     = .12,
+    mi_pci     = .12,
     revasc_cabg     = .5,
     revasc_pci      = .5,
     
@@ -382,24 +384,6 @@ inputs <- list(
     secular_death = 1
   
   ),
-# Each listed duration will be corrected in the final data frame (temp disutility)
-durations = list(
-  mild_myopathy =  1,
-  mod_myopathy  = 30,
-  sev_myopathy  = 30,
-  cvd           = 30,
-  
-  timi_ext_maj_nonfatal = 14,
-  timi_int_maj_nonfatal = 1,
-  timi_min_nonfatal = 2,
-  revasc_cabg     = 14,
-  revasc_pci      = 7,
-  
-  MajorBleed_GI	= 14,
-  MajorBleed_Other =	14,
-  MinorBleed = 2
-  
-),
 # Each shows whether the event permanently decreases utility (type==0) vs temporarily(type==1)
 type= list(
   mild_myopathy = 1,
@@ -407,14 +391,14 @@ type= list(
   sev_myopathy  = 1,
   cvd           = 1,
   
-  timi_ext_maj_nonfatal = 1,
-  timi_int_maj_nonfatal = 1,
-  timi_min_nonfatal = 1,
-  fatal_bleed     = 0,
+  bleed_ext_maj_nonfatal = 1,
+  bleed_int_maj_nonfatal = 0,
+  bleed_min_nonfatal = 1,
+  bleed_fatal     = 0,
   st_fatal        = 0,
-  cabg_mi         = 0,
+  mi_cabg         = 0,
   mi_med_manage   = 0,
-  mi_nonfatal     = 0,
+  mi_pci     = 0,
   revasc_cabg     = 1,
   revasc_pci      = 1,
   

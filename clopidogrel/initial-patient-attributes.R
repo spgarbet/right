@@ -13,7 +13,8 @@ assign_initial_clopidogrel_attributes <- function(traj,inputs)
     set_attribute("aRR.DAPT.IntBleed",1) %>%
     set_attribute("aRR.DAPT.TIMIMinor",1) %>%
     set_attribute("aRR.DAPT.FatalBleed",1) %>% 
-    set_attribute("aDAPT.Rx",5)
+    set_attribute("aDAPT.Rx",5) %>%
+    set_attribute("sCABG", 2) #switch for cabg-related bleed
 }
 
 assign_dapt_attributes <- function(traj,inputs=list()) 

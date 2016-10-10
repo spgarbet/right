@@ -105,18 +105,16 @@ clopidogrel = list(
     vRR.FatalBleed.Prasugrel =  0.87, # (0.48-1.59)
     vRR.FatalBleed.Aspirin =  4.19, # (1.58-11.11)
     
-    #currently unused
     vRiskCABGTIMImajor = 0.022, # (0.013-0.031) 
     vRR.RiskCABGTIMImajor.Ticagrelor = 1.08, # (0.61-1.91)
     vRR.RiskCABGTIMImajor.Prasugrel =  1.08, # (0.85-1.36)
     vRR.RiskCABGTIMImajor.Aspirin =  4.73,# (1.90-11.82)
 
-    #currently unused
     vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
-    vRR.Mort.LOF = 1.28, #(0.95-1.73)
-    vRR.Bleed.LOF = 0.84, # (0.75-1.00)
-    vRR.Thrombotic.GOF = 0.75, # (0.66-1.00)
-    vRR.Bleed.GOF = 1.26  # (1.00-1.50)
+    vRR.Mort.LOF = 1.28, #(0.95-1.73) #Not sure how to use this one
+    vRR.Bleed.LOF = 0.84 # (0.75-1.00)
+    #vRR.Thrombotic.GOF = 0.75, # (0.66-1.00)
+    #vRR.Bleed.GOF = 1.26  # (1.00-1.50)
 )
 
 simvastatin <- list(
@@ -311,6 +309,7 @@ inputs <- list(
     mi_pci     = realdol(27840,2011), 
     revasc_cabg     = realdol(50560/14,2011),
     revasc_pci      = realdol(20670/7,2011),
+    cabg_bleed      = realdol(35570/7,2011),
     
     warfarin        = realdol(71/90,year=2007),
     #bleeding events: sharing w/ chlopidigrel model??
@@ -342,6 +341,7 @@ inputs <- list(
     bleed_min_nonfatal = 2,
     revasc_cabg     = 14,
     revasc_pci      = 7,
+    cabg_bleed      = 7,
     
     MajorBleed_GI	= 14,
     MajorBleed_Other =	14,
@@ -364,6 +364,7 @@ inputs <- list(
     mi_pci     = .12,
     revasc_cabg     = .5,
     revasc_pci      = .5,
+    cabg_bleed      = .5,
     
     MajorBleed_ICH	= 0.61,
     MajorBleed_GI	  = 0.1511,
@@ -401,6 +402,7 @@ type= list(
   mi_pci     = 0,
   revasc_cabg     = 1,
   revasc_pci      = 1,
+  cabg_bleed      = 1,
   
   MajorBleed_ICH	= 0,
   MajorBleed_GI	  = 1,

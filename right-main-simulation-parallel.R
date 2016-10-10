@@ -307,6 +307,11 @@ event_registry <- list(
        time_to_event = time_to_FatalBleed,
        func          = FatalBleed_event,
        reactive      = FALSE),
+  list(name          = "CABG-related bleed",
+       attr          = "aCABGBleed",
+       time_to_event = time_to_CABGBleed,
+       func          = CABGBleed_event,
+       reactive      = FALSE),
   
   #### Warfarin Events
   list(name          = "Start Warfarin",

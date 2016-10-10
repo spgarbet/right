@@ -239,7 +239,8 @@ ST_event = function(traj, inputs)
                function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
                continue= c(TRUE,TRUE),
                # Discontinue DAPT Therapy if CABG, Continue With Aspirin
-               create_trajectory() %>% mark("st_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+               create_trajectory() %>% mark("st_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4) %>%
+                 set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)),
                # Reset Tx Duration to 1 year if PCI
                create_trajectory() %>%  mark("st_pci") %>% 
                  set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
@@ -272,6 +273,7 @@ time_to_MI = function(attrs, inputs)
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.MI"]]
+    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.MI.LOF
     if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.MI.Ticagrelor 
     if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.MI.Prasugrel
     if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.MI.Aspirin
@@ -314,7 +316,8 @@ MI_event = function(traj, inputs)
           continue = c(TRUE, TRUE, TRUE),
           
           # CABG
-          create_trajectory() %>% mark("mi_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4),
+          create_trajectory() %>% mark("mi_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4) %>%
+            set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)),
           #* TO DO: Add in Brief 14 Day Utility Decrement
           #* TO DO: Confirm DAPT Therapy shut off with CABG.
           
@@ -383,7 +386,8 @@ RV_event = function(traj, inputs)
       continue= c(TRUE,TRUE),
       
       # CABG
-      create_trajectory() %>% mark("revasc_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4),
+      create_trajectory() %>% mark("revasc_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4) %>%
+        set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)),
       #* TO DO: Add in Brief 14 Day Utility Decrement
       #* TO DO: Confirm DAPT Therapy shut off with CABG. 
       
@@ -421,6 +425,7 @@ time_to_ExtBleed = function(attrs, inputs)
   {
     # Relative Risk
     rr = attrs[["aRR.DAPT.ExtBleed"]]
+    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.Bleed.LOF
     if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.ExtBleed.Ticagrelor 
     if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.ExtBleed.Prasugrel
     if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.ExtBleed.Aspirin
@@ -566,6 +571,43 @@ FatalBleed_event = function(traj, inputs)
     continue=c(FALSE), # False is patient death
     create_trajectory("Fatal Bleed") %>% mark("bleed_event") %>% mark("bleed_fatal") %>% cleanup_on_termination()
   )
+}
+
+
+###############
+######
+# Added CABG-related TIMI major bleeding
+##
+time_to_CABGBleed = function(attrs, inputs) 
+{
+  if (attrs[["sCABG"]]!=1) return(inputs$vHorizon*365+1) else
+  {
+    # Relative Risk
+    rr = 1
+    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Ticagrelor
+    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Prasugrel
+    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Aspirin
+    
+    # Baseline Risk
+    rates = inputs$clopidogrel$vRiskCABGTIMImajor
+    days = c(365)
+    
+    # Convert To Probability 
+    rates2 = (- (log ( 1 - rates)*rr) / days)
+    
+    timeCABGBleed =  rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    
+    return(timeCABGBleed)
+    
+  }
+}
+
+CABGBleed_event = function(traj, inputs) 
+{
+  traj %>% 
+    set_attribute("sCABG", 2) %>% #switch off until next CABG
+    set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)) %>% 
+    mark("bleed_event") %>% mark("cabg_bleed") 
 }
 
 

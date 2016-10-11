@@ -68,6 +68,7 @@ days_till_cvd <- function(attrs, inputs)
   # {
   #   return(inputs$vHorizon*365+ 1) # No CVD present above background rate
   # }
+  hx         <- attrs[['aStatinRxHx']]
   drug       <- attrs[['aCVDdrug']]
   gender     <- attrs[['aGender']]
   age        <- attrs[['aAge']]
@@ -103,13 +104,12 @@ days_till_cvd <- function(attrs, inputs)
   rate <- -log(1-prob)*rr/time_frame
   
   # Only include CVD (and thus tracking) if they are in Simvastatin study, i.e. taking a statin
-  if(drug>=1)
+  if(hx>=1)
   {
     rexp(1, rate)
   } else {
     inputs$vHorizon*365+1
   }
-  #rexp(1, rate)
 }
 
 cvd <- function(traj,inputs)

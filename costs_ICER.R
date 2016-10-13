@@ -9,10 +9,10 @@ counters <- c(counters.gen, counters.dapt, counters.simvastatin, counters.warfar
 inputs$vN <- 100000
 
 ###########
-library(plyr)
-library(dplyr)
-library(tidyr)
-library(reshape2)
+#library(plyr)
+#library(dplyr)
+#library(tidyr)
+#library(reshape2)
 options("scipen"=100, "digits"=6)
 annual_discount_rate <- 0.03
 
@@ -38,8 +38,8 @@ cost_cat <- data.frame(resource=c("panel_test","single_test",
                                   "revasc_event","revasc_pci","revasc_cabg","bleed_ext_maj_nonfatal","bleed_int_maj_nonfatal","bleed_min_nonfatal","bleed_fatal",
                                   "st_fatal","st_pci","st_cabg","mi_cabg","mi_pci","mi_med_manage","mild_myopathy","mod_myopathy","sev_myopathy","rahbdo_death",
                                   "cvd","cvd_death","out_of_range","in_range","MajorBleed_ICH","MajorBleed_ICH_Fatal","MajorBleed_GI","MajorBleed_GI_Fatal","MajorBleed_Other",
-                                  "MajorBleed_Other_Fatal","MinorBleed","Stroke_MinorDeficit","Stroke_MajorDeficit","Stroke_Fatal","DVTPE_Fatal","DVT","PE"),
-                       cat=c(rep(1,2),rep(2,7),rep(3,34))
+                                  "MajorBleed_Other_Fatal","MinorBleed","Stroke_MinorDeficit","Stroke_MajorDeficit","Stroke_Fatal","DVTPE_Fatal","DVT","PE", "cabg_bleed"),
+                       cat=c(rep(1,2),rep(2,7),rep(3,35))
 )
 
 cost.qaly <- function(raw,inputs) 
@@ -89,23 +89,23 @@ cost.qaly <- function(raw,inputs)
   
   type <- data.frame(resource=names(inputs$type),type=unlist(inputs$type),row.names=NULL)
   qaly1 <- arrivals %>% group_by(name) %>% 
-    arrange(start_time) %>% mutate(utility = ifelse(row_number()==1,1,NA)) %>% filter(disutility>0 | utility>0) %>% #cross out events that have no impact on utility
+    arrange(start_time) %>% dplyr::mutate(utility = ifelse(row_number()==1,1,NA)) %>% filter(disutility>0 | utility>0) %>% #cross out events that have no impact on utility
     select(name,resource,start_time,end_time,activity_time,disutility) %>%
     merge(type,by="resource",all.x=TRUE) %>% #attach type of events: temp vs. permanent disutility
-    mutate(us=disutility,ue=disutility*(-type)) %>%  #us/ue stand for disutility at start/end time: temp event will add back disutility at end time
+    dplyr::mutate(us=disutility,ue=disutility*(-type)) %>%  #us/ue stand for disutility at start/end time: temp event will add back disutility at end time
     select(name,start_time,end_time,us,ue,resource,type) %>% melt(id.vars=c("name","resource","us","ue","type")) %>% arrange(value) %>% #separate and spread start/end time
-    mutate(disutility=ifelse(variable=="start_time",us,ue)) %>% arrange(name,value,desc(variable)) %>% #match disutility with start/end time
-    group_by(name) %>% mutate(time=lead(value)) %>% mutate(dtime=ifelse(row_number()>1,time-lag(time),time)) %>% filter(!is.na(dtime)) %>% 
+    dplyr::mutate(disutility=ifelse(variable=="start_time",us,ue)) %>% arrange(name,value,desc(variable)) %>% #match disutility with start/end time
+    group_by(name) %>% mutate(time=lead(value)) %>% dplyr::mutate(dtime=ifelse(row_number()>1,time-lag(time),time)) %>% filter(!is.na(dtime)) %>% 
     filter(!(type==0 & dtime==0)) #For events that permanently reduce utility, this deletes double counts of the event and prevent double counting of disutility 
   #For temp event, we need to keep two records (start & end) in the datasets in order to adding back disutility at end time
   
   qaly2 <- qaly1 %>% mutate(cum1=ifelse(type==1 | is.na(type),0,disutility)) %>% #For permanent events (type==0), pass disutility to accumulate
     group_by(name) %>% mutate(temp_u=1-cumsum(cum1)) %>% 
-    mutate(cum2=ifelse(type==0 | is.na(type),0,disutility)) %>% mutate(utility=temp_u-cumsum(cum2)) %>% #For temp events, deduct accumulative disutility from temp_u
+    dplyr::mutate(cum2=ifelse(type==0 | is.na(type),0,disutility)) %>% mutate(utility=temp_u-cumsum(cum2)) %>% #For temp events, deduct accumulative disutility from temp_u
     filter(utility>0) #do not count negative/zero utility in qaly computation
   
   qaly.i <- qaly2 %>% select(name, value, time, utility) %>%
-    mutate(qaly.d = discount_value(utility,A=value,B=time)) #discounted QALY for each period of time 
+    dplyr::mutate(qaly.d = discount_value(utility,A=value,B=time)) #discounted QALY for each period of time 
   
   QALY = qaly.i %>% group_by(name) %>% dplyr::summarise(dQALY = sum(qaly.d)/365.25)
   COST = arrivals %>% filter(discounted_cost>0) %>% group_by(name,resource) %>% dplyr::summarise(dCOST = sum(discounted_cost)) %>% merge(cost_cat,by="resource",all.x = TRUE)

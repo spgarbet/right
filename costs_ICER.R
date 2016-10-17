@@ -89,7 +89,7 @@ cost.qaly <- function(raw,inputs)
   
   type <- data.frame(resource=names(inputs$type),type=unlist(inputs$type),row.names=NULL)
   qaly1 <- arrivals %>% group_by(name) %>% 
-    arrange(start_time) %>% dplyr::mutate(utility = ifelse(row_number()==1,1,NA)) %>% filter(disutility>0 | utility>0) %>% #cross out events that have no impact on utility
+    arrange(start_time,desc(end_time)) %>% dplyr::mutate(utility = ifelse(row_number()==1,1,NA)) %>% filter(disutility>0 | utility>0) %>% #cross out events that have no impact on utility
     select(name,resource,start_time,end_time,activity_time,disutility) %>%
     merge(type,by="resource",all.x=TRUE) %>% #attach type of events: temp vs. permanent disutility
     dplyr::mutate(us=disutility,ue=disutility*(-type)) %>%  #us/ue stand for disutility at start/end time: temp event will add back disutility at end time

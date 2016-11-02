@@ -124,8 +124,8 @@ simvastatin <- list(
     vProbabilityReactive = 1.00, # Under reactive, probability of ordering test
     
     # Weibull for statin prescription
-    vScale = 80722.66,
-    vShape = 0.52,
+    vScale = 13989.02,
+    vShape = 0.54,
     
     #
     vMedMetabolizer  = 0.249,   # Prevalence of medium metabolizers

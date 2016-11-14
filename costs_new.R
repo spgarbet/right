@@ -15,6 +15,10 @@ inputs$vN <- 100000
 #library(reshape2)
 options("scipen"=100, "digits"=10)
 
+#1: genetic tests
+#2: drug
+#3: AE
+#4: other
 event_cat <- data.frame(resource=c("panel_test","single_test",
                                   "clopidogrel","ticagrelor","prasugrel","aspirin","warfarin","simvastatin","alt_simvastatin",
                                   "revasc_event","revasc_pci","revasc_cabg","bleed_ext_maj_nonfatal","bleed_int_maj_nonfatal","bleed_min_nonfatal","bleed_fatal",
@@ -78,7 +82,7 @@ cost.qaly <- function(raw,inputs)
     filter(!(type==0 & dtime==0)) #For events that permanently reduce utility, this deletes double counts of the event and prevent double counting of disutility 
   #For temp event, we need to keep two records (start & end) in the datasets in order to adding back disutility at end time
   
-  qaly2 <- qaly1 %>% mutate(cum1=ifelse(type==1 | is.na(type),0,disutility)) %>% #For permanent events (type==0), pass disutility to accumulate
+  qaly2 <- qaly1 %>% arrange(name,value,desc(time),variable) %>% mutate(cum1=ifelse(type==1 | is.na(type),0,disutility)) %>% #For permanent events (type==0), pass disutility to accumulate
     group_by(name) %>% mutate(temp_u=1-cumsum(cum1)) %>% 
     dplyr::mutate(cum2=ifelse(type==0 | is.na(type),0,disutility)) %>% mutate(utility=temp_u-cumsum(cum2)) %>% #For temp events, deduct accumulative disutility from temp_u
     filter(utility>0) #do not count negative/zero utility in qaly computation
@@ -91,10 +95,17 @@ cost.qaly <- function(raw,inputs)
   
   QALY = qaly.i %>% group_by(name) %>% dplyr::summarise(QALY = sum(qaly)/365.25) %>% 
     merge(namelist,by="name",all.x = TRUE) %>% mutate(event=ifelse(is.na(event),0,1))
-  COST = arrivals %>% filter(cum_cost>0) %>% group_by(name) %>% dplyr::summarise(COST = sum(cum_cost))
-  out <- merge(QALY,COST,by="name")
-  avgsum <- out %>% group_by(event) %>% dplyr::summarise(N=n(),QALY=mean(QALY),COST = mean(COST))
-  
+  COST.i = arrivals %>% filter(cum_cost>0) %>% group_by(name,resource) %>% dplyr::summarise(cost = sum(cum_cost)) %>% 
+    merge(event_cat,by="resource",all.x = TRUE) 
+  COST = COST.i %>% group_by(name) %>% dplyr::summarise(COST = sum(cost)) 
+  COST.d = COST.i %>% filter(cat==2) %>% group_by(name) %>% dplyr::summarise(COST.d = sum(cost))
+  COST <- merge(COST,COST.d,by="name",all.x=T)
+  out <- merge(QALY,COST,by="name",all.x=T) %>% 
+    mutate(COST=ifelse(!is.na(COST),COST,0),COST.d=ifelse(!is.na(COST.d),COST.d,0)) %>%
+    mutate(COST.e=COST-COST.d)
+  avgsum <- out %>% group_by(event) %>% dplyr::summarise(N=n(),QALY=mean(QALY),COST = mean(COST),COST.d=mean(COST.d),COST.e=mean(COST.e))
+  avgsum2 <- out %>% dplyr::summarise(N=n(),QALY=mean(QALY),COST = mean(COST), COST.d=mean(COST.d),COST.e=mean(COST.e)) %>% mutate(event=9)
+  avgsum <- rbind(avgsum,avgsum2) 
   return(avgsum)
 }
 

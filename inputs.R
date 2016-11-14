@@ -291,7 +291,9 @@ inputs <- list(
     mild_myopathy   =   realdol(129,year=2012),
     mod_myopathy    =  realdol(2255/30,year=2012), # Note this divided by duration
     sev_myopathy    = realdol(12811/30,year=2012),
+    rahbdo_death    = realdol(12811,year=2012), #pass on total sev_myopathy cost
     cvd             = realdol(20347/30,year=2012),
+    cvd_death       = realdol(20347,year=2012), #pass on total cvd cost
     simvastatin     =   realdol(147/365,year=2012),
     alt_simvastatin = realdol(173.1/365,year=2012),
     
@@ -353,6 +355,9 @@ inputs <- list(
     mod_myopathy  = 0.0500,
     sev_myopathy  = 0.5300,
     cvd           = 0.2445,
+    cvd_death     = 1,
+    rahbdo_death  = 1,
+    
     
     bleed_ext_maj_nonfatal = .2,
     bleed_int_maj_nonfatal = .61,
@@ -391,6 +396,9 @@ type= list(
   mod_myopathy  = 1,
   sev_myopathy  = 1,
   cvd           = 1,
+  cvd_death     = 0,
+  rahbdo_death  = 0,
+  
   
   bleed_ext_maj_nonfatal = 1,
   bleed_int_maj_nonfatal = 0,

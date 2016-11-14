@@ -115,12 +115,11 @@ days_till_cvd <- function(attrs, inputs)
 cvd <- function(traj,inputs)
 {
   traj %>%
-  mark("cvd") %>%
   branch(
     function() sample(1:2, 1, prob=c(0.117, 0.883)),
     continue=c(FALSE, TRUE),
     create_trajectory("CVD w/ Death") %>% mark("cvd_death") %>% cleanup_on_termination(),
-    create_trajectory("CVD Event")    %>% timeout(0)
+    create_trajectory("CVD Event")    %>% mark("cvd") %>% timeout(0)
   ) %>%
   assign_statin(inputs)
 }

@@ -160,11 +160,10 @@ days_till_sev_myopathy <- function(attrs,inputs)
 sev_myopathy <- function(traj,inputs)
 {
   traj %>%
-  mark("sev_myopathy") %>%
   branch(
     function() sample(1:2, 1, prob=c(inputs$simvastatin$vProbRahbdoDeath, 1-inputs$simvastatin$vProbRahbdoDeath)),
     continue = c(FALSE, TRUE),
     create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_termination(),
-    create_trajectory("Do we stop treatment?") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)
+    create_trajectory("Do we stop treatment?") %>% mark("sev_myopathy") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)
   )
 }

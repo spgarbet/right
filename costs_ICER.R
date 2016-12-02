@@ -113,16 +113,18 @@ cost.qaly <- function(raw,inputs)
                            dCOST = sum(COST$dCOST)/inputs$vN,
                            dCOST.test = sum(COST$dCOST[COST$cat==1])/inputs$vN,
                            dCOST.drug = sum(COST$dCOST[COST$cat==2])/inputs$vN,
-                           dCOST.event = sum(COST$dCOST[COST$cat==3])/inputs$vN)
+                           dCOST.event = sum(COST$dCOST[COST$cat==3])/inputs$vN) %>%
+    mutate(NMB10k=dQALY*10000-dCOST,NMB50k=dQALY*50000-dCOST,NMB100k=dQALY*100000-dCOST) #add NMB calcuation
   return(avgsum)
 }
 
 
+
 #######ICER & C/E Plane
-library(ggplot2)
-library(ggrepel)
-library(dplyr)
-library(tidyr)
+#library(ggplot2)
+#library(ggrepel)
+#library(dplyr)
+#library(tidyr)
 
 icer <- function(results) 
 {
@@ -178,5 +180,4 @@ ce_plane <- function(sum, title) {
     geom_label_repel(aes(label=label)) +
     ggtitle(title)
 }
-
 

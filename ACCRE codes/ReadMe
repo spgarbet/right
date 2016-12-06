@@ -1,0 +1,18 @@
+This folder contains ACCRE codes for running Clopidogrel single-drug model. First run 10 batches of model (c0-c9, only vary in random seeds and file name of results), and then combine and run analyses (c10_top). 
+
+With majority of simulation files untouched, “extra” files substitute for “right-main-simulation” files and post-simulation analyses use “costs” files (both included in this folder). 
+
+*Use "extra" and "costs_ICER" for standard 10-year simulation.
+*Use "extra_immortal" and "costs_new" for simulation eliminating secular death and discounting.
+
+*Random Seeds:
+0 -> 12345
+1 -> 54321
+2 -> 1501
+3 -> 268
+4 -> 34
+5 -> 3905
+6 -> 476
+7 -> 325
+8 -> 5
+9 -> 10

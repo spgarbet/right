@@ -197,12 +197,12 @@ warfarin = list(
   vNonAF_Risk_Major_Bleed_Over4 = 0.39118, 
   vRRMajorBleed_NonAF = 1,
   
-  vAF_Risk_Minor_Bleed_3 = 0.0973, # risk of bleeding events for INR < 3 & AF indication
-  vAF_Risk_Minor_Bleed_3to4 = 0.4046,
+  vAF_Risk_Minor_Bleed_3 = 0.0936, # risk of bleeding events for INR < 3 & AF indication (minor fix)
+  vAF_Risk_Minor_Bleed_3to4 = 0.3890,
   vAF_Risk_Minor_Bleed_Over4 = 0.9999,
   vRRMinorBleed_AF = 1,
-  vNonAF_Risk_Minor_Bleed_3 = 0.0973,
-  vNonAF_Risk_Minor_Bleed_3to4 = 0.4046,
+  vNonAF_Risk_Minor_Bleed_3 = 0.0936,
+  vNonAF_Risk_Minor_Bleed_3to4 = 0.3890,
   vNonAF_Risk_Minor_Bleed_Over4 =	0.9999,
   vRRMinorBleed_NonAF = 1,
   

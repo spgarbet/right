@@ -167,6 +167,11 @@ simvastatin <- list(
 
 )
 
+multiplier = 1.95 #triangle
+rrMinorBleed = (1-0.138)/0.138 #beta`
+rBleed = c(0.3,0.3,0.6,0.6,0.1,0.1) #beta
+pBleed = c(1-0.52,0.52,1-0.0723,0.0723,1-0.021,0.021) #beta
+
 warfarin = list(
   vPREDICTsens = 0.23,
   vPREDICTspec = 0.93,
@@ -181,48 +186,41 @@ warfarin = list(
   vscale_timetowarfarin = 33471.45,
   
   # INR: initial & time to get in range
-  vMedianTimetoINR	= 0.0239, 
-  vMedianTimetoINR_PGx	= 0.033,
-  vMedianTimetoINR_PGx_delay = 0.02888, 
+  vMedianTimetoINR	= log(2)/29, 
+  vMedianTimetoINR_PGx	= log(2)/21,
+  vMedianTimetoINR_PGx_delay = log(2)/(24), 
   vINRfreq = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_freq,
   vINRvalue = (read.csv("./warfarin/warfarin_inputs_INR.csv"))$INR_value,
   
   # adverse events: bleed
-  vAF_Risk_Major_Bleed_3 = 0.01497, # risk of bleeding events for INR < 3 & AF indication
-  vAF_Risk_Major_Bleed_3to4 = 0.06224,
-  vAF_Risk_Major_Bleed_Over4 = 0.39118,
+  vMultiplier = multiplier,
+  vAF_Risk_Major_Bleed_3 = min(0.038/(3+multiplier)*multiplier,0.9999), # risk of bleeding events for INR < 3 & AF indication
+  vAF_Risk_Major_Bleed_3to4 = min(0.158/(3+multiplier)*multiplier,0.9999),
+  vAF_Risk_Major_Bleed_Over4 = min(0.993/(3+multiplier)*multiplier,0.9999),
   vRRMajorBleed_AF = 1,
-  vNonAF_Risk_Major_Bleed_3 = 0.01497,
-  vNonAF_Risk_Major_Bleed_3to4 = 0.06224,
-  vNonAF_Risk_Major_Bleed_Over4 = 0.39118, 
+  vNonAF_Risk_Major_Bleed_3 = min(0.038/(3+multiplier)*multiplier,0.9999),
+  vNonAF_Risk_Major_Bleed_3to4 = min(0.158/(3+multiplier)*multiplier,0.9999),
+  vNonAF_Risk_Major_Bleed_Over4 = min(0.993/(3+multiplier)*multiplier,0.9999), 
   vRRMajorBleed_NonAF = 1,
   
-  vAF_Risk_Minor_Bleed_3 = 0.0973, # risk of bleeding events for INR < 3 & AF indication
-  vAF_Risk_Minor_Bleed_3to4 = 0.4046,
-  vAF_Risk_Minor_Bleed_Over4 = 0.9999,
+  vAF_Risk_Minor_Bleed_3 = min(rrMinorBleed*min(0.038/(3+multiplier)*multiplier,0.9999),0.9999), # risk of bleeding events for INR < 3 & AF indication
+  vAF_Risk_Minor_Bleed_3to4 = min(rrMinorBleed*min(0.158/(3+multiplier)*multiplier,0.9999),0.9999),
+  vAF_Risk_Minor_Bleed_Over4 = min(rrMinorBleed*min(0.993/(3+multiplier)*multiplier,0.9999),0.9999),
   vRRMinorBleed_AF = 1,
-  vNonAF_Risk_Minor_Bleed_3 = 0.0973,
-  vNonAF_Risk_Minor_Bleed_3to4 = 0.4046,
-  vNonAF_Risk_Minor_Bleed_Over4 =	0.9999,
+  vNonAF_Risk_Minor_Bleed_3 = min(rrMinorBleed*min(0.038/(3+multiplier)*multiplier,0.9999),0.9999),
+  vNonAF_Risk_Minor_Bleed_3to4 = min(rrMinorBleed*min(0.158/(3+multiplier)*multiplier,0.9999),0.9999),
+  vNonAF_Risk_Minor_Bleed_Over4 =	min(rrMinorBleed*min(0.993/(3+multiplier)*multiplier,0.9999),0.9999),
   vRRMinorBleed_NonAF = 1,
   
   vTimeDurBleed = 365,
-
-  #adjusted estimates:
-  # V1:    90d risk is 1.95 * other time
-  # major: 0.01497 0.06224 0.39118 
-  # minor: 0.0973 0.4046 0.9999
-  # V2:    90d risk is 1.95 * average 1 yr
-  # major: 0.01852 0.07702 0.48409 
-  # minor: 0.1204 0.5007 0.9999
   
   ##prob distribution of six types of major bleeding events
-  vR_Bleed_ICH	= 0.144, 
-  vR_Bleed_ICH_Fatal = 0.156,
-  vR_Bleed_GI	= 0.557,
-  vR_Bleed_GI_Fatal	= 0.043,
-  vR_Bleed_Other = 0.098,
-  vR_Bleed_Other_Fatal = 0.002,
+  vR_Bleed_ICH	= (rBleed*pBleed)[1], 
+  vR_Bleed_ICH_Fatal = (rBleed*pBleed)[2],
+  vR_Bleed_GI	= (rBleed*pBleed)[3],
+  vR_Bleed_GI_Fatal	= (rBleed*pBleed)[4],
+  vR_Bleed_Other = (rBleed*pBleed)[5],
+  vR_Bleed_Other_Fatal = (rBleed*pBleed)[6],
   
   # adverse event: stroke
   vAF_Risk_Stroke_1.5 = 0.077,

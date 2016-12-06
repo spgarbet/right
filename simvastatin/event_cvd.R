@@ -116,7 +116,7 @@ cvd <- function(traj,inputs)
 {
   traj %>%
   branch(
-    function() sample(1:2, 1, prob=c(0.117, 0.883)),
+    function() sample(1:2, 1, prob=c(inputs$simvastatin$vProbcvdDeath, 1-inputs$simvastatin$vProbcvdDeath)),
     continue=c(FALSE, TRUE),
     create_trajectory("CVD w/ Death") %>% mark("cvd_death") %>% cleanup_on_termination(),
     create_trajectory("CVD Event")    %>% mark("cvd") %>% timeout(0)

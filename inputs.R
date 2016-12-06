@@ -163,7 +163,8 @@ simvastatin <- list(
     vSevMyoAltMedVar=1.08,    # Rel Risk|Medium metabolizer
     vSevMyoAltPoorVar=4.05,   # Rel Risk|Poor metabolizer
     
-    vProbRahbdoDeath = 0.1 # Case fatality for severe myopathy
+    vProbRahbdoDeath = 0.1, # Case fatality for severe myopathy
+    vProbcvdDeath = 0.117 # Case fatality for CVD
 
 )
 

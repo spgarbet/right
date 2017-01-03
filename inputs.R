@@ -101,14 +101,14 @@ clopidogrel = list(
     vRR.TIMIMinor.Prasugrel =  1.16, # (.91-1.49)
     vRR.TIMIMinor.Aspirin =  0.47, #(.39-.57)
 
-    vRR.FatalBleed.Ticagrelor = 1.35, #( 0.62-0.95)
-    vRR.FatalBleed.Prasugrel =  0.87, # (0.48-1.59)
-    vRR.FatalBleed.Aspirin =  4.19, # (1.58-11.11)
+    vRR.FatalBleed.Ticagrelor = 0.87, # (0.48-1.59)
+    vRR.FatalBleed.Prasugrel =  4.19, # (1.58-11.11)
+    vRR.FatalBleed.Aspirin =  1.35, #(0.62-0.95)
     
     vRiskCABGTIMImajor = 0.022, # (0.013-0.031) 
-    vRR.RiskCABGTIMImajor.Ticagrelor = 1.08, # (0.61-1.91)
-    vRR.RiskCABGTIMImajor.Prasugrel =  1.08, # (0.85-1.36)
-    vRR.RiskCABGTIMImajor.Aspirin =  4.73,# (1.90-11.82)
+    vRR.RiskCABGTIMImajor.Ticagrelor = 1.08, # (0.85-1.36)
+    vRR.RiskCABGTIMImajor.Prasugrel =  4.73,# (1.90-11.82)
+    vRR.RiskCABGTIMImajor.Aspirin =  1.08, # (0.61-1.91)
 
     vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
     vRR.Mort.LOF = 1.28, #(0.95-1.73) #Not sure how to use this one

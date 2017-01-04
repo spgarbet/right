@@ -72,7 +72,8 @@ panel_test <- function(traj, inputs)
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
     set_attribute('aGenotyped_CVD',     1)  %>%
     set_attribute('aGenotyped_Warfarin', 1) %>%
-    mark("panel_test")
+    mark("panel_test") %>%
+    set_attribute("aPredicted", 2)
 }
 
 

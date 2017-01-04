@@ -65,7 +65,8 @@ panel_test <- function(traj, inputs)
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
     set_attribute('aGenotyped_CVD',     1)  %>%
     set_attribute('aGenotyped_Warfarin', 1) %>%
-    mark("panel_test")
+    mark("panel_test") %>%
+    set_attribute("aPredicted", 2)
 }
 
 #####
@@ -125,6 +126,14 @@ initialize_patient <- function(traj, inputs)
     assign_clopidogrel_attributes(inputs) %>%
     assign_simvastatin_attributes(inputs) %>%
     assign_warfarin_attributes(inputs)
+}
+
+predict_draw <- function(traj, inputs)
+{
+  traj %>%
+    predict_clopidogrel_draw(inputs) %>%
+    predict_simvastatin_draw(inputs) %>%
+    predict_warfarin_draw(inputs)
 }
 
 predict_test <- function(traj, inputs)

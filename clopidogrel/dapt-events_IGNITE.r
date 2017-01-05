@@ -211,7 +211,8 @@ dapt_30d_strategy <- function(traj,inputs)
           create_trajectory() %>% timeout(0)
         ),
       create_trajectory("stay alt") %>% timeout(0)
-    )}
+    )} %>%
+    set_attribute("aSwitch30d",2)
 }
 
 

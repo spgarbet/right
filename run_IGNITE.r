@@ -19,6 +19,7 @@ rm(list=ls())
 pkg = list("simmer",
            "ggplot2",
            "reshape2",
+           "plyr", #need to load this before "dplyr"
            "tidyr",
            "dplyr",
            "msm",
@@ -396,3 +397,4 @@ inputs$vDrugs = list(vSimvastatin = F,
 inputs$clopidogrel$vDAPTScale <- epsilon
 #inputs$simvastatin$vScale <- epsilon
 inputs$clopidogrel$vRRRepeat.DAPT <- 0 #only for low-weibull runs, to fix retrigger clopidogrel prescription
+inputs$clopidogrel$vProbabilityDAPTSwitch = 1 #all switch

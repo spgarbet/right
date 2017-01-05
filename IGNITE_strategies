@@ -1,0 +1,35 @@
+0) Reference strategy – Treat all with clopidogrel for one year – this is equivalent to our “no testing” I believe
+inputs$vPreemptive = "None", inputs$vReactive = "None", inputs$vSwitch = "None"
+inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
+
+1) No genotyping; Treat all with alternative antiplatelet for one year
+inputs$vPreemptive = "None", inputs$vReactive = "None", inputs$vSwitch = "None"
+inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
+
+2) No genotyping; Treat all with alternatives for one month then switch
+inputs$vPreemptive = "None", inputs$vReactive = "None", inputs$vSwitch = "All"
+inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
+
+3) Genotype at time of PCI and then treat non-LOF with clopidogrel; LOF with Alt
+inputs$vPreemptive = "Panel", inputs$vReactive = "None", inputs$vSwitch = "None"
+inputs$clopidogrel$vProbabilityDAPTSwitch = 1
+
+4) Treat all patients with alternative until 30 days; then genotype and then switch non-LOF to clopidogrel
+
+
+
+general revision:
+
+inputs:
+1.time horizon -> 1 year 
+2.add drug inputs control (vDAPT.Start)
+3.add strategy element "Switch"
+4.register 30-day event
+5.set drug switch prob to 1 
+
+dapt-events:
+2.revise assign_DAPT_medication
+4.add 30-day event
+
+initial-patient-attributes:
+4.add switch to shut down 30d event once triggered

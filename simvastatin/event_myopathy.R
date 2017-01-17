@@ -56,6 +56,7 @@ next_step <- function(traj, inputs, probability_stop)
 # Mild Myopathy events
 days_till_mild_myopathy <- function(attrs, inputs)
 {
+ if (inputs$vDrugs$vSimvastatin) {
   sim  <- inputs$simvastatin
   drug <- attrs[["aCVDdrug"]]
   geno <- attrs[["aCVDgenotype"]]
@@ -80,6 +81,11 @@ days_till_mild_myopathy <- function(attrs, inputs)
   if(t2e > 365) {return(inputs$vHorizon*365+1)}
 
   return(t2e)
+  } else 
+  {
+    inputs$vHorizon*365+1
+  }
+  
 }
 
 # Mark a mild myopathy event
@@ -93,6 +99,7 @@ mild_myopathy <- function(traj, inputs)
 # Moderate myopathy events
 days_till_mod_myopathy <- function(attrs, inputs)
 {
+ if (inputs$vDrugs$vSimvastatin) {
   sim  <- inputs$simvastatin
   drug <- attrs[["aCVDdrug"]]
   geno <- attrs[["aCVDgenotype"]]
@@ -117,6 +124,10 @@ days_till_mod_myopathy <- function(attrs, inputs)
   if(t2e > 365) {return(inputs$vHorizon*365+1)}
 
   return(t2e)
+    } else 
+  {
+    inputs$vHorizon*365+1
+  }
 }
 
 # Mark a moderate myopathy event
@@ -130,6 +141,7 @@ mod_myopathy <- function(traj,inputs)
 # Severe myopathy events
 days_till_sev_myopathy <- function(attrs,inputs)
 {
+ if (inputs$vDrugs$vSimvastatin) {
   sim  <- inputs$simvastatin
   drug <- attrs[["aCVDdrug"]]
   geno <- attrs[["aCVDgenotype"]]
@@ -154,6 +166,11 @@ days_till_sev_myopathy <- function(attrs,inputs)
   if(t2e > 365) {return(inputs$vHorizon*365+1)}
 
   return(t2e)
+      } else 
+  {
+    inputs$vHorizon*365+1
+  }
+  
 }
 
 # Mark a severe myopathy event

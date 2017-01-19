@@ -37,17 +37,17 @@ major_bleed_event <- function(traj, inputs)
           function() sample(1:6, 1, prob=vMajorBleedfreq),
           continue=rep(c(TRUE,FALSE),3),
           create_trajectory("ICH") %>% 
-            set_attribute("aTypeofBleed",1) %>% mark("MajorBleed_ICH"),
+            set_attribute("aTypeofBleed",1) %>% mark("MajorBleed_ICH") %>% mark("MajorBleed_event"),
           create_trajectory("ICH_Fatal") %>% 
-            set_attribute("aTypeofBleed",2) %>% mark("MajorBleed_ICH_Fatal") %>% cleanup_on_termination(),
+            set_attribute("aTypeofBleed",2) %>% mark("MajorBleed_ICH_Fatal") %>% mark("MajorBleed_event") %>% cleanup_on_termination(),
           create_trajectory("GI") %>%
-            set_attribute("aTypeofBleed",3) %>% mark("MajorBleed_GI"),
+            set_attribute("aTypeofBleed",3) %>% mark("MajorBleed_GI") %>% mark("MajorBleed_event"),
           create_trajectory("GI_Fatal") %>%
-            set_attribute("aTypeofBleed",4) %>% mark("MajorBleed_GI_Fatal") %>% cleanup_on_termination(),
+            set_attribute("aTypeofBleed",4) %>% mark("MajorBleed_GI_Fatal") %>% mark("MajorBleed_event") %>% cleanup_on_termination(),
           create_trajectory("Other") %>%
-            set_attribute("aTypeofBleed",5) %>% mark("MajorBleed_Other"),
+            set_attribute("aTypeofBleed",5) %>% mark("MajorBleed_Other") %>% mark("MajorBleed_event"),
           create_trajectory("Other_Fatal") %>%
-            set_attribute("aTypeofBleed",6) %>% mark("MajorBleed_Other_Fatal") %>% cleanup_on_termination()
+            set_attribute("aTypeofBleed",6) %>% mark("MajorBleed_Other_Fatal") %>% mark("MajorBleed_event") %>% cleanup_on_termination()
         )
 }  
 

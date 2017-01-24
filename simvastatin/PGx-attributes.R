@@ -6,8 +6,8 @@ predict_simvastatin_draw <- function(traj, inputs)
   # Need to confirm the true horizon from Jonatan and Yaping. 
   traj %>%
     set_attribute("aPrCVD.Score.Eq1",  function(attrs)
-      inputs$simvastatin$vPREDICTsens * (attrs[['aStartStatin']] <= 365*5) + 
-      (1 - inputs$simvastatin$vPREDICTspec) * (1 - (attrs[["aStartStatin"]] < 365*5))) %>%
+      inputs$simvastatin$vPREDICTsens * (attrs[['aStartStatin']] <= 365*inputs$vHorizon) + 
+      (1 - inputs$simvastatin$vPREDICTspec) * (1 - (attrs[["aStartStatin"]] < 365*inputs$vHorizon))) %>%
     
     # All this routine needs to do is set the genotyped attribute correctly
     # The main loop code will pick this up and triggers a "panel_test" if needed.

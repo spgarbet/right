@@ -102,9 +102,9 @@ shinyServer(function(input, output) {
     out()
   }) 
   
-  output$events <- renderTable({
+  output$events <- renderDataTable({
     out()$summary
-    }, rownames = FALSE, digits=0, bordered=FALSE)
+    }, escape=FALSE)
   
   output$costs <- renderTable({
     out()$sum_costs     

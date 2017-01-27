@@ -89,7 +89,7 @@ shinyUI(fluidPage(
       
       h2("Simulation Results"),
       h3("Event Counts"),
-      tableOutput("events"),
+      dataTableOutput("events"),
       br(),
       
       h3("Average Costs & QALYs"),

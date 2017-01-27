@@ -100,7 +100,7 @@ shinyUI(fluidPage(
       tableOutput("last_c"),
       
       h3("Simulation Method"),
-      img(src="Clopidogrel_diagram.png", width="85%")
+      img(src="clopidogrel_diagram.png", width="100%")
     )),
       
   p("Built using ",

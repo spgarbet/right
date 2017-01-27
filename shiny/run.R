@@ -9,6 +9,7 @@ pkg = list("simmer",
            "deSolve")
 invisible(lapply(pkg, require, character.only = TRUE))
 
+
 ####
 ## 
 # Define Simulation Scenario
@@ -141,11 +142,11 @@ preemptive_strategy <- function(traj, inputs)
     traj %>%
       predict_test(inputs) %>%
       branch(
-        function(attrs) ifelse(any_genotyped(attrs),2,1),
+        function(attrs) attrs[['aGenotyped_CYP2C19']],
         continue=rep(TRUE,2),
-        create_trajectory() %>% timeout(0), # Nothing genotyped, do nothing
-        create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) # Something was genotyped via PREDICT, do panel
-      )
+        create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1), # Something was genotyped via PREDICT, do panel
+        create_trajectory() %>% timeout(0) # Nothing genotyped, do nothing  
+    )
   } else if (inputs$vPreemptive == "Age >= 50")
   {
     traj %>%
@@ -346,17 +347,21 @@ inputs$vN <- 100
 inputs$vDrugs = list(vSimvastatin = F, 
                      vWarfarin = F,
                      vClopidogrel = T)
-#inputs$warfarin$vscale_timetowarfarin <- epsilon
+
 inputs$clopidogrel$vDAPTScale <- epsilon
-#inputs$simvastatin$vScale <- epsilon
+
 inputs$clopidogrel$vRRRepeat.DAPT <- 0 #only for low-weibull runs, to fix retrigger clopidogrel prescription
 inputs$clopidogrel$vProbabilityDAPTSwitch = 1 #all switch
+
+#inputs$warfarin$vscale_timetowarfarin <- epsilon
+#inputs$simvastatin$vScale <- epsilon
 
 ##################
 #output generating func
 #run
 inputs$vPreemptive = "None"
 inputs$vReactive = "None"
+#inputs$iseed = 12345
 
 ####
 ## 
@@ -369,7 +374,7 @@ env  <- simmer("RIGHT-v1.1")
 
 exec.simulation <- function(inputs)
 {
-  set.seed(12345)
+  set.seed(inputs$iseed)
   env  <<- simmer("RIGHT-v1.1")
   traj <- simulation(env, inputs)
   env %>% create_counters(counters)
@@ -384,8 +389,9 @@ exec.simulation <- function(inputs)
   #counts
   DT <- data.table(arrivals)
   summary <- DT[, .N, by = resource]
+  #summary[summary$resource=="panel_test",]$resource <- "single_test"
   events <- summary %>% merge(form,by="resource",all.y=TRUE) %>%
-    mutate(Event=txt, Count=ifelse(is.na(N),0,N)) %>% arrange(num) %>% select(Event,Count)
+    mutate(Event=txt, Count=ifelse(is.na(N),0,N)) %>% select(Event,Count,num)
   
   #C&Q
   sum_costs <- cost.qaly(arrivals,inputs)
@@ -395,39 +401,40 @@ exec.simulation <- function(inputs)
   
 }
 
-#filter 
+#####Shiny functions
+#filter outputs and rename
 form <- data.frame(
   txt = c("	  N               	",
           "	  Secular Death     	",
           "	  Single Test	",
-          "	  Panel Test        	",
           "	  DAPT Start        	",
+          "Drug Exposure",
           "	  Clopidogrel       	",
           "	  Ticagrelor        	",
           "	  Aspirin           	",
           "	  DAPT Switch       	",
           "	  ST Event	",
-          "	  ST Fatal          	",
-          "	  ST CABG            	",
-          "	  ST PCI          	",
+          "	    ST Fatal          	",
+          "	    ST CABG            	",
+          "	    ST PCI          	",
           "	  MI Event	",
-          "	  MI CABG      	",
-          "	  MI PCI    	",
-          "	  MI Med Manage     	",
+          "	    MI CABG      	",
+          "	    MI PCI    	",
+          "	    MI Med Manage     	",
           "	  Revasc Event     	",
-          "	  Revasc CABG   	",
-          "	  Revasc PCI    	",
+          "	    Revasc CABG   	",
+          "	    Revasc PCI    	",
           "	  Bleed Event	",
-          "	  Bleed Ext Maj NonFatal  	",
-          "	  Bleed Int Maj NonFatal  	",
-          "	  Bleed Min NonFatal  	",
-          "	  Bleed Fatal       	",
-          "	  CABG-related Bleed	"),
+          "	    Bleed Ext Maj NonFatal  	",
+          "	    Bleed Int Maj NonFatal  	",
+          "	    Bleed Min NonFatal  	",
+          "	    Bleed Fatal       	",
+          "	    CABG-related Bleed	"),
   resource = c("	time_in_model	",
                "	secular_death	",
                "	single_test	",
-               "	panel_test	",
                "	dapt_start	",
+               "drug_exposure",
                "	clopidogrel	",
                "	ticagrelor	",
                "	aspirin	",
@@ -451,3 +458,43 @@ form <- data.frame(
                "	cabg_bleed	"))
 form$num <- as.numeric(row.names(form))
 form$resource <- trimws(form$resource,which="both")
+#form$txt <- trimws(form$txt,which="both")
+
+#transfer input strategy to parameters
+trans_strategy <- function(x) {
+  if(x=="None") {
+    preemptive <- "None"
+    reactive <- "None"
+  } else if
+  (x=="Reactive") {
+    preemptive <- "None"
+    reactive <- "Single"      
+  } else if
+  (x=="Universal Preemptive") {
+    preemptive <- "Panel"
+    reactive <- "None"       
+  } else if 
+  (x=="Targeted Preemptive") {
+    preemptive <- "PREDICT"
+    reactive <- "None"       
+  } else {
+    preemptive <- "Age >= 50"
+    reactive <- "None"         
+  }
+  return(list(preemptive=preemptive,reactive=reactive))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

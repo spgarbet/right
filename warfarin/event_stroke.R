@@ -31,36 +31,36 @@ stroke_event <- function(traj, inputs)
         else                  return(2)
       },
       continue=rep(TRUE,2),
-      create_trajectory("INR < 2") %>%
+      trajectory("INR < 2") %>%
         branch(
           function() sample(1:3, 1, prob=vStroke_2_freq),
           continue=c(TRUE,TRUE,FALSE),
-          create_trajectory("minor deficit") %>% 
+          trajectory("minor deficit") %>% 
             set_attribute("aTypeofStroke", 1) %>% mark("Stroke_MinorDeficit") %>% mark("Stroke_event"),
           
           # back to main model (at risk for other drugs, add prescrition redraw later )
-          create_trajectory("major deficit") %>%
+          trajectory("major deficit") %>%
             set_attribute("aTypeofStroke", 2) %>% mark("Stroke_MajorDeficit") %>% mark("pass_stroke_switch") %>% mark("Stroke_event") %>% 
             set_attribute("sWarfarinEvents", 2) %>% #switch off
             cleanup_warfarin() %>% adj_clock(),
           
-          create_trajectory("fatal") %>%
+          trajectory("fatal") %>%
             set_attribute("aTypeofStroke", 3) %>% mark("Stroke_Fatal") %>% mark("Stroke_event") %>% cleanup_on_termination()
         ),
-      create_trajectory("INR >=2")%>%
+      trajectory("INR >=2")%>%
         branch(
           function() sample(1:3, 1, prob=vStroke_Over2_freq),
           continue=c(TRUE,TRUE,FALSE),
-          create_trajectory("minor deficit") %>%
+          trajectory("minor deficit") %>%
             set_attribute("aTypeofStroke", 1) %>% mark("Stroke_MinorDeficit") %>% mark("Stroke_event"),
           
           # back to main model (at risk for other drugs, add prescrition redraw later )          
-          create_trajectory("major deficit") %>%
+          trajectory("major deficit") %>%
             set_attribute("aTypeofStroke", 2) %>% mark("Stroke_MajorDeficit") %>% mark("Stroke_event") %>% mark("pass_stroke_switch") %>%
             set_attribute("sWarfarinEvents", 2) %>% #switch off
             cleanup_warfarin() %>% adj_clock() ,
           
-          create_trajectory("fatal") %>%
+          trajectory("fatal") %>%
             set_attribute("aTypeofStroke", 3) %>% mark("Stroke_Fatal") %>% mark("Stroke_event") %>% cleanup_on_termination()
         )
     )

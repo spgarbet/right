@@ -115,7 +115,7 @@ process_events <- function(traj, env, inputs)
   # and then update it's next time to event
   args <- lapply(event_registry,FUN=function(e) {
     #print(e$name)   # Good for debugging event loading
-    create_trajectory(e$name) %>%
+    trajectory(e$name) %>%
       #timeout(function(attrs) {cat("executing ",e$name,"\n"); 0}) %>%
       e$func(inputs) %>%
       #timeout(function(attrs) {cat("executed ",e$name,"\n"); 0}) %>%
@@ -148,14 +148,14 @@ process_events <- function(traj, env, inputs)
 ##
 simulation <- function(env, inputs)
 {
-  create_trajectory("Patient")     %>%
+  trajectory("Patient")     %>%
     initialize_patient(inputs)     %>%
     assign_events(inputs)          %>%
     preemptive_strategy(inputs)    %>%
     branch( # Used branch, to prevent rollback from looking inside event loop function
       function() 1,
       continue=TRUE,
-      create_trajectory("main_loop") %>% process_events(env, inputs)
+      trajectory("main_loop") %>% process_events(env, inputs)
     ) %>% 
     rollback(amount=1, times=100) # Process up to 100 events per person
 }

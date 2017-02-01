@@ -20,7 +20,7 @@ exec.simulation <- function(inputs)
 inputs$vN <- 100000
 
 results <- NULL
-for(preemptive in c("None", "Panel", "PREDICT", "Age >= 50"))
+for(preemptive in c("None", "Panel", "PREDICT"))
 {
   for(reactive in c("None", "Single"))
   {
@@ -45,3 +45,4 @@ results <- read.csv("simvastatin-withsomecosts.csv")
 library(data.table)
 DT <- data.table(results)
 DT[, .N, by = list(resource, preemptive, reactive)]
+print(DT[, .N, by = list(resource, preemptive, reactive)], topn=200)

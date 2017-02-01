@@ -27,11 +27,11 @@ DVTPE_event <- function(traj, inputs)
     branch(
       function() sample(1:3, 1, prob=vDVTPE_freq),
       continue=c(TRUE,TRUE,FALSE),
-      create_trajectory("DVT") %>% set_attribute("aTypeofDVTPE", 1) %>%
+      trajectory("DVT") %>% set_attribute("aTypeofDVTPE", 1) %>%
         mark("DVT") %>% mark("DVTPE_event"),
-      create_trajectory("PE") %>% set_attribute("aTypeofDVTPE", 2) %>%
+      trajectory("PE") %>% set_attribute("aTypeofDVTPE", 2) %>%
         mark("PE") %>% mark("DVTPE_event"),
-      create_trajectory("DVTPE_Fatal") %>% 
+      trajectory("DVTPE_Fatal") %>% 
         set_attribute("aTypeofDVTPE", 3) %>% 
         mark("DVTPE_Fatal") %>% mark("DVTPE_event") %>% cleanup_on_termination()
     )

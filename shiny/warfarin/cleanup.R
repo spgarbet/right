@@ -18,8 +18,8 @@ stop_monitor_INR <- function(traj)
     branch(
       function(attrs) attrs[["aInRange"]], 
       continue=rep(TRUE, 2),
-      create_trajectory("In Range") %>% release("in_range"),
-      create_trajectory("Out of Range") %>% release("out_of_range")
+      trajectory("In Range") %>% release("in_range"),
+      trajectory("Out of Range") %>% release("out_of_range")
     ) %>%
     set_attribute("sINRMonitor",2)
 }
@@ -30,9 +30,9 @@ stop_warfarin_treatment <- function(traj)
     branch(
       function(attrs) attrs[["aOnWarfarin"]],
       continue=rep(TRUE,2),
-      create_trajectory("On") %>% 
+      trajectory("On") %>% 
         release("warfarin") %>% set_attribute("aOnWarfarin", 2), 
-      create_trajectory("Off") %>% timeout(0)
+      trajectory("Off") %>% timeout(0)
     )
 }
 
@@ -47,7 +47,7 @@ cleanup_warfarin <- function(traj)
     branch(
       function(attrs) attrs[["sINRMonitor"]], 
       continue=rep(TRUE, 2),
-      create_trajectory("being monitored") %>% stop_monitor_INR(),
-      create_trajectory("not") %>% timeout(0) #do nothing
+      trajectory("being monitored") %>% stop_monitor_INR(),
+      trajectory("not") %>% timeout(0) #do nothing
     )
 }

@@ -25,13 +25,13 @@ statin_reactive_strategy <- function(traj, inputs)
       branch(
         function(attrs) attrs[['aGenotyped_CVD']],
         continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  timeout(0),
-        create_trajectory("not have") %>% # Use probability of ordering test
+        trajectory("have test results") %>%  timeout(0),
+        trajectory("not have") %>% # Use probability of ordering test
           branch(
             function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
               continue=c(TRUE,TRUE),
-              create_trajectory() %>% timeout(0),
-              create_trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
+              trajectory() %>% timeout(0),
+              trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
               )
       )
   } else if (inputs$vReactive == "Panel")
@@ -40,14 +40,14 @@ statin_reactive_strategy <- function(traj, inputs)
     branch(
       function(attrs) all_genotyped(attrs)+1,
       continue=c(TRUE, TRUE),
-      create_trajectory("not panel tested") %>% # Use probability of ordering test
+      trajectory("not panel tested") %>% # Use probability of ordering test
         branch(
           function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
           continue=c(TRUE,TRUE),
-          create_trajectory() %>% timeout(0),
-          create_trajectory() %>% panel_test() %>% set_attribute("aOrdered_test", 2)
+          trajectory() %>% timeout(0),
+          trajectory() %>% panel_test() %>% set_attribute("aOrdered_test", 2)
         ),
-      create_trajectory("panel tested") %>% timeout(0)
+      trajectory("panel tested") %>% timeout(0)
     )
   } else stop("Unhandled Reactive Statin Strategy")
 }
@@ -58,7 +58,7 @@ assign_statin <- function(traj, inputs)
     branch(
       function(attrs) min(attrs[["aStatinRxHx"]]+1, 2), # 0 = No history, 1+ prior history
       continue=c(TRUE,TRUE),
-      create_trajectory() %>%
+      trajectory() %>%
         mark("statin_any") %>% 
         set_attribute("aStatinRxHx", 1) %>% # Now they have a history of statin RX
         branch(
@@ -77,10 +77,10 @@ assign_statin <- function(traj, inputs)
             sample(1:2, 1, prob=c(1-inputs$simvastatin$vProbSimvastatinAlt, inputs$simvastatin$vProbSimvastatinAlt))
           },  
           continue = rep(TRUE,2),
-          create_trajectory("Simvastatin") %>%
+          trajectory("Simvastatin") %>%
             seize("simvastatin") %>% 
             set_attribute("aCVDdrug", 1),
-          create_trajectory("Alt. Simvastatin") %>%
+          trajectory("Alt. Simvastatin") %>%
             seize("alt_simvastatin") %>% 
             set_attribute("aCVDdrug", 2)
         ) %>% 
@@ -91,10 +91,10 @@ assign_statin <- function(traj, inputs)
             return(2)
           },
           continue = c(TRUE,TRUE),
-          create_trajectory() %>% mark("statin_switched_PGx"),
-          create_trajectory() %>% timeout(0)
+          trajectory() %>% mark("statin_switched_PGx"),
+          trajectory() %>% timeout(0)
         ),
-      create_trajectory() %>% timeout(0) # Due to prior history, don't do anything, as this has already been dealt with
+      trajectory() %>% timeout(0) # Due to prior history, don't do anything, as this has already been dealt with
     )
 }
 

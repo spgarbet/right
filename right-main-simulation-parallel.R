@@ -176,8 +176,8 @@ preemptive_strategy <- function(traj, inputs)
       branch(
         function(attrs) ifelse(any_genotyped(attrs),2,1),
         continue=rep(TRUE,2),
-        create_trajectory() %>% timeout(0), # Nothing genotyped, do nothing
-        create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) # Something was genotyped via PREDICT, do panel
+        trajectory() %>% timeout(0), # Nothing genotyped, do nothing
+        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) # Something was genotyped via PREDICT, do panel
       )
   } else if (inputs$vPreemptive == "Age >= 50")
   {
@@ -185,8 +185,8 @@ preemptive_strategy <- function(traj, inputs)
       branch(
         function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
         continue = c(TRUE, TRUE),
-        create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1), # Do nothing
-        create_trajectory() %>% timeout(0)
+        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1), # Do nothing
+        trajectory() %>% timeout(0)
       )
   } else stop("Unhandled Preemptive Strategy")
 }
@@ -210,7 +210,7 @@ terminate_simulation <- function(traj, inputs)
     branch(
       function() 1, 
       continue=FALSE,
-      create_trajectory() %>% cleanup_on_termination()
+      trajectory() %>% cleanup_on_termination()
     )
 }
 

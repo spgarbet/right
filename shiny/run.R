@@ -6,7 +6,8 @@ pkg = list("simmer",
            "dplyr",
            "msm",
            "data.table",
-           "deSolve")
+           "deSolve",
+           "quantmod")
 invisible(lapply(pkg, require, character.only = TRUE))
 
 
@@ -144,8 +145,8 @@ preemptive_strategy <- function(traj, inputs)
       branch(
         function(attrs) attrs[['aGenotyped_CYP2C19']],
         continue=rep(TRUE,2),
-        create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1), # Something was genotyped via PREDICT, do panel
-        create_trajectory() %>% timeout(0) # Nothing genotyped, do nothing  
+        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1), # Something was genotyped via PREDICT, do panel
+        trajectory() %>% timeout(0) # Nothing genotyped, do nothing  
     )
   } else if (inputs$vPreemptive == "Age >= 50")
   {
@@ -153,8 +154,8 @@ preemptive_strategy <- function(traj, inputs)
       branch(
         function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
         continue = c(TRUE, TRUE),
-        create_trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) , 
-        create_trajectory() %>% timeout(0)  # Do nothing
+        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) , 
+        trajectory() %>% timeout(0)  # Do nothing
       )
   } else stop("Unhandled Preemptive Strategy")
 }
@@ -178,7 +179,7 @@ terminate_simulation <- function(traj, inputs)
     branch(
       function() 1, 
       continue=FALSE,
-      create_trajectory() %>% cleanup_on_termination()
+      trajectory() %>% cleanup_on_termination()
     )
 }
 

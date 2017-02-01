@@ -37,10 +37,10 @@ assign_CYP2C19_status <- function(traj,inputs)
     branch(
     function() sample(1:4,1,prob=vCYP2C19.Probs),
     continue= rep(TRUE,4),
-    create_trajectory() %>% set_attribute("aCYP2C19",1), # Poor (currently only one used)
-    create_trajectory() %>% set_attribute("aCYP2C19",2), # Rapid
-    create_trajectory() %>% set_attribute("aCYP2C19",3), # Unknown (heterozygous)
-    create_trajectory() %>% set_attribute("aCYP2C19",4)  # Wildtype
+    trajectory() %>% set_attribute("aCYP2C19",1), # Poor (currently only one used)
+    trajectory() %>% set_attribute("aCYP2C19",2), # Rapid
+    trajectory() %>% set_attribute("aCYP2C19",3), # Unknown (heterozygous)
+    trajectory() %>% set_attribute("aCYP2C19",4)  # Wildtype
   )
 }
 

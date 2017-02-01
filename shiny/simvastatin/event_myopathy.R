@@ -2,25 +2,25 @@ library(simmer)
 
 switch_statin <- function(inputs)
 {
-  create_trajectory("Switch Statin") %>% 
+  trajectory("Switch Statin") %>% 
     branch(
       function(attrs) attrs[["aCVDdrug"]]+1,
       continue=rep(TRUE,3),
-      create_trajectory() %>% timeout(0), # Already no treatment, nothing to do
-      create_trajectory("Switch to Second Line") %>% # Switch from Simvastatin -> Alternate
+      trajectory() %>% timeout(0), # Already no treatment, nothing to do
+      trajectory("Switch to Second Line") %>% # Switch from Simvastatin -> Alternate
         mark("sim_switched") %>%
         release("simvastatin") %>%
         seize("alt_simvastatin") %>%
         set_attribute("aStatinRxHx", 2) %>% # 2nd prescription
         set_attribute("aCVDdrug", 2),
-      create_trajectory("Evaluate Alternate Treatment") %>%  # On Alternate
+      trajectory("Evaluate Alternate Treatment") %>%  # On Alternate
         branch(
           function(attrs) min(attrs[["aStatinRxHx"]], 2), # 1 = 2nd round of alternate, 2+ = Stop
           continue=c(TRUE,TRUE),
-          create_trajectory("Continuing Alternate Treatment") %>%
+          trajectory("Continuing Alternate Treatment") %>%
             set_attribute("aStatinRxHx", 2), # 2nd prescription
           # Stop
-          create_trajectory("Stopping Statin Treatment") %>%  
+          trajectory("Stopping Statin Treatment") %>%  
             mark("sim_stopped") %>%
             release("alt_simvastatin") %>%
             set_attribute("aCVDdrug", 0)
@@ -30,13 +30,13 @@ switch_statin <- function(inputs)
 
 stop_statin_treatment <- function(inputs)
 {
-  create_trajectory("Stop Statin Treatment") %>%
+  trajectory("Stop Statin Treatment") %>%
     branch(
       function(attrs) attrs[["aCVDdrug"]]+1,
       continue=rep(TRUE,3),
-      create_trajectory() %>% timeout(0), # Already no treatment
-      create_trajectory() %>% mark("sim_stopped")  %>% release("simvastatin"),
-      create_trajectory() %>% mark("sim_stopped")  %>% release("alt_simvastatin")
+      trajectory() %>% timeout(0), # Already no treatment
+      trajectory() %>% mark("sim_stopped")  %>% release("simvastatin"),
+      trajectory() %>% mark("sim_stopped")  %>% release("alt_simvastatin")
     ) %>%
     set_attribute("aCVDdrug", 0)
 }
@@ -180,7 +180,7 @@ sev_myopathy <- function(traj,inputs)
   branch(
     function() sample(1:2, 1, prob=c(inputs$simvastatin$vProbRahbdoDeath, 1-inputs$simvastatin$vProbRahbdoDeath)),
     continue = c(FALSE, TRUE),
-    create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_termination(),
-    create_trajectory("Do we stop treatment?") %>% mark("sev_myopathy") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)
+    trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_termination(),
+    trajectory("Do we stop treatment?") %>% mark("sev_myopathy") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)
   )
 }

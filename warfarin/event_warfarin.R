@@ -20,13 +20,13 @@ warfarin_reactive_strategy <- function(traj, inputs)
       branch(
         function(attrs) attrs[['aGenotyped_Warfarin']],
         continue=c(TRUE, TRUE),
-        create_trajectory("have test results") %>%  timeout(0),
-        create_trajectory("not have") %>% 
+        trajectory("have test results") %>%  timeout(0),
+        trajectory("not have") %>% 
           branch(
             function(attrs) sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive)),
             continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0),
-            create_trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
+            trajectory() %>% timeout(0),
+            trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
           )
       )
   } else if (inputs$vReactive == "Panel")
@@ -35,14 +35,14 @@ warfarin_reactive_strategy <- function(traj, inputs)
       branch(
         function(attrs) all_genotyped(attrs)+1,
         continue=c(TRUE, TRUE),
-        create_trajectory("not panel tested") %>% 
+        trajectory("not panel tested") %>% 
           branch(
             function(attrs) sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive)),
             continue=c(TRUE,TRUE),
-            create_trajectory() %>% timeout(0),
-            create_trajectory() %>% panel_test()
+            trajectory() %>% timeout(0),
+            trajectory() %>% panel_test()
           ), # Not all genotyped, then do it
-        create_trajectory("panel tested") %>% timeout(0)
+        trajectory("panel tested") %>% timeout(0)
       )
   } else stop("Unhandled Reactive Warfarin Strategy")
 }
@@ -86,9 +86,9 @@ start_warfarin <- function(traj, inputs)
     branch(
       function(attrs) attrs[["aInRange"]],
       continue=rep(TRUE, 2),
-      create_trajectory("Initial In Range") %>% mark("Initial_InRange") %>%
+      trajectory("Initial In Range") %>% mark("Initial_InRange") %>%
         seize("in_range"),
-      create_trajectory("Initial Out of Range") %>% mark("Initial_OutRange") %>%
+      trajectory("Initial Out of Range") %>% mark("Initial_OutRange") %>%
         seize("out_of_range") 
     ) %>%
     
@@ -101,8 +101,8 @@ start_warfarin <- function(traj, inputs)
         return(2) #either not genotyped, or order reactive test this time
       },
       continue = c(TRUE,TRUE),
-      create_trajectory() %>% set_attribute("aReadWarfarinTest", function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead))),
-      create_trajectory() %>% timeout(0)
+      trajectory() %>% set_attribute("aReadWarfarinTest", function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead))),
+      trajectory() %>% timeout(0)
     ) 
 }
 

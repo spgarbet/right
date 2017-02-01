@@ -121,7 +121,7 @@ process_events <- function(traj, env, inputs)
       #timeout(function(attrs) {cat("executed ",e$name,"\n"); 0}) %>%
       set_attribute(e$attr, function(attrs) {now(env)+e$time_to_event(attrs,inputs)})
   })
-  args$traj      <- traj
+  args$".trj"    <- traj
   args$option    <- function(attrs) next_event(attrs)$id
   args$continue  <- rep(TRUE,length(event_registry))
   

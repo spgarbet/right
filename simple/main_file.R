@@ -1,4 +1,4 @@
-setwd("/Users/zilu/Desktop/right-simulation/simple")
+
 rm(list=ls())
 
 pkg = list("simmer",
@@ -20,7 +20,7 @@ inputs <- list(
   
   vRiskA = 0.1,
   vDurationA = 5,
-  vRR = 0.85,
+  vRR = 0.95,
   vFatalA = 0.05,
   
   vRiskB = 0.5,
@@ -108,8 +108,6 @@ event_registry <- list(
        func          = terminate_simulation,
        reactive      = FALSE)
 )
-
-
 
 #### Counters
 counters <- c(

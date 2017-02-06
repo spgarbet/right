@@ -1,4 +1,4 @@
-setwd("/Users/zilu/Desktop/right-simulation/simple")
+setwd("./")
 
 source("./main_file.R")
 source("./costs_simple.R")
@@ -7,7 +7,7 @@ source("./costs_simple.R")
 results <- NULL
 #can modify here
 inputs$vHorizon
-inputs$vN
+inputs$vN <- 100000
 
 for(strategy in c("Standard","Treat")) {
   inputs$vStrategy <- strategy

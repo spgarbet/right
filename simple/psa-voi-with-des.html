@@ -185,11 +185,12 @@ require(knitr)
   ## Look at summary statistics
   results &lt;- patient.attributes &lt;- NULL</code></pre>
 <p>Set the run parameters</p>
-<pre class="r"><code>inputs$vN &lt;- 25000
-inputs$vHorizon &lt;- 90
+<pre class="r"><code>inputs$vHorizon &lt;- 90
 inputs$vAge &lt;- 40
-inputs$vGender &lt;- 1  # 1 = Female, 2= Male</code></pre>
-<pre class="r"><code>for(strategy in c(&quot;Standard&quot;,&quot;Treat&quot;)) {
+inputs$vGender &lt;- 1  # 1 = Female, 2= Male
+inputs$vN &lt;- 25000
+
+for(strategy in c(&quot;Standard&quot;,&quot;Treat&quot;)) {
   inputs$vStrategy &lt;- strategy
   cat(&quot;Running &quot;, strategy, &quot;\n&quot;)
   run &lt;- exec.simulation(inputs)
@@ -218,38 +219,38 @@ summary %&gt;% dcast(resource~strategy,value.var=&quot;N&quot;) %&gt;% kable()</
 <tbody>
 <tr class="odd">
 <td align="left">A</td>
-<td align="right">857</td>
-<td align="right">720</td>
+<td align="right">2093</td>
+<td align="right">1769</td>
 </tr>
 <tr class="even">
 <td align="left">A_death</td>
-<td align="right">51</td>
-<td align="right">36</td>
+<td align="right">110</td>
+<td align="right">94</td>
 </tr>
 <tr class="odd">
 <td align="left">A_survive</td>
-<td align="right">806</td>
-<td align="right">684</td>
+<td align="right">1983</td>
+<td align="right">1675</td>
 </tr>
 <tr class="even">
 <td align="left">B</td>
-<td align="right">411</td>
-<td align="right">325</td>
+<td align="right">968</td>
+<td align="right">833</td>
 </tr>
 <tr class="odd">
 <td align="left">secular_death</td>
-<td align="right">137</td>
-<td align="right">132</td>
+<td align="right">24890</td>
+<td align="right">24906</td>
 </tr>
 <tr class="even">
 <td align="left">time_in_model</td>
-<td align="right">10000</td>
-<td align="right">10000</td>
+<td align="right">25000</td>
+<td align="right">25000</td>
 </tr>
 <tr class="odd">
 <td align="left">treat</td>
 <td align="right">NA</td>
-<td align="right">10000</td>
+<td align="right">25000</td>
 </tr>
 </tbody>
 </table>
@@ -268,16 +269,16 @@ kable(sum_costs)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">8.44191</td>
-<td align="right">1676.89</td>
+<td align="right">22.9377</td>
+<td align="right">1606.98</td>
 <td align="left">Standard</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
-<td align="right">8.47164</td>
-<td align="right">3370.35</td>
+<td align="right">23.0141</td>
+<td align="right">3373.70</td>
 <td align="left">Treat</td>
-<td align="right">56968</td>
+<td align="right">23112.4</td>
 </tr>
 </tbody>
 </table>
@@ -300,9 +301,9 @@ NMB %&gt;% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %&gt;% mutate( seNMB = s
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">1279.19</td>
-<td align="right">12834519097</td>
-<td align="right">1132.9</td>
+<td align="right">5877.33</td>
+<td align="right">423821781808</td>
+<td align="right">4117.39</td>
 </tr>
 </tbody>
 </table>
@@ -317,28 +318,28 @@ X[,1] &lt;- 1+9*X[,1]
 X[,2] &lt;- 20+10*X[,2]
 X</code></pre>
 <pre><code>##          [,1]    [,2]
-##  [1,] 4.55489 23.0014
-##  [2,] 9.77755 29.6797
-##  [3,] 5.14667 24.5168
-##  [4,] 3.80451 27.6439
-##  [5,] 1.61339 29.3734
-##  [6,] 5.51381 20.6886
-##  [7,] 4.01957 25.6170
-##  [8,] 3.21129 21.8276
-##  [9,] 1.82488 21.1554
-## [10,] 6.05040 26.0198
-## [11,] 6.66334 27.9125
-## [12,] 1.09787 24.0110
-## [13,] 8.74944 28.2947
-## [14,] 2.27739 28.7655
-## [15,] 4.86707 22.6977
-## [16,] 7.18147 23.5864
-## [17,] 8.34664 20.3433
-## [18,] 6.73668 26.6387
-## [19,] 9.34247 25.1746
-## [20,] 9.08787 27.1869
-## [21,] 7.84831 24.7402
-## [22,] 2.92022 21.5630</code></pre>
+##  [1,] 5.34083 28.3215
+##  [2,] 9.23592 27.3849
+##  [3,] 8.22395 21.0971
+##  [4,] 3.03694 20.8024
+##  [5,] 7.20159 21.8762
+##  [6,] 2.03189 24.8037
+##  [7,] 6.01593 22.4591
+##  [8,] 6.82714 27.8511
+##  [9,] 7.70126 26.3500
+## [10,] 8.39674 20.0976
+## [11,] 1.18658 26.6687
+## [12,] 2.58892 23.7155
+## [13,] 3.87121 22.9692
+## [14,] 9.89518 25.6671
+## [15,] 5.72098 29.0853
+## [16,] 6.44553 23.5520
+## [17,] 3.47047 29.3847
+## [18,] 4.37408 24.4003
+## [19,] 1.46359 29.7684
+## [20,] 3.32210 25.2439
+## [21,] 5.08514 27.1921
+## [22,] 8.96456 21.7994</code></pre>
 <div id="refs" class="references">
 <div id="ref-ohagan_monte_2007">
 <p>O’Hagan, Anthony, Matt Stevenson, and Jason Madan. 2007. “Monte Carlo Probabilistic Sensitivity Analysis for Patient Level Simulation Models: Efficient Estimation of Mean and Variance Using ANOVA.” <em>Health Economics</em> 16 (10): 1009–23. doi:<a href="https://doi.org/10.1002/hec.1199">10.1002/hec.1199</a>.</p>

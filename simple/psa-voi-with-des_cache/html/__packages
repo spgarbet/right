@@ -1,12 +1,6 @@
 base
-methods
 foreign
 ggplot2
-datasets
-utils
-grDevices
-graphics
-stats
 simmer
 reshape2
 plyr

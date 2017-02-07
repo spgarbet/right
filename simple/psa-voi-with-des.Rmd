@@ -104,9 +104,6 @@ require(knitr)
 ```
 
 Set the run parameters
-```{r}
-
-```
 
 ```{r, message=FALSE, warning=FALSE,cache=TRUE}
 

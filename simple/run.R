@@ -1,13 +1,15 @@
-setwd("./")
-
+#setwd("./simple")
+rm(ls=ls())
 source("./main_file.R")
 source("./costs_simple.R")
 
 ## Look at summary statistics
 results <- NULL
+
 #can modify here
-inputs$vHorizon
-inputs$vN <- 100000
+inputs$vHorizon <- 90
+inputs$vN <- 100
+inputs$vAge <- 40
 
 for(strategy in c("Standard","Treat")) {
   inputs$vStrategy <- strategy

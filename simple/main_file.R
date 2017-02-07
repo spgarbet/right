@@ -1,4 +1,3 @@
-
 rm(list=ls())
 
 pkg = list("simmer",
@@ -17,10 +16,10 @@ invisible(lapply(pkg, require, character.only = TRUE))
 epsilon <- 0.000000000001
 inputs <- list(
   vAge = 40,
-  
+  vGender = 1,
   vRiskA = 0.1,
   vDurationA = 5,
-  vRR = 0.95,
+  vRR = 0.85,
   vFatalA = 0.05,
   
   vRiskB = 0.5,
@@ -33,7 +32,8 @@ inputs <- list(
   disutilities = list(
     A_survive = 0.25,
     A_death = 1,
-    B = 0.1
+    B = 0.1,
+    secular_death = 1
   ),
   
   durations = list(
@@ -43,14 +43,15 @@ inputs <- list(
   type = list(
     A_survive = 0,
     A_death = 0,
-    B = 1
+    B = 1,
+    secular_death = 0
   ),
   
   costs = list(
     A_survive = 10000,
     A_death = 10000,
-    B = 5000/365, #daily cost
-    treat=0
+    B = 25000/365, #daily cost
+    treat=2000
   )
 )
 
@@ -64,7 +65,9 @@ initialize_patient <- function(traj, inputs)
     seize("time_in_model") %>%
     set_attribute("aAgeInitial", function() inputs$vAge) %>%
     set_attribute("aAge", function(attrs) attrs[['aAgeInitial']]) %>%
-    set_attribute("aRR_A", 1) %>%
+    set_attribute("aGender", function() inputs$vGender) %>%
+    #set_attribute("aRR_A", function()  rbeta(n=1,shape1=inputs$vRR*100,shape2=(1-inputs$vRR)*100) ) %>%
+    set_attribute("aRR_A",function() inputs$vRR) %>% 
     set_attribute("aRR_B", epsilon) %>%
     set_attribute("aTreat", function() ifelse(inputs$vStrategy=="Treat",1,2)) %>%
     branch(
@@ -77,6 +80,12 @@ initialize_patient <- function(traj, inputs)
 
 ########
 #events
+
+
+####
+## Secular Death
+source('./event_secular_death.R')
+
 source('./events_simple.R')
 terminate_simulation <- function(traj, inputs)
 {
@@ -88,10 +97,25 @@ terminate_simulation <- function(traj, inputs)
     )
 }
 
+####
+## Cleanup 
+cleanup_on_termination <- function(traj)
+{
+  traj %>% 
+    #print_attrs() %>%
+    release("time_in_model") 
+}
+
+
+
 ###
 #fill in event_registry
 event_registry <- list(
-
+  list(name          = "Secular Death",
+       attr          = "aSecularDeathTime",
+       time_to_event = days_till_death,
+       func          = secular_death,
+       reactive      = FALSE),
   list(name          = "Event A",
        attr          = "attA",
        time_to_event = days_till_A,
@@ -116,7 +140,8 @@ counters <- c(
   "A",
   "A_survive",
   "B",
-  "treat"
+  "treat",
+  "secular_death"
 )
 
 source('./event_main_loop_simple.R')

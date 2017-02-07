@@ -1,0 +1,171 @@
+---
+title: Probabilistic Sensitivity Analyses and Value of Information with Discrete Event
+  Simulation
+output:
+  html_document: default
+  html_notebook: default
+bibliography: psa-voi-with-des.bib
+---
+
+This notebook is designed to explore probabilistic sensitivity analysis (PSA) and value of information (VOI) methods with a simple discrete event simulation (DES) model.  
+
+# Description of Model
+
+We begin with a simple DES model with the following characteristics:
+
+1. A population of 40-year olds are at risk for an event (A) that happens at a 10% rate over a 5 year period.
+2. All those who experience the event incur a cost of $10,000.
+3. Among those who experience the event, there is a 5% case fatality rate.  
+4. Among those who survive, they experience a 0.25 utility decrement for the remainder of their life. 
+5. Among the surviors, there is a second event (B) that occurs with probability 50% over a 5 year period.
+6. Event B has no case fatality but incurs a $25,000 cost and a 0.10 disutility for 1 year 
+7. There is a new therapy available that reduces the rate of the first event by a relative risk of 0.85, however the therapy costs $8,000.
+
+# Sample Size Calculations
+
+We will utilize the methodology outlined in @ohagan_monte_2007 to estimate the correct sample size, as well as to perform the PSA via ANOVA methods.
+
+## Notation adopted from @ohagan_monte_2007
+
+[Note much of this is *word for word* so do not use it in a manucript.]
+
+Let $\textbf{x}$ denote the vector of model parameters whose uncertainty we with to account for.  Let $y(\textbf{x})$ denote the "true" model output for input vector $\textbf{x}$.  
+
+We never observe the true value $y(\textbf{x})$ but rather each iteration of the simulation model produces, for each simulated patient a value $z$ that is $y(\textbf{x})$ plus noise, and this noise has zero expectation. 
+
+Let $\textbf{x}_i$ denote the $i$th sampled parameter set, and let $z_{ij}$ denote the output value for the $j$th individual patient in the model run using inputs $\textbf{x}_i$.
+
+The subscript $i$ ranges from 1 to $N$, the number of parameter sets sampled in the PSA.  The subscript $j$ runs from 1 to $n$, the number of patients simulated in each model run.
+
+We denote the mean output for run $i$ by $\bar z_i$ and the mean over all $Nn$ patients in all model runs by $\bar z$. 
+
+Our goal in performing the PSA is to examine the probability distribution of $y(\textbf{X})$, and this distribution is what would be obtained if we were able to compute $y_i = y(\textbf{x}_i)$ for a large sample of parameter sets $\textbf{x}_i$. 
+
+We are particularly interested in the mean and the variance of this distribution:
+
+\[
+\mu = E(y(\textbf{X}))
+\]
+
+\[
+\sigma^2 = var(y(\textbf{X}))
+\]
+
+The variance term $\sigma^2$ refers to *second order uncertainty* in the model (i.e., uncertainty in the paramters) but first order uncertainty is also important. This arises due to variability among paitents in the population.  
+
+Let $\tau^2(\textbf{x})$ be the parient-level variance for simulations of patients with paremters $\textbf{x}$ and let 
+
+\[
+\bar \tau^2 = E(\tau^2(\textbf{X}))
+\]
+be the mean value of $\tau^2(\textbf{x})$ averaged with respect to the uncertainty in X.  
+
+In general the larger the patient-level variability the more patients we will need to sample in each run.  
+
+Let $k$ denote the ratio of these two variances:
+
+\[
+k = \bar \tau^2 / \sigma^2
+\]
+so that $\bar \tau^2 = k \sigma^2$.
+
+
+## Incremental Net Benefit
+
+We define $\lambda$ as the willingness to pay coefficient, and define the **incremental net benefit** as
+
+\[
+z = \lambda \times \Delta e - \Delta c
+\]
+where $\Delta e$ is the patients increment in effectiveness between two competing strategies and $\Delta c$ is the increment in costs.  
+
+Using this we can define $y$ as the population mean incremental net benefit and treatment 2 is cost-effective if $y>0$.  
+
+Our goal in PSA is to quantify uncertainty in whether $y>0$.  
+
+
+
+
+## Implementation
+A key step is in knowing the ratio $k = \bar \tau^2 / \sigma^2$.  We do so by first obtaining a prior estimate of $k$. @ohagan_monte_2007 suggest that to do so, the model input value for the initial set of runs should not be chosen randomly; we want the input parameter sets to have broad coverage of the input space.  They suggest a small number $N$ of runs, on the order of 25-40, with inputs sets chosen to be spread broadly across the space of possible inputs, and a moderate to large value of $n$.  
+
+Let $u$ denote the number of uncertain input parameters for the model.  Moreover, we want to use $p$ values for each input, and we can use these to construct a grid of combinations. 
+
+A Latin Hypercube sampling technique can be used so that each level of each factor is used the same number of times.  
+
+
+
+```{r, message=FALSE, warning=FALSE}
+source("./main_file.R")
+source("./costs_simple.R")
+require(knitr)
+  ## Look at summary statistics
+  results <- patient.attributes <- NULL
+```
+
+Set the run parameters
+```{r}
+
+```
+
+```{r, message=FALSE, warning=FALSE,cache=TRUE}
+
+inputs$vHorizon <- 90
+inputs$vAge <- 40
+inputs$vGender <- 1  # 1 = Female, 2= Male
+inputs$vN <- 25000
+
+for(strategy in c("Standard","Treat")) {
+  inputs$vStrategy <- strategy
+  cat("Running ", strategy, "\n")
+  run <- exec.simulation(inputs)
+  run$strategy <- strategy
+  
+  attributes <- arrange(get_mon_attributes(env),name,key,time) 
+  attributes <- spread(attributes %>% group_by(name,key) %>% summarise(first = first(value)),key,first) %>% data.table()
+  attributes$strategy = strategy 
+  
+  if(is.null(results)) { results <- run} else  {results <- rbind(results, run)}
+  if(is.null(patient.attributes)) { patient.attributes <- attributes} else { patient.attributes <- rbind(patient.attributes,attributes) }
+}
+
+DT <- data.table(results)
+summary <- DT[, .N, by = list(resource,strategy)]
+summary %>% dcast(resource~strategy,value.var="N") %>% kable()
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+s1 <- cost.qaly(subset(results,strategy=="Standard"),inputs) %>% mutate(strategy="Standard")
+s2 <- cost.qaly(subset(results,strategy=="Treat"),inputs) %>% mutate(strategy="Treat")
+sum_costs <- rbind(s1,s2) %>% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY)) 
+kable(sum_costs)
+```
+
+
+## Estimate the incremental net benefit. 
+
+```{r}
+lambda <- 100000 # Willingness to pay parameter
+inb1 <- cost.qaly.i(subset(results,strategy=="Standard"),inputs) %>% mutate(strategy="Standard")
+inb2 <- cost.qaly.i(subset(results,strategy=="Treat"),inputs) %>% mutate(strategy="Treat")
+NMB <- inb1 %>% left_join(inb2,"name") %>% mutate(dQALY = dQALY.y - dQALY.x, dCOST = dCOST.y - dCOST.x, NMB = lambda * dQALY - dCOST ) 
+
+NMB %>% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %>% mutate( seNMB = sqrt(vNMB/inputs$vN)) %>% kable()
+
+```
+
+
+## Latin Hypercube Sampling
+
+```{r}
+require(lhs)
+# If you wanted a uniform Latin hypercube on [1,10] and  [20,30] with 22 samplesQ
+X <- randomLHS(22, 2)
+X[,1] <- 1+9*X[,1]
+X[,2] <- 20+10*X[,2]
+X
+
+
+```
+

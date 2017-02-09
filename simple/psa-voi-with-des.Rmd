@@ -99,6 +99,7 @@ A Latin Hypercube sampling technique can be used so that each level of each fact
 source("./main_file.R")
 source("./costs_simple.R")
 require(knitr)
+require(msm)
   ## Look at summary statistics
   results <- patient.attributes <- NULL
 ```
@@ -110,7 +111,7 @@ Set the run parameters
 inputs$vHorizon <- 90
 inputs$vAge <- 40
 inputs$vGender <- 1  # 1 = Female, 2= Male
-inputs$vN <- 25000
+inputs$vN <- 1000
 
 for(strategy in c("Standard","Treat")) {
   inputs$vStrategy <- strategy
@@ -153,16 +154,88 @@ NMB %>% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %>% mutate( seNMB = sqrt(vN
 ```
 
 
+## Latin Hypercube Sampling for the PSA
+
+We have several parameters we would like to examine in our probabilistic sensitivity analysis.  These parameters (and plausible ranges) have been highlighted in bold in the model description below.
+
+1. A population of 40-year olds are at risk for an event (A) that happens at a **10% [8-12%]** rate over a 5 year period.
+2. All those who experience the event incur a cost of $10,000.
+3. Among those who experience the event, there is a **5% [2-7%]** case fatality rate.  
+4. Among those who survive, they experience a **0.25 [0.2-0.3]** utility decrement for the remainder of their life. 
+5. Among the surviors, there is a second event (B) that occurs with probability **50% [30-70]** over a 5 year period.
+6. Event B has no case fatality but incurs a $25,000 cost and a **0.10 [0.7-0.13]** disutility for 1 year 
+7. There is a new therapy available that reduces the rate of the first event by a relative risk of **0.85 [0.75-0.95]**, however the therapy costs $8,000.
+
+
 ## Latin Hypercube Sampling
 
-```{r}
-require(lhs)
-# If you wanted a uniform Latin hypercube on [1,10] and  [20,30] with 22 samplesQ
-X <- randomLHS(22, 2)
-X[,1] <- 1+9*X[,1]
-X[,2] <- 20+10*X[,2]
-X
+We'll draw from the parameter space using a latin hypercube design.  The randomLHS function draws a uniform sample which can then be transformed into any distirbution using the quantile function.  
 
+To execute the latin hypercube sampling, we'll first specfiy a list object which summarizes the type and parameters of each unknown parameter in the model. 
+
+```{r}
+pp <- list(
+  vRiskA = list(
+    type = "beta",
+    parameter = "vRiskA",
+    shape1 = 100,
+    shape2 = 900
+  ),
+  vFatalA = list(
+    type = "uniform",
+    parameter = "vFatalA",
+    min = 0.01,
+    max = 0.09
+  ),
+  A_survive = list(
+    type = "uniform",
+    parameter = "A_survive",
+    min = 0.20,
+    max = 0.25
+  ),
+  vRiskB = list(
+    type = "uniform",
+    parameter = "vRiskB",
+    min = 0.45,
+    max = 0.55
+  ),
+  B = list(
+    type = "uniform",
+    parameter = "B",
+    min = 0.07,
+    max = 0.13
+  ),
+  vRR = list(
+    type = "beta",
+    parameter = "vRR",
+    shape1 = 850,
+    shape2 = 150
+  )
+)
+```
+
+We'll now draw a random hypercube sample based on the number of parameters listed in the list object.  Once we draw the uniform draws from the hypercube sample, we'll apply the specific quantile function for the model parameter to get its draw for that iteration of the model.
+
+
+```{r, message=FALSE, warning=FALSE}
+require(lhs)
+require(tidyverse)
+X <- randomLHS(10, length(pp))
+colnames(X) = names(pp)
+
+lhc.draws.transformed <- cbind.data.frame(lapply(pp,function(x) 
+  {
+    if (x[["type"]]=="beta")
+    {
+      qbeta(X[,x[["parameter"]]],shape1=x[["shape1"]],shape2=x[["shape2"]])
+    } 
+    else if (x[["type"]]=="uniform")
+    {
+      qunif(X[,x[["parameter"]]],min=x[["min"]],max=x[["max"]])
+    }   
+  }
+))
+lhc.draws.transformed %>% head()
 
 ```
 

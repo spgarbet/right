@@ -3,6 +3,7 @@ options("scipen"=100, "digits"=6)
 annual_discount_rate <- 0.03
 
 cont_discount_rate   <- -log(1-annual_discount_rate) # Yearly Time Scale
+select <- dplyr::select
 discounted_cost <- function(start_day, end_day, base_yearly_cost, rate = cont_discount_rate)
 {
   #base_yearly_cost*(exp(-rate*start_day/365) - exp(-rate*end_day/365))/rate 

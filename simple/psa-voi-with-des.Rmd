@@ -11,15 +11,16 @@ This notebook is designed to explore probabilistic sensitivity analysis (PSA) an
 
 # Description of Model
 
-We begin with a simple DES model with the following characteristics:
+We begin with a simple DES model with the following characteristics.  Please note that the range of uncertainty is provided in square brackets.  
 
-1. A population of 40-year olds are at risk for an event (A) that happens at a 10% rate over a 5 year period.
+1. A population of 40-year olds are at risk for an event (A) that happens at a **10% [8-12%]** rate over a 5 year period.
 2. All those who experience the event incur a cost of $10,000.
-3. Among those who experience the event, there is a 5% case fatality rate.  
-4. Among those who survive, they experience a 0.25 utility decrement for the remainder of their life. 
-5. Among the surviors, there is a second event (B) that occurs with probability 50% over a 5 year period.
-6. Event B has no case fatality but incurs a $25,000 cost and a 0.10 disutility for 1 year 
-7. There is a new therapy available that reduces the rate of the first event by a relative risk of 0.85, however the therapy costs $8,000.
+3. Among those who experience the event, there is a **5% [2-7%]** case fatality rate.  
+4. Among those who survive, they experience a **0.25 [0.2-0.3]** utility decrement for the remainder of their life. 
+5. Among the surviors, there is a second event (B) that occurs with probability **50% [30-70]** over a 5 year period.
+6. Event B has no case fatality but incurs a $25,000 cost and a **0.10 [0.7-0.13]** disutility for 1 year 
+7. There is a new therapy available that reduces the rate of the first event by a relative risk of **0.5 [0.45-0.55]**, however the therapy costs $8,000.
+
 
 # Sample Size Calculations
 
@@ -84,16 +85,12 @@ Using this we can define $y$ as the population mean incremental net benefit and 
 Our goal in PSA is to quantify uncertainty in whether $y>0$.  
 
 
-
-
 ## Implementation
 A key step is in knowing the ratio $k = \bar \tau^2 / \sigma^2$.  We do so by first obtaining a prior estimate of $k$. @ohagan_monte_2007 suggest that to do so, the model input value for the initial set of runs should not be chosen randomly; we want the input parameter sets to have broad coverage of the input space.  They suggest a small number $N$ of runs, on the order of 25-40, with inputs sets chosen to be spread broadly across the space of possible inputs, and a moderate to large value of $n$.  
 
 Let $u$ denote the number of uncertain input parameters for the model.  Moreover, we want to use $p$ values for each input, and we can use these to construct a grid of combinations. 
 
 A Latin Hypercube sampling technique can be used so that each level of each factor is used the same number of times.  
-
-
 
 ```{r, message=FALSE, warning=FALSE}
 source("./main_file.R")
@@ -158,14 +155,6 @@ NMB %>% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %>% mutate( seNMB = sqrt(vN
 
 We have several parameters we would like to examine in our probabilistic sensitivity analysis.  These parameters (and plausible ranges) have been highlighted in bold in the model description below.
 
-1. A population of 40-year olds are at risk for an event (A) that happens at a **10% [8-12%]** rate over a 5 year period.
-2. All those who experience the event incur a cost of $10,000.
-3. Among those who experience the event, there is a **5% [2-7%]** case fatality rate.  
-4. Among those who survive, they experience a **0.25 [0.2-0.3]** utility decrement for the remainder of their life. 
-5. Among the surviors, there is a second event (B) that occurs with probability **50% [30-70]** over a 5 year period.
-6. Event B has no case fatality but incurs a $25,000 cost and a **0.10 [0.7-0.13]** disutility for 1 year 
-7. There is a new therapy available that reduces the rate of the first event by a relative risk of **0.85 [0.75-0.95]**, however the therapy costs $8,000.
-
 
 ## Latin Hypercube Sampling
 
@@ -208,8 +197,8 @@ pp <- list(
   vRR = list(
     type = "beta",
     parameter = "vRR",
-    shape1 = 850,
-    shape2 = 150
+    shape1 = 500,
+    shape2 = 500
   )
 )
 ```
@@ -238,4 +227,60 @@ lhc.draws.transformed <- cbind.data.frame(lapply(pp,function(x)
 lhc.draws.transformed %>% head()
 
 ```
+We can now iterate over the sampled parameter sets and return the dQALY, dCOST, and NMB for the strategy.
+```{r}
+
+inputs.orig <- inputs
+psa <- lhc.draws.transformed
+psa$NMB <- psa$dQALY <- psa$dCOST <- psa$ICER <- NA
+
+for (s in 1:nrow(lhc.draws.transformed))
+{
+  cat(s)
+  cat(paste0("\n"))
+  inputs$vRiskA <- lhc.draws.transformed$vRiskA[s]
+  inputs$vFatalA <- lhc.draws.transformed$vFatalA[s]
+  inputs$disutilities$A_survive <- lhc.draws.transformed$A_survive[s]
+  inputs$vRiskB <- lhc.draws.transformed$vRiskB[s]
+  inputs$disutilities$B <- lhc.draws.transformed$B[s]
+  inputs$vRR <- lhc.draws.transformed$vRR[s]
+  
+  for(strategy in c("Standard","Treat")) {
+    inputs$vStrategy <- strategy
+    cat("Running ", strategy, "\n")
+    run <- exec.simulation(inputs)
+    run$strategy <- strategy
+    
+    attributes <- arrange(get_mon_attributes(env),name,key,time) 
+    attributes <- spread(attributes %>% group_by(name,key) %>% summarise(first = first(value)),key,first) %>% data.table()
+    attributes$strategy = strategy 
+    
+    if(is.null(results)) { results <- run} else  {results <- rbind(results, run)}
+    if(is.null(patient.attributes)) { patient.attributes <- attributes} else 
+      { patient.attributes <-      rbind(patient.attributes,attributes) }
+  } 
+  s1 <- cost.qaly(subset(results,strategy=="Standard"),inputs) %>% mutate(strategy="Standard")
+  s2 <- cost.qaly(subset(results,strategy=="Treat"),inputs) %>% mutate(strategy="Treat")
+  #sum_costs <- rbind(s1,s2) %>% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY), dCOST = dCOST - lag(dCOST),dQALY=dQALY-lag(dQALY)) %>% filter(!is.na(ICER)) 
+  sum_costs <- rbind(s1,s2) %>% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY)) %>% mutate(dQALY=dQALY-lag(dQALY),dCOST=dCOST-lag(dCOST)) %>% filter(!is.na(ICER))
+  
+  
+  lambda <- 100000 # Willingness to pay parameter
+  inb1 <- cost.qaly.i(subset(results,strategy=="Standard"),inputs) %>% mutate(strategy="Standard")
+  inb2 <- cost.qaly.i(subset(results,strategy=="Treat"),inputs) %>% mutate(strategy="Treat")
+  NMB <- inb1 %>% left_join(inb2,"name") %>% mutate(dQALY = dQALY.y - dQALY.x, dCOST = dCOST.y - dCOST.x, NMB = lambda * dQALY - dCOST ) 
+
+  
+  psa$NMB[s] <- NMB %>% summarise(mNMB = mean(NMB)) %>% collect() %>% .[["mNMB"]]
+  psa$dQALY[s] <- sum_costs$dQALY[1]
+  psa$dCOST[s] <- sum_costs$dCOST[1]
+  psa$ICER[s] <- sum_costs$ICER[1]
+}
+```
+
+
+```{r}
+psa %>% ggplot(aes(x=dQALY,y=dCOST))+geom_point()
+```
+
 

@@ -6,7 +6,7 @@ source("./clopidogrel/counters.R")
 source('./warfarin/counters.R')
 source("./main/counters.R")
 counters <- c(counters.gen, counters.dapt, counters.simvastatin, counters.warfarin)
-inputs$vN <- 100000
+inputs$vN <- 200000
 
 ###########
 #library(plyr)
@@ -109,13 +109,19 @@ cost.qaly <- function(raw,inputs)
   
   QALY = qaly.i %>% group_by(name) %>% dplyr::summarise(dQALY = sum(qaly.d)/365.25)
   COST = arrivals %>% filter(discounted_cost>0) %>% group_by(name,resource) %>% dplyr::summarise(dCOST = sum(discounted_cost)) %>% merge(cost_cat,by="resource",all.x = TRUE)
-  avgsum <- data.frame(    dQALY = sum(QALY$dQALY)/inputs$vN,
-                           dCOST = sum(COST$dCOST)/inputs$vN,
-                           dCOST.test = sum(COST$dCOST[COST$cat==1])/inputs$vN,
-                           dCOST.drug = sum(COST$dCOST[COST$cat==2])/inputs$vN,
-                           dCOST.event = sum(COST$dCOST[COST$cat==3])/inputs$vN) %>%
-    mutate(NMB10k=dQALY*10000-dCOST,NMB50k=dQALY*50000-dCOST,NMB100k=dQALY*100000-dCOST) #add NMB calcuation
-  return(avgsum)
+  c1 <- COST %>% group_by(name) %>% summarize(total=sum(dCOST))
+  c2 <- COST %>% group_by(name) %>% filter(cat==1) %>% summarize(test=sum(dCOST))
+  c3 <- COST %>% group_by(name) %>% filter(cat==2) %>% summarize(drug=sum(dCOST))
+  c4 <- COST %>% group_by(name) %>% filter(cat==3) %>% summarize(event=sum(dCOST))
+  out <- QALY %>% left_join(c1,by="name") %>% left_join(c2,by="name") %>% left_join(c3,by="name") %>% left_join(c4,by="name")
+  return(out)
+  #avgsum <- data.frame(    dQALY = sum(QALY$dQALY)/inputs$vN,
+   #                        dCOST = sum(COST$dCOST)/inputs$vN,
+    #                       dCOST.test = sum(COST$dCOST[COST$cat==1])/inputs$vN,
+     #                      dCOST.drug = sum(COST$dCOST[COST$cat==2])/inputs$vN,
+      #                     dCOST.event = sum(COST$dCOST[COST$cat==3])/inputs$vN) %>%
+    #mutate(NMB10k=dQALY*10000-dCOST,NMB50k=dQALY*50000-dCOST,NMB100k=dQALY*100000-dCOST) #add NMB calcuation
+  #return(avgsum)
 }
 
 

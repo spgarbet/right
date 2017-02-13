@@ -182,13 +182,14 @@ z = \lambda \times \Delta e - \Delta c
 <pre class="r"><code>source(&quot;./main_file.R&quot;)
 source(&quot;./costs_simple.R&quot;)
 require(knitr)
+require(msm)
   ## Look at summary statistics
   results &lt;- patient.attributes &lt;- NULL</code></pre>
 <p>Set the run parameters</p>
 <pre class="r"><code>inputs$vHorizon &lt;- 90
 inputs$vAge &lt;- 40
 inputs$vGender &lt;- 1  # 1 = Female, 2= Male
-inputs$vN &lt;- 25000
+inputs$vN &lt;- 1000
 
 for(strategy in c(&quot;Standard&quot;,&quot;Treat&quot;)) {
   inputs$vStrategy &lt;- strategy
@@ -219,38 +220,38 @@ summary %&gt;% dcast(resource~strategy,value.var=&quot;N&quot;) %&gt;% kable()</
 <tbody>
 <tr class="odd">
 <td align="left">A</td>
-<td align="right">2093</td>
-<td align="right">1769</td>
+<td align="right">92</td>
+<td align="right">83</td>
 </tr>
 <tr class="even">
 <td align="left">A_death</td>
-<td align="right">110</td>
-<td align="right">94</td>
+<td align="right">1</td>
+<td align="right">2</td>
 </tr>
 <tr class="odd">
 <td align="left">A_survive</td>
-<td align="right">1983</td>
-<td align="right">1675</td>
+<td align="right">91</td>
+<td align="right">81</td>
 </tr>
 <tr class="even">
 <td align="left">B</td>
-<td align="right">968</td>
-<td align="right">833</td>
+<td align="right">44</td>
+<td align="right">36</td>
 </tr>
 <tr class="odd">
 <td align="left">secular_death</td>
-<td align="right">24890</td>
-<td align="right">24906</td>
+<td align="right">999</td>
+<td align="right">998</td>
 </tr>
 <tr class="even">
 <td align="left">time_in_model</td>
-<td align="right">25000</td>
-<td align="right">25000</td>
+<td align="right">1000</td>
+<td align="right">1000</td>
 </tr>
 <tr class="odd">
 <td align="left">treat</td>
 <td align="right">NA</td>
-<td align="right">25000</td>
+<td align="right">1000</td>
 </tr>
 </tbody>
 </table>
@@ -269,16 +270,16 @@ kable(sum_costs)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">22.9377</td>
-<td align="right">1606.98</td>
+<td align="right">22.9156</td>
+<td align="right">1810.95</td>
 <td align="left">Standard</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
-<td align="right">23.0141</td>
-<td align="right">3373.70</td>
+<td align="right">22.9937</td>
+<td align="right">3552.58</td>
 <td align="left">Treat</td>
-<td align="right">23112.4</td>
+<td align="right">22279.7</td>
 </tr>
 </tbody>
 </table>
@@ -301,45 +302,95 @@ NMB %&gt;% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %&gt;% mutate( seNMB = s
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">5877.33</td>
-<td align="right">423821781808</td>
-<td align="right">4117.39</td>
+<td align="right">6075.49</td>
+<td align="right">348598659761</td>
+<td align="right">18670.8</td>
 </tr>
 </tbody>
 </table>
 </div>
+<div id="latin-hypercube-sampling-for-the-psa" class="section level2">
+<h2>Latin Hypercube Sampling for the PSA</h2>
+<p>We have several parameters we would like to examine in our probabilistic sensitivity analysis. These parameters (and plausible ranges) have been highlighted in bold in the model description below.</p>
+<ol style="list-style-type: decimal">
+<li>A population of 40-year olds are at risk for an event (A) that happens at a <strong>10% [8-12%]</strong> rate over a 5 year period.</li>
+<li>All those who experience the event incur a cost of $10,000.</li>
+<li>Among those who experience the event, there is a <strong>5% [2-7%]</strong> case fatality rate.<br />
+</li>
+<li>Among those who survive, they experience a <strong>0.25 [0.2-0.3]</strong> utility decrement for the remainder of their life.</li>
+<li>Among the surviors, there is a second event (B) that occurs with probability <strong>50% [30-70]</strong> over a 5 year period.</li>
+<li>Event B has no case fatality but incurs a $25,000 cost and a <strong>0.10 [0.7-0.13]</strong> disutility for 1 year</li>
+<li>There is a new therapy available that reduces the rate of the first event by a relative risk of <strong>0.85 [0.75-0.95]</strong>, however the therapy costs $8,000.</li>
+</ol>
+</div>
 <div id="latin-hypercube-sampling" class="section level2">
 <h2>Latin Hypercube Sampling</h2>
-<pre class="r"><code>require(lhs)</code></pre>
-<pre><code>## Loading required package: lhs</code></pre>
-<pre class="r"><code># If you wanted a uniform Latin hypercube on [1,10] and  [20,30] with 22 samplesQ
-X &lt;- randomLHS(22, 2)
-X[,1] &lt;- 1+9*X[,1]
-X[,2] &lt;- 20+10*X[,2]
-X</code></pre>
-<pre><code>##          [,1]    [,2]
-##  [1,] 5.34083 28.3215
-##  [2,] 9.23592 27.3849
-##  [3,] 8.22395 21.0971
-##  [4,] 3.03694 20.8024
-##  [5,] 7.20159 21.8762
-##  [6,] 2.03189 24.8037
-##  [7,] 6.01593 22.4591
-##  [8,] 6.82714 27.8511
-##  [9,] 7.70126 26.3500
-## [10,] 8.39674 20.0976
-## [11,] 1.18658 26.6687
-## [12,] 2.58892 23.7155
-## [13,] 3.87121 22.9692
-## [14,] 9.89518 25.6671
-## [15,] 5.72098 29.0853
-## [16,] 6.44553 23.5520
-## [17,] 3.47047 29.3847
-## [18,] 4.37408 24.4003
-## [19,] 1.46359 29.7684
-## [20,] 3.32210 25.2439
-## [21,] 5.08514 27.1921
-## [22,] 8.96456 21.7994</code></pre>
+<p>We’ll draw from the parameter space using a latin hypercube design. The randomLHS function draws a uniform sample which can then be transformed into any distirbution using the quantile function.</p>
+<p>To execute the latin hypercube sampling, we’ll first specfiy a list object which summarizes the type and parameters of each unknown parameter in the model.</p>
+<pre class="r"><code>pp &lt;- list(
+  vRiskA = list(
+    type = &quot;beta&quot;,
+    parameter = &quot;vRiskA&quot;,
+    shape1 = 100,
+    shape2 = 900
+  ),
+  vFatalA = list(
+    type = &quot;uniform&quot;,
+    parameter = &quot;vFatalA&quot;,
+    min = 0.01,
+    max = 0.09
+  ),
+  A_survive = list(
+    type = &quot;uniform&quot;,
+    parameter = &quot;A_survive&quot;,
+    min = 0.20,
+    max = 0.25
+  ),
+  vRiskB = list(
+    type = &quot;uniform&quot;,
+    parameter = &quot;vRiskB&quot;,
+    min = 0.45,
+    max = 0.55
+  ),
+  B = list(
+    type = &quot;uniform&quot;,
+    parameter = &quot;B&quot;,
+    min = 0.07,
+    max = 0.13
+  ),
+  vRR = list(
+    type = &quot;beta&quot;,
+    parameter = &quot;vRR&quot;,
+    shape1 = 850,
+    shape2 = 150
+  )
+)</code></pre>
+<p>We’ll now draw a random hypercube sample based on the number of parameters listed in the list object. Once we draw the uniform draws from the hypercube sample, we’ll apply the specific quantile function for the model parameter to get its draw for that iteration of the model.</p>
+<pre class="r"><code>require(lhs)
+require(tidyverse)
+X &lt;- randomLHS(10, length(pp))
+colnames(X) = names(pp)
+
+lhc.draws.transformed &lt;- cbind.data.frame(lapply(pp,function(x) 
+  {
+    if (x[[&quot;type&quot;]]==&quot;beta&quot;)
+    {
+      qbeta(X[,x[[&quot;parameter&quot;]]],shape1=x[[&quot;shape1&quot;]],shape2=x[[&quot;shape2&quot;]])
+    } 
+    else if (x[[&quot;type&quot;]]==&quot;uniform&quot;)
+    {
+      qunif(X[,x[[&quot;parameter&quot;]]],min=x[[&quot;min&quot;]],max=x[[&quot;max&quot;]])
+    }   
+  }
+))
+lhc.draws.transformed %&gt;% head()</code></pre>
+<pre><code>##      vRiskA   vFatalA A_survive   vRiskB         B      vRR
+## 1 0.1065451 0.0347546  0.232808 0.522997 0.1196847 0.864362
+## 2 0.0753925 0.0657389  0.225856 0.453160 0.0904232 0.861904
+## 3 0.0918213 0.0492352  0.248551 0.483975 0.1068543 0.850669
+## 4 0.0987431 0.0776461  0.223079 0.504856 0.0812162 0.841077
+## 5 0.1037680 0.0187709  0.239955 0.544880 0.0736005 0.832762
+## 6 0.0971621 0.0678488  0.240837 0.464857 0.0944529 0.839784</code></pre>
 <div id="refs" class="references">
 <div id="ref-ohagan_monte_2007">
 <p>O’Hagan, Anthony, Matt Stevenson, and Jason Madan. 2007. “Monte Carlo Probabilistic Sensitivity Analysis for Patient Level Simulation Models: Efficient Estimation of Mean and Variance Using ANOVA.” <em>Health Economics</em> 16 (10): 1009–23. doi:<a href="https://doi.org/10.1002/hec.1199">10.1002/hec.1199</a>.</p>

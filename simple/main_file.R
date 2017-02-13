@@ -19,7 +19,7 @@ inputs <- list(
   vGender = 1,
   vRiskA = 0.1,
   vDurationA = 5,
-  vRR = 0.85,
+  vRR = 0.5,
   vFatalA = 0.05,
   
   vRiskB = 0.5,

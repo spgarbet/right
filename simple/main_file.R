@@ -59,10 +59,12 @@ inputs <- list(
 
 ###
 ###assign attributes
+
 initialize_patient <- function(traj, inputs)
 {
   traj %>%
     seize("time_in_model") %>%
+    set_attribute("aID", function() { tmp <- id; id <<- id + 1; tmp }) %>%
     set_attribute("aAgeInitial", function() inputs$vAge) %>%
     set_attribute("aAge", function(attrs) attrs[['aAgeInitial']]) %>%
     set_attribute("aGender", function() inputs$vGender) %>%
@@ -76,7 +78,9 @@ initialize_patient <- function(traj, inputs)
       trajectory("Treat") %>% mark("treat"),
       trajectory("Standard") %>% timeout(0)
     )
+
 }
+
 
 ########
 #events

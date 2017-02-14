@@ -26,7 +26,7 @@ params <- c(
   d_a  = 0.25,               # Permanent disutility for a
   d_b  = 0.1,                # 1-year disutility for b 
   
-  disc_rate = 0.03           # For computing discount
+  disc_rate = 1e-12          # For computing discount
 )
 
 Simple <- function(t, y, params)
@@ -35,7 +35,7 @@ Simple <- function(t, y, params)
     if(t > 5)
     {
       r_a <- 0
-      r_d <- 0
+      r_b <- 0
     }
     
     list(c(
@@ -45,7 +45,7 @@ Simple <- function(t, y, params)
       e1= (1-r_ad)*r_a*h-(r_b+r_d)*e1,
       b = r_b*e1,
       e2= r_b*e1 - r_d*e2,
-      d = (r_d+r_ad*r_a)*h + r_d*e1 + r_d*e2
+      d = r_ad*r_a*h + r_d*(h+e1+e2)
     ))
   })
 }
@@ -62,34 +62,43 @@ costs <- function(solution, params)
   n <- length(solution[,1])
 
   with(as.list(params), {
-    cost <- c_a*solution[n, 'a'] + c_b*solution[n, 'b'] + c_t*solution[1, 'h']
+    # Compute Discounted Cost
+    cost <- c_a*sum(diff(solution[,'a'])*solution[2:n,'disc']) + # Cost * Number of events in bucket a
+            c_b*sum(diff(solution[,'b'])*solution[2:n,'disc']) + # Cost * Number of events in bucket b
+            c_t*solution[1, 'h']  # Cost * Initial healthy individuals
     
-    h     <- solution[2,'time'] - solution[1,'time']
+    # Step size of simulation
+    step     <- solution[2,'time'] - solution[1,'time']
     
-    # Compute a taper function
+    # Compute a taper function, for cutting off permanent disutility at time horizon
     taper <- rep(1, n-1)
     to    <- n - 1
     from  <- to - to/5
-    taper[(from+1):to] <- seq(1, h, length.out=to/5) # Deals with cutoff in disutility
+    taper[(from+1):to] <- seq(1, step, length.out=to/5) # Deals with cutoff in disutility
       
-    dis  <- d_a*sum(alt_simp_coef(n)*solution[,'a'])*h + # Permanent disutility A (integration)
-            d_b*sum(diff(solution[,'b'])*taper)        + # Event B (with taper for horizon)
-            sum(alt_simp_coef(n)*solution[,'d'])*h       # Death disutility (integration)
+    # Total possible life units is integral of discounted time
+    life <- sum(alt_simp_coef(n)*solution[,'disc'])*step
     
-    c(cost       = cost,
-      disutility = dis,
-      a_count    = solution[n, 'a'],
-      b_count    = solution[n, 'b'],
-      dead_count = solution[n, 'd'], 
-      living     = solution[n, 'h']+solution[n,'e1']+solution['e2']
+    dis  <- d_a*sum(alt_simp_coef(n)*solution[,'a']*solution[,'disc'])*step + # Permanent disutility A (integration)
+            d_b*sum(diff(solution[,'b'])*taper*solution[2:n,'disc'])        + # Event B (with taper for horizon)
+            sum(alt_simp_coef(n)*solution[,'d']*solution[,'disc'])*step       # Death disutility (integration)
+    
+    c(cost       = c(cost, use.names=FALSE),
+      qaly       = c(life - dis, use.names=FALSE),
+      possible   = c(life, use.names=FALSE),
+      disutility = c(dis, use.names=FALSE),
+      a_count    = c(solution[n,'a'], use.names=FALSE),
+      b_count    = c(solution[n,'b'], use.names=FALSE),
+      dead_count = c(solution[n,'d'], use.names=FALSE), 
+      living     = c(solution[n,'h']+solution[n,'e1']+solution[n,'e2'], use.names=FALSE)
       )
   })
 }
 
 expected <- function(params) costs(ode(yinit, times, Simple, params), params)
 
-expected(params)
+round(expected(params), 4)
 
 params['r_a'] <- params['r_a']*0.5
 params['c_t']  <- 2000
-expected(params)
+round(expected(params), 4)

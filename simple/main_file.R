@@ -70,6 +70,8 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aRR_A",function() inputs$vRR) %>% 
     set_attribute("aRR_B", epsilon) %>%
     set_attribute("aTreat", function() ifelse(inputs$vStrategy=="Treat",1,2)) %>%
+    set_attribute("eventA",0) %>%  # Event A 0=not experienced, 1=experienced
+    set_attribute("eventB",0) %>%  # Event B 0=not experienced, 1=experienced
     branch(
       function(attrs) attrs[['aTreat']],
       continue = c(TRUE, TRUE),
@@ -151,7 +153,7 @@ source('./event_main_loop_simple.R')
 # Start the clock!
 exec.simulation <- function(inputs)
 {
-  set.seed(12345)
+ # set.seed(12345)
   env  <<- simmer("Simple")
   traj <- simulation(env, inputs)
   env %>% create_counters(counters)

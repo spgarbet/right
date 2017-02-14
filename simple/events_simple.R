@@ -1,17 +1,18 @@
 days_till_A<- function(attrs, inputs)
 {
   # Relative Risk
-  if(attrs[["aTreat"]]==1) 
-    {rr = inputs$vRR*attrs[["aRR_A"]]} else {rr = attrs[["aRR_A"]]}
+  rr <- if(attrs[["aTreat"]]==1) inputs$vRR else 1.0
   
   # Baseline Risk
-  rates = 0.1
-  days = 365*5
+  days <- 365*inputs$vDurationA
   
   # Convert To Probability 
-  rates2 = (- (log ( 1 - rates)*rr) / days)
+  rate <- (- (log ( 1 - inputs$vRiskA)*rr) / days)
   
-  t2e = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+  t2e <- rexp(1, rate)
+  
+  if(t2e > days || attrs[["eventA"]] != 0) t2e <- 365*inputs$vHorizon + 1
+  
   return(t2e)
 } 
 
@@ -23,33 +24,34 @@ event_A = function(traj, inputs)
   continue = c(FALSE, TRUE),
   trajectory("Die")  %>% release("time_in_model") %>% mark("A_death") %>% mark("A"),
   trajectory("Survive")  %>%  mark("A_survive") %>% mark("A") %>%
-    set_attribute("aRR_A",epsilon) %>% #turn off A
+    set_attribute("eventA",1) %>% #record occurance of A
     set_attribute("aRR_B",1) %>% #turn on B and adjust clock
-    set_attribute("attB", function(attrs) now(env) + days_till_B(attrs,inputs))
+    set_attribute("attB", function(attrs) now() + days_till_B(attrs,inputs))
   )
 }
 
-  
-
 days_till_B <- function(attrs,inputs) 
 {
-  # Relative Risk
-  rr = attrs[["aRR_B"]]
-  
   # Baseline Risk
-  rates = inputs$vRiskB
-  days = 365*5
+  days <- 365*inputs$vDurationB
   
   # Convert To Probability 
-  rates2 = (- (log ( 1 - rates)*rr) / days)
+  rate <- (- (log ( 1 - inputs$vRiskB)) / days)
   
-  t2e = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+  t2e <- rexp(1, rate)
+  
+  if(t2e > days || attrs[["eventA"]] != 1 || attrs[["eventB"]] != 0)
+    t2e <- 365*inputs$vHorizon + 1
+
   return(t2e)
 }
 
 event_B = function(traj, inputs) 
 {
-  traj %>% set_attribute("aRR_B",epsilon) %>% mark("B")
+  traj %>%
+  set_attribute("aRR_B",epsilon) %>%
+  mark("B") %>%
+  set_attribute("eventB", 1)
 }
 
 

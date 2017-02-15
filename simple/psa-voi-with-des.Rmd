@@ -13,7 +13,7 @@ This notebook is designed to explore probabilistic sensitivity analysis (PSA) an
 
 We begin with a simple DES model with the following characteristics.  Please note that the range of uncertainty is provided in square brackets.  
 
-1. A population of 40-year olds are at risk for an event (A) that happens at a **10% [8-12%]** rate over a 5 year period.
+1. A population of 40-year old women are at risk for both secular death and an event (A) that happens at a **10% [8-12%]** rate over a 5 year period.
 2. All those who experience the event incur a cost of $10,000.
 3. Among those who experience the event, there is a **5% [2-7%]** case fatality rate.  
 4. Among those who survive, they experience a **0.25 [0.2-0.3]** utility decrement for the remainder of their life. 
@@ -97,8 +97,10 @@ source("./main_file.R")
 source("./costs_simple.R")
 require(knitr)
 require(msm)
-  ## Look at summary statistics
-  results <- patient.attributes <- NULL
+id <- 0
+
+## Look at summary statistics
+results <- patient.attributes <- NULL
 ```
 
 Set the run parameters
@@ -108,7 +110,7 @@ Set the run parameters
 inputs$vHorizon <- 90
 inputs$vAge <- 40
 inputs$vGender <- 1  # 1 = Female, 2= Male
-inputs$vN <- 1000
+inputs$vN <- 100
 
 for(strategy in c("Standard","Treat")) {
   inputs$vStrategy <- strategy
@@ -147,10 +149,7 @@ inb2 <- cost.qaly.i(subset(results,strategy=="Treat"),inputs) %>% mutate(strateg
 NMB <- inb1 %>% left_join(inb2,"name") %>% mutate(dQALY = dQALY.y - dQALY.x, dCOST = dCOST.y - dCOST.x, NMB = lambda * dQALY - dCOST ) 
 
 NMB %>% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %>% mutate( seNMB = sqrt(vNMB/inputs$vN)) %>% kable()
-
 ```
-
-
 ## Latin Hypercube Sampling for the PSA
 
 We have several parameters we would like to examine in our probabilistic sensitivity analysis.  These parameters (and plausible ranges) have been highlighted in bold in the model description below.
@@ -211,7 +210,7 @@ require(lhs)
 require(tidyverse)
 X <- randomLHS(10, length(pp))
 colnames(X) = names(pp)
-
+Y <- randomLHS(10000000,length(pp))
 lhc.draws.transformed <- cbind.data.frame(lapply(pp,function(x) 
   {
     if (x[["type"]]=="beta")
@@ -232,7 +231,7 @@ We can now iterate over the sampled parameter sets and return the dQALY, dCOST, 
 
 inputs.orig <- inputs
 psa <- lhc.draws.transformed
-psa$NMB <- psa$dQALY <- psa$dCOST <- psa$ICER <- NA
+psa$NMB <- psa$dQALY <- psa$dCOST <- psa$ICER <- psa$tau.i <-  NA
 
 for (s in 1:nrow(lhc.draws.transformed))
 {
@@ -269,18 +268,61 @@ for (s in 1:nrow(lhc.draws.transformed))
   inb1 <- cost.qaly.i(subset(results,strategy=="Standard"),inputs) %>% mutate(strategy="Standard")
   inb2 <- cost.qaly.i(subset(results,strategy=="Treat"),inputs) %>% mutate(strategy="Treat")
   NMB <- inb1 %>% left_join(inb2,"name") %>% mutate(dQALY = dQALY.y - dQALY.x, dCOST = dCOST.y - dCOST.x, NMB = lambda * dQALY - dCOST ) 
-
   
   psa$NMB[s] <- NMB %>% summarise(mNMB = mean(NMB)) %>% collect() %>% .[["mNMB"]]
   psa$dQALY[s] <- sum_costs$dQALY[1]
   psa$dCOST[s] <- sum_costs$dCOST[1]
   psa$ICER[s] <- sum_costs$ICER[1]
+  psa$tau.i[s] <- var(NMB$NMB)
 }
 ```
 
+From the paper:
+
+Having chosen a suitable design of N inputs sets and carried out the model runs, we can use the ANOVA method to estimate both $\bar \tau^2$ and $\sigma^2$.  However, some correction is needed when estimating $\sigma^2$, to allow for the spread of the points.
+
+Let $v_j$ be the variance of the p values chosen for input $j$, expressed as a proportion of the correct variance for that input according to its PSA distribution.  
+
+## Variance of Beta Distribution
+
+\[
+var(X)  = \frac{\alpha \beta}{(\alpha+\beta)^2(\alpha + \beta + 1)}
+\]
+
+## Variance of Uniform Distribution
+\[
+var(X)  = \frac{1}{12}(max-min)^2
+\]
 
 ```{r}
-psa %>% ggplot(aes(x=dQALY,y=dCOST))+geom_point()
+# These are the analytic formulas for the variances.  We'll apply over the list of uncertain parameters to get their theoretical variances.  
+
+var.beta <- function(shape1,shape2) (shape1*shape2)/ (((shape1+shape2))^2*(shape1+shape2+1))
+var.unif <- function(min,max) (1/12)*(max-min)^2
+
+v.j <- cbind.data.frame(lapply(pp,function(x) 
+  {
+    if (x[["type"]]=="beta")
+    {
+      var.beta(shape1=x[["shape1"]],shape2=x[["shape2"]])
+    } 
+    else if (x[["type"]]=="uniform")
+    {
+      var.unif(min=x[["min"]],max=x[["max"]])
+    }   
+  }
+))
+v.j
+
+
+```
+If we now suppose that hte output of the economic model is roughly linear in its inputs, then the ANOVA estimate of $\sigma^2$ should be divided by the product of the $v_j$'s in order to correct for the spread of the design points. 
+
+```{r}
+tau.est <- mean(psa$tau.i)
+sigmasq.est <- mean(psa$NMB)
+k.est <- tau.est / sigmasq.est
+
 ```
 
 

@@ -123,16 +123,16 @@ $(document).ready(function () {
 <p>This notebook is designed to explore probabilistic sensitivity analysis (PSA) and value of information (VOI) methods with a simple discrete event simulation (DES) model.</p>
 <div id="description-of-model" class="section level1">
 <h1>Description of Model</h1>
-<p>We begin with a simple DES model with the following characteristics:</p>
+<p>We begin with a simple DES model with the following characteristics. Please note that the range of uncertainty is provided in square brackets.</p>
 <ol style="list-style-type: decimal">
-<li>A population of 40-year olds are at risk for an event (A) that happens at a 10% rate over a 5 year period.</li>
+<li>A population of 40-year old women are at risk for both secular death and an event (A) that happens at a <strong>10% [8-12%]</strong> rate over a 5 year period.</li>
 <li>All those who experience the event incur a cost of $10,000.</li>
-<li>Among those who experience the event, there is a 5% case fatality rate.<br />
+<li>Among those who experience the event, there is a <strong>5% [2-7%]</strong> case fatality rate.<br />
 </li>
-<li>Among those who survive, they experience a 0.25 utility decrement for the remainder of their life.</li>
-<li>Among the surviors, there is a second event (B) that occurs with probability 50% over a 5 year period.</li>
-<li>Event B has no case fatality but incurs a $25,000 cost and a 0.10 disutility for 1 year</li>
-<li>There is a new therapy available that reduces the rate of the first event by a relative risk of 0.85, however the therapy costs $8,000.</li>
+<li>Among those who survive, they experience a <strong>0.25 [0.2-0.3]</strong> utility decrement for the remainder of their life.</li>
+<li>Among the surviors, there is a second event (B) that occurs with probability <strong>50% [30-70]</strong> over a 5 year period.</li>
+<li>Event B has no case fatality but incurs a $25,000 cost and a <strong>0.10 [0.7-0.13]</strong> disutility for 1 year</li>
+<li>There is a new therapy available that reduces the rate of the first event by a relative risk of <strong>0.5 [0.45-0.55]</strong>, however the therapy costs $8,000.</li>
 </ol>
 </div>
 <div id="sample-size-calculations" class="section level1">
@@ -183,13 +183,13 @@ z = \lambda \times \Delta e - \Delta c
 source(&quot;./costs_simple.R&quot;)
 require(knitr)
 require(msm)
-  ## Look at summary statistics
-  results &lt;- patient.attributes &lt;- NULL</code></pre>
+## Look at summary statistics
+results &lt;- patient.attributes &lt;- NULL</code></pre>
 <p>Set the run parameters</p>
 <pre class="r"><code>inputs$vHorizon &lt;- 90
 inputs$vAge &lt;- 40
 inputs$vGender &lt;- 1  # 1 = Female, 2= Male
-inputs$vN &lt;- 1000
+inputs$vN &lt;- 100
 
 for(strategy in c(&quot;Standard&quot;,&quot;Treat&quot;)) {
   inputs$vStrategy &lt;- strategy
@@ -220,38 +220,33 @@ summary %&gt;% dcast(resource~strategy,value.var=&quot;N&quot;) %&gt;% kable()</
 <tbody>
 <tr class="odd">
 <td align="left">A</td>
-<td align="right">92</td>
-<td align="right">83</td>
+<td align="right">5</td>
+<td align="right">2</td>
 </tr>
 <tr class="even">
 <td align="left">A_death</td>
 <td align="right">1</td>
-<td align="right">2</td>
+<td align="right">1</td>
 </tr>
 <tr class="odd">
 <td align="left">A_survive</td>
-<td align="right">91</td>
-<td align="right">81</td>
+<td align="right">4</td>
+<td align="right">1</td>
 </tr>
 <tr class="even">
-<td align="left">B</td>
-<td align="right">44</td>
-<td align="right">36</td>
-</tr>
-<tr class="odd">
 <td align="left">secular_death</td>
-<td align="right">999</td>
-<td align="right">998</td>
-</tr>
-<tr class="even">
-<td align="left">time_in_model</td>
-<td align="right">1000</td>
-<td align="right">1000</td>
+<td align="right">99</td>
+<td align="right">99</td>
 </tr>
 <tr class="odd">
+<td align="left">time_in_model</td>
+<td align="right">100</td>
+<td align="right">100</td>
+</tr>
+<tr class="even">
 <td align="left">treat</td>
 <td align="right">NA</td>
-<td align="right">1000</td>
+<td align="right">100</td>
 </tr>
 </tbody>
 </table>
@@ -270,16 +265,16 @@ kable(sum_costs)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">22.9156</td>
-<td align="right">1810.95</td>
+<td align="right">22.8518</td>
+<td align="right">468.936</td>
 <td align="left">Standard</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
-<td align="right">22.9937</td>
-<td align="right">3552.58</td>
+<td align="right">22.9165</td>
+<td align="right">2191.248</td>
 <td align="left">Treat</td>
-<td align="right">22279.7</td>
+<td align="right">26616.9</td>
 </tr>
 </tbody>
 </table>
@@ -302,26 +297,18 @@ NMB %&gt;% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %&gt;% mutate( seNMB = s
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">6075.49</td>
-<td align="right">348598659761</td>
-<td align="right">18670.8</td>
+<td align="right">4748.43</td>
+<td align="right">239157979211</td>
+<td align="right">48903.8</td>
+</tr>
+<tr class="even">
+<td align="right">## Latin H</td>
+<td align="right">ypercube Sampli</td>
+<td align="right">ng for the PSA</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div id="latin-hypercube-sampling-for-the-psa" class="section level2">
-<h2>Latin Hypercube Sampling for the PSA</h2>
 <p>We have several parameters we would like to examine in our probabilistic sensitivity analysis. These parameters (and plausible ranges) have been highlighted in bold in the model description below.</p>
-<ol style="list-style-type: decimal">
-<li>A population of 40-year olds are at risk for an event (A) that happens at a <strong>10% [8-12%]</strong> rate over a 5 year period.</li>
-<li>All those who experience the event incur a cost of $10,000.</li>
-<li>Among those who experience the event, there is a <strong>5% [2-7%]</strong> case fatality rate.<br />
-</li>
-<li>Among those who survive, they experience a <strong>0.25 [0.2-0.3]</strong> utility decrement for the remainder of their life.</li>
-<li>Among the surviors, there is a second event (B) that occurs with probability <strong>50% [30-70]</strong> over a 5 year period.</li>
-<li>Event B has no case fatality but incurs a $25,000 cost and a <strong>0.10 [0.7-0.13]</strong> disutility for 1 year</li>
-<li>There is a new therapy available that reduces the rate of the first event by a relative risk of <strong>0.85 [0.75-0.95]</strong>, however the therapy costs $8,000.</li>
-</ol>
 </div>
 <div id="latin-hypercube-sampling" class="section level2">
 <h2>Latin Hypercube Sampling</h2>
@@ -361,8 +348,8 @@ NMB %&gt;% summarise(mNMB = mean(NMB), vNMB = var(NMB)) %&gt;% mutate( seNMB = s
   vRR = list(
     type = &quot;beta&quot;,
     parameter = &quot;vRR&quot;,
-    shape1 = 850,
-    shape2 = 150
+    shape1 = 500,
+    shape2 = 500
   )
 )</code></pre>
 <p>We’ll now draw a random hypercube sample based on the number of parameters listed in the list object. Once we draw the uniform draws from the hypercube sample, we’ll apply the specific quantile function for the model parameter to get its draw for that iteration of the model.</p>
@@ -385,12 +372,113 @@ lhc.draws.transformed &lt;- cbind.data.frame(lapply(pp,function(x)
 ))
 lhc.draws.transformed %&gt;% head()</code></pre>
 <pre><code>##      vRiskA   vFatalA A_survive   vRiskB         B      vRR
-## 1 0.1065451 0.0347546  0.232808 0.522997 0.1196847 0.864362
-## 2 0.0753925 0.0657389  0.225856 0.453160 0.0904232 0.861904
-## 3 0.0918213 0.0492352  0.248551 0.483975 0.1068543 0.850669
-## 4 0.0987431 0.0776461  0.223079 0.504856 0.0812162 0.841077
-## 5 0.1037680 0.0187709  0.239955 0.544880 0.0736005 0.832762
-## 6 0.0971621 0.0678488  0.240837 0.464857 0.0944529 0.839784</code></pre>
+## 1 0.0851774 0.0744215  0.242765 0.494973 0.0976607 0.512857
+## 2 0.0924700 0.0699364  0.238482 0.543336 0.1072323 0.529449
+## 3 0.1065933 0.0151491  0.211391 0.479544 0.1185638 0.467440
+## 4 0.0899513 0.0470284  0.228077 0.459086 0.1148860 0.503955
+## 5 0.0967356 0.0858270  0.247578 0.523076 0.1288540 0.489402
+## 6 0.0994624 0.0594082  0.221434 0.532227 0.0734066 0.495226</code></pre>
+<p>We can now iterate over the sampled parameter sets and return the dQALY, dCOST, and NMB for the strategy.</p>
+<pre class="r"><code>inputs.orig &lt;- inputs
+psa &lt;- lhc.draws.transformed
+psa$NMB &lt;- psa$dQALY &lt;- psa$dCOST &lt;- psa$ICER &lt;- psa$tau.i &lt;-  NA
+
+for (s in 1:nrow(lhc.draws.transformed))
+{
+  cat(s)
+  cat(paste0(&quot;\n&quot;))
+  inputs$vRiskA &lt;- lhc.draws.transformed$vRiskA[s]
+  inputs$vFatalA &lt;- lhc.draws.transformed$vFatalA[s]
+  inputs$disutilities$A_survive &lt;- lhc.draws.transformed$A_survive[s]
+  inputs$vRiskB &lt;- lhc.draws.transformed$vRiskB[s]
+  inputs$disutilities$B &lt;- lhc.draws.transformed$B[s]
+  inputs$vRR &lt;- lhc.draws.transformed$vRR[s]
+  
+  for(strategy in c(&quot;Standard&quot;,&quot;Treat&quot;)) {
+    inputs$vStrategy &lt;- strategy
+    cat(&quot;Running &quot;, strategy, &quot;\n&quot;)
+    run &lt;- exec.simulation(inputs)
+    run$strategy &lt;- strategy
+    
+    attributes &lt;- arrange(get_mon_attributes(env),name,key,time) 
+    attributes &lt;- spread(attributes %&gt;% group_by(name,key) %&gt;% summarise(first = first(value)),key,first) %&gt;% data.table()
+    attributes$strategy = strategy 
+    
+    if(is.null(results)) { results &lt;- run} else  {results &lt;- rbind(results, run)}
+    if(is.null(patient.attributes)) { patient.attributes &lt;- attributes} else 
+      { patient.attributes &lt;-      rbind(patient.attributes,attributes) }
+  } 
+  s1 &lt;- cost.qaly(subset(results,strategy==&quot;Standard&quot;),inputs) %&gt;% mutate(strategy=&quot;Standard&quot;)
+  s2 &lt;- cost.qaly(subset(results,strategy==&quot;Treat&quot;),inputs) %&gt;% mutate(strategy=&quot;Treat&quot;)
+  #sum_costs &lt;- rbind(s1,s2) %&gt;% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY), dCOST = dCOST - lag(dCOST),dQALY=dQALY-lag(dQALY)) %&gt;% filter(!is.na(ICER)) 
+  sum_costs &lt;- rbind(s1,s2) %&gt;% mutate(ICER = (lag(dCOST)-dCOST)/(lag(dQALY)-dQALY)) %&gt;% mutate(dQALY=dQALY-lag(dQALY),dCOST=dCOST-lag(dCOST)) %&gt;% filter(!is.na(ICER))
+  
+  
+  lambda &lt;- 100000 # Willingness to pay parameter
+  inb1 &lt;- cost.qaly.i(subset(results,strategy==&quot;Standard&quot;),inputs) %&gt;% mutate(strategy=&quot;Standard&quot;)
+  inb2 &lt;- cost.qaly.i(subset(results,strategy==&quot;Treat&quot;),inputs) %&gt;% mutate(strategy=&quot;Treat&quot;)
+  NMB &lt;- inb1 %&gt;% left_join(inb2,&quot;name&quot;) %&gt;% mutate(dQALY = dQALY.y - dQALY.x, dCOST = dCOST.y - dCOST.x, NMB = lambda * dQALY - dCOST ) 
+  
+  psa$NMB[s] &lt;- NMB %&gt;% summarise(mNMB = mean(NMB)) %&gt;% collect() %&gt;% .[[&quot;mNMB&quot;]]
+  psa$dQALY[s] &lt;- sum_costs$dQALY[1]
+  psa$dCOST[s] &lt;- sum_costs$dCOST[1]
+  psa$ICER[s] &lt;- sum_costs$ICER[1]
+  psa$tau.i[s] &lt;- var(NMB$NMB)
+}</code></pre>
+<pre><code>## 1
+## Running  Standard 
+## Running  Treat 
+## 2
+## Running  Standard 
+## Running  Treat 
+## 3
+## Running  Standard 
+## Running  Treat 
+## 4
+## Running  Standard 
+## Running  Treat 
+## 5
+## Running  Standard 
+## Running  Treat 
+## 6
+## Running  Standard 
+## Running  Treat 
+## 7
+## Running  Standard 
+## Running  Treat 
+## 8
+## Running  Standard 
+## Running  Treat 
+## 9
+## Running  Standard 
+## Running  Treat 
+## 10
+## Running  Standard 
+## Running  Treat</code></pre>
+<p>From the paper:</p>
+<p>Having chosen a suitable design of N inputs sets and carried out the model runs, we can use the ANOVA method to estimate both <span class="math inline">\(\bar \tau^2\)</span> and <span class="math inline">\(\sigma^2\)</span>. However, some correction is needed when estimating <span class="math inline">\(\sigma^2\)</span>, to allow for the spread of the points.</p>
+<p>Let <span class="math inline">\(v_j\)</span> be the variance of the p values chosen for input <span class="math inline">\(j\)</span>, expressed as a proportion of the correct variance for that input according to its PSA distribution.</p>
+</div>
+<div id="variance-of-beta-distribution" class="section level2">
+<h2>Variance of Beta Distribution</h2>
+<p><span class="math display">\[
+var(X)  = \frac{\alpha \beta}{(\alpha+\beta)^2(\alpha + \beta + 1)}
+\]</span></p>
+</div>
+<div id="variance-of-uniform-distribution" class="section level2">
+<h2>Variance of Uniform Distribution</h2>
+<p><span class="math display">\[
+var(X)  = \frac{1}{12}(max-min)^2
+\]</span></p>
+<pre class="r"><code>tt &lt;- rbeta(n=100000,shape1=10,shape2=90); var(tt)</code></pre>
+<pre><code>## [1] 0.000888354</code></pre>
+<pre class="r"><code>tt2 &lt;- (10*90) / ((10+90)^2*(10+90+1))
+
+var.beta &lt;- function(shape1,shape2) (shape1*shape2)/ (((shape1+shape2))^2*(shape1+shape2+1))
+var.unif &lt;- function(min,max) (1/12)*(max-min)^2</code></pre>
+<pre class="r"><code>tau.est &lt;- mean(psa$tau.i)
+sigmasq.est &lt;- mean(psa$NMB)
+k.est &lt;- tau.est / sigmasq.est</code></pre>
 <div id="refs" class="references">
 <div id="ref-ohagan_monte_2007">
 <p>O’Hagan, Anthony, Matt Stevenson, and Jason Madan. 2007. “Monte Carlo Probabilistic Sensitivity Analysis for Patient Level Simulation Models: Efficient Estimation of Mean and Variance Using ANOVA.” <em>Health Economics</em> 16 (10): 1009–23. doi:<a href="https://doi.org/10.1002/hec.1199">10.1002/hec.1199</a>.</p>

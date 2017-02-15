@@ -1,4 +1,4 @@
-#setwd("./simple")
+setwd("./simple")
 rm(list=ls())
 source("./main_file.R")
 source("./costs_simple.R")

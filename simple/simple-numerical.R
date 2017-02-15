@@ -60,16 +60,16 @@ Simple <- function(t, y, params)
     if(is.infinite(r_d)) r_d <- 1e16 # A really large number
 
     # Event B stops at time 5 years after event A (delay equation)
-    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t, 2) #*exp(-5*r_a - F_40yr_drate(t)) 
+    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t-5, 2)*exp(-5*r_b - F_40yr_drate(t)) 
     
     # Event A stops at time t=5 years
     if(t > 5) r_a <- 0
       
     list(c(
-      disc = -disc_rate*disc,            # Simple discount rate
+      disc = -disc_rate*disc,            # Simple discount r ate
       h    = -(r_a+r_d)*h,
       a    = r_a*h,
-      e10  = (1-r_ad)*r_a*h-r_d*e10-dd_b,
+      e10  = (1-r_ad)*r_a*h-r_d*e10-dd_b-r_b*e10,
       e15  = dd_b - r_d*e15,
       b    = r_b*e10,
       e2   = r_b*e10 - r_d*e2,
@@ -120,12 +120,12 @@ costs <- function(solution, params)
       a_count    = unname(solution[n,'a']),
       b_count    = unname(solution[n,'b']),
       dead_count = unname(solution[n,'d']), 
-      living     = unname(solution[n,'h']+solution[n,'e1']+solution[n,'e2'])
+      living     = unname(solution[n,'h']+solution[n,'e10']+solution[n,'e15']+solution[n,'e2'])
       )
   })
 }
 
-expected <- function(params) costs(ode(yinit, times, Simple, params), params)
+expected <- function(params) costs(dede(yinit, times, Simple, params), params)
 
 round(expected(params), 4)
 

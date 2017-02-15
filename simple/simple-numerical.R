@@ -2,10 +2,24 @@ library(deSolve)
 
 ss_death <- read.csv("ss-death-2011.csv")
 
+
 inst_rate <- function(percent, timeframe)
 {
   - log(1-percent) / timeframe
 }
+
+
+# Numerical approach to secular death
+f_40yr_percent_d    <- c(ss_death$f_death_prob[41:120])
+sim_adj_age         <- 0:79
+f_40yr_per_d_spline <- splinefun(sim_adj_age, f_40yr_percent_d)
+dev.off()
+curve(f_40yr_per_d_spline, col='red', from=0, to=82, xlab="years past 40", ylab="percent chance of death")
+points(sim_adj_age, f_40yr_percent_d)
+
+# Clamped at infinite rate
+f_40yr_drate <- function(t) inst_rate(pmin(f_40yr_per_d_spline(t), 1),1)
+
 
 alt_simp_coef <- function(i)
 {
@@ -35,7 +49,8 @@ Simple <- function(t, y, params)
   with(as.list(c(y, params)), {
     
     # Use table for death_prob, Female 40 (offset 1)
-    r_d <- if(t >= 80.0) 1 else inst_rate(ss_death$f_death_prob[floor(41+t)] ,1)
+    r_d <- f_40yr_drate(t)
+    if(is.infinite(r_d)) r_d <- 1e16 # A really large number
 
     # Event A stops at time t=5 years
     if(t > 5) r_a <- 0
@@ -59,6 +74,8 @@ Simple <- function(t, y, params)
 yinit <- c(disc=1, h=1, a=0, e1=0, b=0, e2=0, d=0)
 times <- seq(0, 90, by=1/365)  # units of years, increments of days
 out   <- ode(yinit, times, Simple, params)
+
+plot(out)
 
 # Check sensibility, i.e. all occupancy buckets sum to 1
 all((rowSums(out[,c('h','e1','e2','d')]) - 1) < 1e-8)

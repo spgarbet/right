@@ -34,7 +34,7 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
         trajectory("have test results") %>%  timeout(0),
         trajectory("not have") %>% 
           branch(
-            function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+            function(attrs) attrs[['aControlClo1']],
             continue=c(TRUE,TRUE),
             trajectory() %>% timeout(0),
             trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
@@ -48,7 +48,7 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
         continue=c(TRUE, TRUE),
         trajectory("not panel tested") %>% 
           branch(
-            function(attrs) sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive)),
+            function(attrs) attrs[['aControlClo1']],
             continue=c(TRUE,TRUE),
             trajectory() %>% timeout(0),
             trajectory() %>% panel_test() %>% set_attribute("aOrdered_test", 2)
@@ -74,7 +74,7 @@ assign_DAPT_medication <- function(traj,inputs)
       function(attrs) {
         # The genotyped patients are switched with some probability.  
         if(attrs[['aGenotyped_CYP2C19']]==1 && attrs[['aCYP2C19']] == 1 && 
-          (attrs[['aOrdered_test']] == 2 || runif(1) < inputs$clopidogrel$vProbabilityRead)) {
+          (attrs[['aOrdered_test']] == 2 || attrs[['aControlClo2']]==2)) {
           return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
         } else if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 
         return(1) # Default is to Clopidogrel, hence return 1 if no Hx of alternative drug, or if not switched.  
@@ -108,6 +108,8 @@ assign_DAPT_medication <- function(traj,inputs)
 dapt <- function(traj, inputs)
 {
   traj %>%
+    set_attribute("aControlClo1", function() sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive))) %>%
+    set_attribute("aControlClo2", function() sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityRead,  inputs$clopidogrel$vProbabilityRead))) %>%
     branch( 
       function(attrs) ifelse(attrs[['aNumDAPT']] < inputs$clopidogrel$vMaxDAPT,1,2),
       continue = c(TRUE,TRUE),

@@ -50,5 +50,7 @@ assign_clopidogrel_attributes <- function(traj, inputs)
     assign_initial_clopidogrel_attributes(inputs) %>%
     assign_dapt_attributes(inputs) %>%
     assign_CYP2C19_status(inputs) %>%
-    set_attribute("aOrdered_test", 1)      # Did a physician order a test 1=NO, 2= YES
+    set_attribute("aOrdered_test", 1) %>%     # Did a physician order a test this time 1=NO, 2= YES
+    set_attribute("aControlClo1", 0) %>% #control ordering test
+    set_attribute("aControlClo2",0) #control reading test
 }

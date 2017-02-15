@@ -28,7 +28,7 @@ statin_reactive_strategy <- function(traj, inputs)
         trajectory("have test results") %>%  timeout(0),
         trajectory("not have") %>% # Use probability of ordering test
           branch(
-            function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
+            function(attrs) attrs[['aControlSim1']],
               continue=c(TRUE,TRUE),
               trajectory() %>% timeout(0),
               trajectory() %>% set_attribute("aGenotyped_CVD", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
@@ -42,7 +42,7 @@ statin_reactive_strategy <- function(traj, inputs)
       continue=c(TRUE, TRUE),
       trajectory("not panel tested") %>% # Use probability of ordering test
         branch(
-          function(attrs) sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive)),
+          function(attrs) attrs[['aControlSim1']],          
           continue=c(TRUE,TRUE),
           trajectory() %>% timeout(0),
           trajectory() %>% panel_test() %>% set_attribute("aOrdered_test", 2)
@@ -67,7 +67,7 @@ assign_statin <- function(traj, inputs)
             # If not genotyped, return 1 for simvastatin
             if(attrs[['aGenotyped_CVD']] != 1) return(1)
             else if(attrs[['aCVDgenotype' ]] == 1 && 
-                   (attrs[['aOrdered_test']] == 2 || runif(1) < inputs$simvastatin$vProbabilityRead) )
+                   (attrs[['aOrdered_test']] == 2 || attrs[['aControlSim2']]==2) )
             # If known to be wildtype (reactive test or use previous test), use simvastatin
             {
               return(1)
@@ -101,7 +101,9 @@ assign_statin <- function(traj, inputs)
 prescribe_statin <- function(traj, inputs)
 {
   traj %>%
+    set_attribute("aControlSim1",function() sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityReactive,  inputs$simvastatin$vProbabilityReactive))) %>%
+    set_attribute("aControlSim2",function() sample(1:2,1,prob=c(1- inputs$simvastatin$vProbabilityRead,  inputs$simvastatin$vProbabilityRead))) %>% #used in physician behavior
     statin_reactive_strategy(inputs) %>%
     assign_statin(inputs) %>%
-    set_attribute("aOrdered_test", 2)
+    set_attribute("aOrdered_test", 1)
 }

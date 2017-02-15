@@ -7,10 +7,10 @@ warfarin_out <- function(raw,inputs)
     arrange(name) #in/out time among warfarin users
   t2 <- t1 %>% spread(resource, activity_time, fill=0) #long to wide
   r1 <- t2 %>% mutate(tot=out_of_range+in_range) %>% mutate(pctp=in_range/tot*100) %>% 
-    group_by(preemptive,reactive) %>% dplyr::summarise(mean(pctp)) %>% data.frame()
+    select(name,preemptive,reactive,pctp)
   r2 <- t2 %>% mutate(test=out_of_range/3+in_range/7) %>%
-    group_by(preemptive,reactive) %>% dplyr::summarise(mean(test)) %>% data.frame()
-  warfarin_sup <- merge(r1,r2,by=c("preemptive","reactive"))
+    select(name,preemptive,reactive,test)
+  warfarin_sup <- merge(r1,r2,by=c("name","preemptive","reactive"))
   return(warfarin_sup)
   }
   else{print("Warfarin model's off.")}

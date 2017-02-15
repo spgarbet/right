@@ -23,10 +23,10 @@ warfarin_reactive_strategy <- function(traj, inputs)
         trajectory("have test results") %>%  timeout(0),
         trajectory("not have") %>% 
           branch(
-            function(attrs) sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive)),
+            function(attrs) attrs[['aControlWar1']],
             continue=c(TRUE,TRUE),
             trajectory() %>% timeout(0),
-            trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
+            trajectory() %>% set_attribute("aGenotyped_Warfarin", 1) %>% mark("single_test") 
           )
       )
   } else if (inputs$vReactive == "Panel")
@@ -37,10 +37,10 @@ warfarin_reactive_strategy <- function(traj, inputs)
         continue=c(TRUE, TRUE),
         trajectory("not panel tested") %>% 
           branch(
-            function(attrs) sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive)),
+            function(attrs) attrs[['aControlWar1']],
             continue=c(TRUE,TRUE),
             trajectory() %>% timeout(0),
-            trajectory() %>% panel_test()
+            trajectory() %>% panel_test() 
           ), # Not all genotyped, then do it
         trajectory("panel tested") %>% timeout(0)
       )
@@ -90,30 +90,18 @@ start_warfarin <- function(traj, inputs)
         seize("in_range"),
       trajectory("Initial Out of Range") %>% mark("Initial_OutRange") %>%
         seize("out_of_range") 
-    ) %>%
-    
-    #decide whether to use test results
-    branch(
-      function(attrs) 
-      {  
-       #if genotyped and already tested, use probability of using the test
-        if(attrs[["aGenotyped_Warfarin"]]==1 & attrs[["aOrdered_test"]] == 1) return(1)
-        return(2) #either not genotyped, or order reactive test this time
-      },
-      continue = c(TRUE,TRUE),
-      trajectory() %>% set_attribute("aReadWarfarinTest", function(attrs) sample(1:2,1,prob=c(inputs$warfarin$vProbabilityRead, 1-inputs$warfarin$vProbabilityRead))),
-      trajectory() %>% timeout(0)
-    ) 
+    )
 }
 
 prescribe_warfarin <- function(traj, inputs)
 {
-  traj %>% 
+  traj %>%
+    set_attribute("aControlWar1",function() sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityReactive,  inputs$warfarin$vProbabilityReactive))) %>%
+    set_attribute("aControlWar2",function() sample(1:2,1,prob=c(1- inputs$warfarin$vProbabilityRead,  inputs$warfarin$vProbabilityRead))) %>%
     mark("warfarin_start") %>%
     set_attribute("aWTestAvail", function(attrs) attrs[["aGenotyped_Warfarin"]]) %>% #before reactive strategy, know whether test available
     warfarin_reactive_strategy(inputs) %>%
     start_warfarin(inputs) %>%
-    set_attribute("aOrdered_test", 1) %>%
     #downstream events
     adj_clock()
 }

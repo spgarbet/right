@@ -84,7 +84,7 @@ next_event <- function(attrs)
     }
   }
   
-  cat("Next Event ", event, " ", event_time, " ", id, "\n)
+  #cat("Next Event ", event, " ", event_time, " ", id, "\n")
   
   return(list(event=event, event_time=event_time, id=id))
 }

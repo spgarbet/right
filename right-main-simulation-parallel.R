@@ -72,8 +72,7 @@ panel_test <- function(traj, inputs)
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
     set_attribute('aGenotyped_CVD',     1)  %>%
     set_attribute('aGenotyped_Warfarin', 1) %>%
-    mark("panel_test") %>%
-    set_attribute("aPredicted", 2)
+    mark("panel_test") 
 }
 
 
@@ -134,7 +133,8 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
     assign_clopidogrel_attributes(inputs) %>%
     assign_simvastatin_attributes(inputs) %>%
-    assign_warfarin_attributes(inputs)
+    assign_warfarin_attributes(inputs) %>%
+    set_attribute("aSeed", function() sample(inputs$vN*2,1)) 
 }
 
 predict_draw <- function(traj, inputs)
@@ -168,7 +168,7 @@ preemptive_strategy <- function(traj, inputs)
     traj # Do nothing
   } else if (inputs$vPreemptive == "Panel"    )
   {
-    traj %>% panel_test(inputs) %>% set_attribute("aPredicted", 1)
+    traj %>% panel_test(inputs) 
   } else if (inputs$vPreemptive == "PREDICT"  )
   {
     traj %>%
@@ -177,7 +177,7 @@ preemptive_strategy <- function(traj, inputs)
         function(attrs) ifelse(any_genotyped(attrs),2,1),
         continue=rep(TRUE,2),
         trajectory() %>% timeout(0), # Nothing genotyped, do nothing
-        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) # Something was genotyped via PREDICT, do panel
+        trajectory() %>% panel_test(inputs) # Something was genotyped via PREDICT, do panel
       )
   } else if (inputs$vPreemptive == "Age >= 50")
   {
@@ -185,7 +185,7 @@ preemptive_strategy <- function(traj, inputs)
       branch(
         function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
         continue = c(TRUE, TRUE),
-        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1), # Do nothing
+        trajectory() %>% panel_test(inputs), # Do nothing
         trajectory() %>% timeout(0)
       )
   } else stop("Unhandled Preemptive Strategy")

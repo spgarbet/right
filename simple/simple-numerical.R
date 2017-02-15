@@ -17,13 +17,20 @@ dev.off()
 curve(f_40yr_per_d_spline, col='red', from=0, to=82, xlab="years past 40", ylab="percent chance of death")
 points(sim_adj_age, f_40yr_percent_d)
 
-# Clamped at infinite rate
+# Clamped at infinite rate via pmin
 f_40yr_drate <- function(t) inst_rate(pmin(f_40yr_per_d_spline(t), 1),1)
+curve(f_40yr_drate, from=0, to=90)
 
+# Now, a special function used in delay equation (Had to put upper bound at 81)
+F_40yr_drate <- Vectorize(function(t) 
+{
+  integrate(f_40yr_drate, lower=max(t-5, 0), upper=min(t, 81))$value
+})
 
+# This is for doing numberical integration of a set of numbers at an even interval
 alt_simp_coef <- function(i)
 {
-  if (i < 8) stop("Invalid simpson coefficient size")
+  if (i < 8) stop("Invalid Simpson coefficient size")
   
   # pg.117 4.1.14, Numerical Recipes in C, 1st edition
   c(17/48, 50/48, 43/48, 49/48, rep(1, i-8 ), 49/48, 43/48, 50/48, 17/48) 
@@ -52,33 +59,33 @@ Simple <- function(t, y, params)
     r_d <- f_40yr_drate(t)
     if(is.infinite(r_d)) r_d <- 1e16 # A really large number
 
+    # Event B stops at time 5 years after event A (delay equation)
+    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t, 2) #*exp(-5*r_a - F_40yr_drate(t)) 
+    
     # Event A stops at time t=5 years
     if(t > 5) r_a <- 0
-    
-    # Event B stops at time 5 years after event A (delay equation)
-    #t0 <- if(t < 5) 0 else t-5
-    #aPop <- if(t <= 0) 0 else lagvalue(t, 4) - lagvalue(t0, 4) # WRONG FIXE ME!!!!
-    
+      
     list(c(
       disc = -disc_rate*disc,            # Simple discount rate
-      h = -(r_a+r_d)*h,
-      a = r_a*h,
-      e1= (1-r_ad)*r_a*h-(r_b+r_d)*e1,
-      b = r_b*e1,
-      e2= r_b*e1 - r_d*e2,
-      d = r_ad*r_a*h + r_d*(h+e1+e2)
+      h    = -(r_a+r_d)*h,
+      a    = r_a*h,
+      e10  = (1-r_ad)*r_a*h-r_d*e10-dd_b,
+      e15  = dd_b - r_d*e15,
+      b    = r_b*e10,
+      e2   = r_b*e10 - r_d*e2,
+      d    = r_ad*r_a*h + r_d*(h+e10+e15+e2)
     ))
   })
 }
 
-yinit <- c(disc=1, h=1, a=0, e1=0, b=0, e2=0, d=0)
-times <- seq(0, 90, by=1/365)  # units of years, increments of days
-out   <- ode(yinit, times, Simple, params)
+yinit <- c(disc=1, h=1, a=0, e10=0, e15=0, b=0, e2=0, d=0)
+times <- seq(0, 80, by=1/365)  # units of years, increments of days, everyone dies after 120, so simulation is cut short
+out   <- dede(yinit, times, Simple, params)
 
 plot(out)
 
 # Check sensibility, i.e. all occupancy buckets sum to 1
-all((rowSums(out[,c('h','e1','e2','d')]) - 1) < 1e-8)
+all((rowSums(out[,c('h','e10','e15', 'e2','d')]) - 1) < 1e-8)
 
 costs <- function(solution, params)
 {

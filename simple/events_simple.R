@@ -26,7 +26,7 @@ event_A = function(traj, inputs)
   trajectory("Survive")  %>%  mark("A_survive") %>% mark("A") %>%
     set_attribute("eventA",1) %>% #record occurance of A
     set_attribute("aRR_B",1) %>% #turn on B and adjust clock
-    set_attribute("attB", function(attrs) now() + days_till_B(attrs,inputs))
+    set_attribute("attB", function(attrs) now(env) + days_till_B(attrs,inputs))
   )
 }
 

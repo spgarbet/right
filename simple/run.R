@@ -1,5 +1,5 @@
 #setwd("./simple")
-rm(ls=ls())
+rm(list=ls())
 source("./main_file.R")
 source("./costs_simple.R")
 

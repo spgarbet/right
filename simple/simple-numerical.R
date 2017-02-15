@@ -1,5 +1,7 @@
 library(deSolve)
 
+ss_death <- read.csv("ss-death-2011.csv")
+
 inst_rate <- function(percent, timeframe)
 {
   - log(1-percent) / timeframe
@@ -17,7 +19,6 @@ alt_simp_coef <- function(i)
 params <- c(
   r_a  = inst_rate(0.1, 5),  # Rate of healthy having event A
   r_b  = inst_rate(0.5, 5),  # Rate of post-A  having event B
-  r_d  = inst_rate(0.1, 5),  # Rate of death 
   r_ad = 0.05,               # Rate of death as direct result of A
   
   c_a  = 10000,              # Cost of event A
@@ -32,11 +33,16 @@ params <- c(
 Simple <- function(t, y, params)
 {
   with(as.list(c(y, params)), {
-    if(t > 5)
-    {
-      r_a <- 0
-      r_b <- 0
-    }
+    
+    # Use table for death_prob, Female 40 (offset 1)
+    r_d <- if(t >= 80.0) 1 else inst_rate(ss_death$f_death_prob[floor(41+t)] ,1)
+
+    # Event A stops at time t=5 years
+    if(t > 5) r_a <- 0
+    
+    # Event B stops at time 5 years after event A (delay equation)
+    #t0 <- if(t < 5) 0 else t-5
+    #aPop <- if(t <= 0) 0 else lagvalue(t, 4) - lagvalue(t0, 4) # WRONG FIXE ME!!!!
     
     list(c(
       disc = -disc_rate*disc,            # Simple discount rate
@@ -55,7 +61,7 @@ times <- seq(0, 90, by=1/365)  # units of years, increments of days
 out   <- ode(yinit, times, Simple, params)
 
 # Check sensibility, i.e. all occupancy buckets sum to 1
-all((rowSums(out[,c('h','e1','e2','d')]) - 1) < 1e-12)
+all((rowSums(out[,c('h','e1','e2','d')]) - 1) < 1e-8)
 
 costs <- function(solution, params)
 {
@@ -83,14 +89,14 @@ costs <- function(solution, params)
             d_b*sum(diff(solution[,'b'])*taper*solution[2:n,'disc'])        + # Event B (with taper for horizon)
             sum(alt_simp_coef(n)*solution[,'d']*solution[,'disc'])*step       # Death disutility (integration)
     
-    c(cost       = c(cost, use.names=FALSE),
-      qaly       = c(life - dis, use.names=FALSE),
-      possible   = c(life, use.names=FALSE),
-      disutility = c(dis, use.names=FALSE),
-      a_count    = c(solution[n,'a'], use.names=FALSE),
-      b_count    = c(solution[n,'b'], use.names=FALSE),
-      dead_count = c(solution[n,'d'], use.names=FALSE), 
-      living     = c(solution[n,'h']+solution[n,'e1']+solution[n,'e2'], use.names=FALSE)
+    c(cost       = unname(cost),
+      qaly       = unname(life - dis),
+      possible   = unname(life),
+      disutility = unname(dis),
+      a_count    = unname(solution[n,'a']),
+      b_count    = unname(solution[n,'b']),
+      dead_count = unname(solution[n,'d']), 
+      living     = unname(solution[n,'h']+solution[n,'e1']+solution[n,'e2'])
       )
   })
 }

@@ -59,12 +59,13 @@ inputs <- list(
 
 ###
 ###assign attributes
+id <- 0
 
 initialize_patient <- function(traj, inputs)
 {
   traj %>%
     seize("time_in_model") %>%
-    set_attribute("aID", function() { tmp <- id; id <<- id + 1; tmp }) %>%
+    #set_attribute("aID", function() { tmp <- id; id <<- id + 1; tmp }) %>%
     set_attribute("aAgeInitial", function() inputs$vAge) %>%
     set_attribute("aAge", function(attrs) attrs[['aAgeInitial']]) %>%
     set_attribute("aGender", function() inputs$vGender) %>%
@@ -91,7 +92,6 @@ initialize_patient <- function(traj, inputs)
 ####
 ## Secular Death
 source('./event_secular_death.R')
-
 source('./events_simple.R')
 terminate_simulation <- function(traj, inputs)
 {

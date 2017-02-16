@@ -1,4 +1,5 @@
 library(deSolve)
+library(flexsurv) # For pgompertz
 
 ss_death <- read.csv("ss-death-2011.csv")
 
@@ -9,7 +10,8 @@ inst_rate <- function(percent, timeframe)
 }
 
 
-# Numerical approach to secular death
+###################################
+# Numerical approach to secular death (very high accuracy!)
 f_40yr_percent_d    <- c(ss_death$f_death_prob[41:120])
 sim_adj_age         <- 0:79
 f_40yr_per_d_spline <- splinefun(sim_adj_age, f_40yr_percent_d)
@@ -21,6 +23,14 @@ points(sim_adj_age, f_40yr_percent_d)
 f_40yr_drate <- function(t) inst_rate(pmin(f_40yr_per_d_spline(t), 1),1)
 curve(f_40yr_drate, from=0, to=90)
 
+###################################
+# Use exact same Gompertz approx as DES instead, but work above is very nice
+f_40yr_drate <- function(t) dgompertz(t, 0.100751, 0.000837072) / (1-pgompertz(t, 0.100751, 0.000837072))
+curve(inst_rate(pmin(f_40yr_per_d_spline(x), 1),1), col='red', lty=2, from=0, to=90)
+curve(f_40yr_drate, add=TRUE)
+
+####################################
+# Integrations of death rates for exposure calculations in delay
 # Now, a special function used in delay equation (Had to put upper bound at 81)
 F_40yr_drate <- Vectorize(function(t) 
 {
@@ -33,7 +43,6 @@ F_40yr_rate_int <- Vectorize(function(lower, upper)
   integrate(f_40yr_drate, lower=max(lower, 0), upper=min(upper, 81))$value
 })
 
-
 # This is for doing numberical integration of a set of numbers at an even interval
 alt_simp_coef <- function(i)
 {
@@ -43,7 +52,8 @@ alt_simp_coef <- function(i)
   c(17/48, 50/48, 43/48, 49/48, rep(1, i-8 ), 49/48, 43/48, 50/48, 17/48) 
 }
 
-
+###################################
+# Main model parameters
 params <- c(
   r_a  = inst_rate(0.1, 5),  # Rate of healthy having event A
   r_b  = inst_rate(0.5, 5),  # Rate of post-A  having event B
@@ -58,6 +68,8 @@ params <- c(
   disc_rate = 1e-12          # For computing discount
 )
 
+###################################
+# Numerical Delay Differential Equation
 Simple <- function(t, y, params)
 {
   with(as.list(c(y, params)), {

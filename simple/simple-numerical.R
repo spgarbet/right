@@ -27,6 +27,13 @@ F_40yr_drate <- Vectorize(function(t)
   integrate(f_40yr_drate, lower=max(t-5, 0), upper=min(t, 81))$value
 })
 
+# A second special equation for death due to 
+F_40yr_rate_int <- Vectorize(function(lower, upper) 
+{
+  integrate(f_40yr_drate, lower=max(lower, 0), upper=min(upper, 81))$value
+})
+
+
 # This is for doing numberical integration of a set of numbers at an even interval
 alt_simp_coef <- function(i)
 {
@@ -66,19 +73,21 @@ Simple <- function(t, y, params)
     if(t > 5) r_a <- 0
       
     list(c(
-      disc = -disc_rate*disc,            # Simple discount r ate
-      h    = -(r_a+r_d)*h,
-      a    = r_a*h,
-      e10  = (1-r_ad)*r_a*h-r_d*e10-dd_b-r_b*e10,
-      e15  = dd_b - r_d*e15,
-      b    = r_b*e10,
-      e2   = r_b*e10 - r_d*e2,
-      d    = r_ad*r_a*h + r_d*(h+e10+e15+e2)
-    ))
+            disc = -disc_rate*disc,            # Simple discount r ate
+            h    = -(r_a+r_d)*h,
+            a    = r_a*h,
+            e10  = (1-r_ad)*r_a*h-r_d*e10-dd_b-r_b*e10,
+            e15  = dd_b - r_d*e15,
+            b    = r_b*e10,
+            e2   = r_b*e10 - r_d*e2,
+            d    = r_ad*r_a*h + r_d*(h+e10+e15+e2),
+            db   = r_b*e10 - r_d*db - if (t < 1) 0 else lagderiv(t-1, 6)*exp(-F_40yr_rate_int(t-1, t))
+          )
+    )
   })
 }
 
-yinit <- c(disc=1, h=1, a=0, e10=0, e15=0, b=0, e2=0, d=0)
+yinit <- c(disc=1, h=1, a=0, e10=0, e15=0, b=0, e2=0, d=0, db=0)
 times <- seq(0, 80, by=1/365)  # units of years, increments of days, everyone dies after 120, so simulation is cut short
 out   <- dede(yinit, times, Simple, params)
 
@@ -90,36 +99,41 @@ all((rowSums(out[,c('h','e10','e15', 'e2','d')]) - 1) < 1e-8)
 costs <- function(solution, params)
 {
   n <- length(solution[,1])
+  simpson <- alt_simp_coef(n)
 
   with(as.list(params), {
     # Compute Discounted Cost
     cost <- c_a*sum(diff(solution[,'a'])*solution[2:n,'disc']) + # Cost * Number of events in bucket a
             c_b*sum(diff(solution[,'b'])*solution[2:n,'disc']) + # Cost * Number of events in bucket b
-            c_t*solution[1, 'h']  # Cost * Initial healthy individuals
+            c_t*solution[1, 'h']  # Therapy Cost * Initial healthy individuals
     
     # Step size of simulation
     step     <- solution[2,'time'] - solution[1,'time']
     
-    # Compute a taper function, for cutting off permanent disutility at time horizon
-    taper <- rep(1, n-1)
-    to    <- n - 1
-    from  <- to - to/5
-    taper[(from+1):to] <- seq(1, step, length.out=to/5) # Deals with cutoff in disutility
-      
     # Total possible life units is integral of discounted time
-    life <- sum(alt_simp_coef(n)*solution[,'disc'])*step
+    life <- sum(simpson*solution[,'disc'])*step
     
-    dis  <- d_a*sum(alt_simp_coef(n)*solution[,'a']*solution[,'disc'])*step + # Permanent disutility A (integration)
-            d_b*sum(diff(solution[,'b'])*taper*solution[2:n,'disc'])        + # Event B (with taper for horizon)
-            sum(alt_simp_coef(n)*solution[,'d']*solution[,'disc'])*step       # Death disutility (integration)
+    # Permanent disutility for A (integration)
+    disA <- d_a*sum(simpson*solution[,'e10']*solution[,'disc'])*step + 
+            d_a*sum(simpson*solution[,'e15']*solution[,'disc'])*step +
+            d_a*sum(simpson*solution[,'e2' ]*solution[,'disc'])*step
+    
+    # Event B
+    disB <- d_b*sum(simpson*solution[,'db']*solution[,'disc'])*step
+
+    # Death disutility
+    disD <- sum(simpson*solution[,'d']*solution[,'disc'])*step       # Death disutility (integration)
     
     c(cost       = unname(cost),
-      qaly       = unname(life - dis),
+      qaly       = unname(life-disA-disB-disD),
       possible   = unname(life),
-      disutility = unname(dis),
+      disutility = unname(disA+disB+disD),
       a_count    = unname(solution[n,'a']),
+      disutil_a  = unname(disA),
       b_count    = unname(solution[n,'b']),
+      disutil_b  = unname(disB),
       dead_count = unname(solution[n,'d']), 
+      disutil_d  = unname(disD),
       living     = unname(solution[n,'h']+solution[n,'e10']+solution[n,'e15']+solution[n,'e2'])
       )
   })
@@ -132,3 +146,19 @@ round(expected(params), 4)
 params['r_a'] <- params['r_a']*0.5
 params['c_t']  <- 2000
 round(expected(params), 4)
+
+# Some diagnostic plots
+# 
+# dev.off()
+# plot(out[,'time'],out[,'db'], typ='l', xlim=c(0, 12))
+# abline(h=0, col='red', lty=2)
+# abline(v=11, col='blue', lty=2)
+# abline(v=5, col='green', lty=2)
+# 
+# dev.off()
+# plot(out[,'time'],out[,'b'], typ='l', xlim=c(0, 12))
+# abline(v=10, col='green', lty=2)
+# 
+# dev.off()
+# plot(out[,'time'],out[,'e10'], typ='l', xlim=c(0, 12))
+# abline(v=10, col='green', lty=2)

@@ -1,0 +1,132 @@
+---
+title: "rpexp Issues with DES"
+author: "Shawn Garbett"
+date: "February 16, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+In working on the "Simple" model as a validatible proof of concept to compare approaches and sensitivity analysis the `rpexp{msm}` call was removed from the DES model and there was a notable difference in values. This difference is troubling, as this calls into questions the results produced thus far. This vignette is to explore the causes of these difference, and propose a solution.
+
+`rpexp{msm}` is a random draw from a piecewise exponential, i.e. the rate is still piecewise constant. One technique in the existing code is to use rates as a switch to turn off processs outside certain boundaries by using a very small rate, 1e-12. It is also used for changing risk profiles, the existing literature primarily has risks broken into time intervals, e.g. first 30day, first year, etc. Rarely does data exist that shows the time based profile, therefore in matching and using literature values the `pexp{msm}` set of functions is a natural tool for the job. It is worth mentioning, that the good news is that this is a single function call throughout the code base and could easily be replaced with a function that we create ourselves.
+
+## Number of Random Draws Issue
+
+During investigation it was also discovered to be a source of changing trajectories when changing drugs between runs. It is desireable that each simulation have the same random number stream for each strategy being compared. This essentially creates a paired test (greatly increasing accuracy of comparison) between different strategy runs. In practice a single extra random draw in one trajectory throws all the remaining draws off for a run. `rpexp{msm}` does multiple draws, and this is dependent upon rates. Since we set intial events for all trajectories at startup, this call is throwing off the random number streams and causing different counts of assignment for strategies between runs. An excellent solution to this has been proposed by John Graves, random streams, where each trajectory get's it's own random number stream. This would isolate problems of inconsistent draws, however it is desireable to eliminate any difference.
+
+The following demonstrates this:
+
+```{r draws}
+library(msm)
+# Reference set (last 50)
+set.seed(1)
+rpexp(100, rate=c(0.1, 0.2), t=c(0, 1))[51:100]
+
+# Reset random number stream
+set.seed(1)
+# Draw 1st 50 with different rates
+rpexp(25, rate=c(0.0001, 0.2), t=c(0, 1))
+rpexp(25, rate=c(100, 0.2), t=c(0, 1))
+# This should match the first set of numbers, if the random stream number of draws was consistent
+rpexp(50, rate=c(0.1, 0.2), t=c(0, 1))
+```
+
+Note that in the reference set the value in slot 19, 2.1333432 is in the final output in slot 46. Around these position are a repeated sequence, showing that it resynchronized. However the 50th value in the final output the stream desynchronizes as 5.7661373 does not match 0.02025041. This is even more troubling, as even with stream resynchronization the rpexp is not showing reproducible behavior from the random number stream!
+
+## Bias in rpexp
+
+There are two distinct possibilities at this point, that the usage of 1e-12 for a shutoff value is causing numerical issues and rpexp is working correctly but the approach is misguided, or that rpexp has a subtle numerical bug causing bias. A test distinguishing these two is required.
+
+We shall use the following scenario. A 10 year simulation, where $t$ is in units of years. The first 5 years will have a rate of 0.1, and the second 5 years will have a rate of 0. 
+
+For this we can compute the expected average time:
+
+```{r expected, cache=TRUE}
+# Numerical solution
+integrate(function(x) x*dexp(x, 0.1), lower=0, upper=5)
+
+# Simulation solution
+mean(sapply(1:1000, function(y) {set.seed(y); x <- rexp(1e6, 0.1); x[x>5] <- 0; mean(x)}))
+```
+
+Simulation closely matches the actual value, but is off around the fifth digit at a billion simulations. 
+
+Let's look at the same with the second half of the distribution being a rate of 1e-12. What is a five year mean of exponentials at this rate.
+```{r small-expected}
+integrate(function(x) x*dexp(x, 1e-12), lower=0, upper=5)
+
+# Now the full model (have to normalize remaining mass past 5)
+# Cut off at 10 years
+integrate(function(x) ifelse(x <= 5,
+                             x*dexp(x, 0.1),
+                             x*dexp(x-5, 1e-12)*pexp(5, rate=0.1, lower.tail=FALSE)),
+          lower=0, upper=10)
+```
+Thus the expected value for the piecewise simulation is 0.09020401 using the small value 1e-12 as turning off events. This matches within precision the value using zeros. Thus the theoretical usage of this approach is valid and well formed.
+
+### Simulation test of rpexp
+
+We shall compare a draw from `rexp` and `rpexp` for a billion draws each with the 1e-12 small rate for outside events.
+
+```{r msm-test, cache=TRUE}
+mean(sapply(1:1000, function(y) {set.seed(y);
+                                 x <- rexp(1e6, 0.1);
+                                 x[x>5]  <- rexp(length(x[x>5]), 1e-12)+5;
+                                 x[x>10] <- 0;
+                                 mean(x)}))
+mean(sapply(1:1000, function(y) {set.seed(y);
+                                 x <- rpexp(1e6, rate=c(0.1, 1e-12), t=c(0, 5));
+                                 x[x>10] <- 0;
+                                 mean(x)}))
+```
+
+The results line up perfectly with earlier simulations using a consistent seed. So in this regard the `rpexp{msm}` call is not the source of error. This leaves the issue that a subtle logic error existed in previous code, and an effort to locate why the numbers where coming out differently is required. It may be that the differences were only due to random number stream variation, and mental fatigue at the time.
+
+## Recommendation
+
+Continue the random streams work, as this will eliminate a lot of trajectory differences and comparisons will be mostly paired.
+
+Perform an audit of the changelog in git that corrected the problem and see if we can locate where the difference occurred. If not, this was a false positive.
+
+Possibly replace rpexp with a function that consistently draw same number of draws every time.
+
+```{r replacement, cache=TRUE}
+rpexp <- function(n, rate=1, t=0)
+{
+  results <- lapply(1:length(rate), function(x) {
+    rexp(n, rate[x]) + t[x]
+  })
+  
+  for(i in 2:length(rate))
+  {
+    results[[1]] <- ifelse(results[[1]] < t[i],
+                           results[[1]],
+                           results[[i]])
+  }
+  
+  results[[1]]
+}
+
+# Validation
+mean(sapply(1:1000, function(y) {set.seed(y);
+                                 x <- rpexp(1e6, rate=c(0.1, 1e-12), t=c(0, 5));
+                                 x[x>10] <- 0;
+                                 mean(x)}))
+
+# Reference set (last 50)
+set.seed(1)
+rpexp(100, rate=c(0.1, 0.2), t=c(0, 1))[51:100]
+
+# Reset random number stream
+set.seed(1)
+# Draw 1st 50 with different rates
+rpexp(25, rate=c(0.0001, 0.2), t=c(0, 1))
+rpexp(25, rate=c(100, 0.2), t=c(0, 1))
+# This should match the first set of numbers, if the random stream number of draws was consistent
+rpexp(50, rate=c(0.1, 0.2), t=c(0, 1))
+```

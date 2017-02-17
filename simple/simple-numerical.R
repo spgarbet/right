@@ -26,7 +26,7 @@ curve(f_40yr_drate, from=0, to=90)
 ###################################
 # Use exact same Gompertz approx as DES instead, but work above is very nice
 f_40yr_drate <- function(t) dgompertz(t, 0.100751, 0.000837072) / (1-pgompertz(t, 0.100751, 0.000837072))
-curve(inst_rate(pmin(f_40yr_per_d_spline(x), 1),1), col='red', lty=2, from=0, to=90)
+curve(inst_rate(pmin(f_40yr_per_d_spline(x), 1),1), col='red', lty=2, from=0, to=90, ylab="rate of death")
 curve(f_40yr_drate, add=TRUE)
 
 ####################################

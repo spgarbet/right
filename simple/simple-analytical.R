@@ -61,24 +61,55 @@ curve(h, from=0, to=100)
 plot(out[,'time'],out[,'h'], typ='l')
 curve(h, add=TRUE, col='red', lty=2)
 
+
+
+
 # Let's compute bucket of A events
 # da    = r_a*h
 # We only need to do the first 5 years since
 # Known Numerical Solution: 0.09963058
 
-pexp_int_func <- function(rates, intervals, initial=1, factor=1)
+# Work out 0 to 1
+plot(out[,'time'], out[,'a'], xlim=c(0, 1), typ='l', ylim=c(0, 0.03))
+a <- function(t) (params["r_a"] / leaving_healthy_rate[1] )*
+                   exp(leaving_healthy_rate[1] * t) -
+                   params["r_a"] / leaving_healthy_rate[1]
+curve(a, add=TRUE, lty=2, col='red')
+
+# Work out from 1 to 2
+a <- function(t) ifelse( t <= 1, 
+                         (params["r_a"]*boundaries[1] / leaving_healthy_rate[1] )*
+                           exp(leaving_healthy_rate[1] * t) +
+                           0.0 - # a(0) boundary condition
+                           params["r_a"]*boundaries[1] / leaving_healthy_rate[1],
+                         (params["r_a"]*boundaries[2] / leaving_healthy_rate[2] )*
+                           exp(leaving_healthy_rate[2] * (t-1)) +
+                           0.02083817 -  # a(1) previously
+                           params["r_a"]*boundaries[2] / leaving_healthy_rate[2]
+                       )
+plot(out[,'time'], out[,'a'], xlim=c(0, 2), typ='l', ylim=c(0, 0.05))
+curve(a, add=TRUE, lty=2, col='red')
+
+# solution dy/dt = b exp(a t) => y = b/a exp(a t) + c
+# https://www.wolframalpha.com/input/?i=dy%2Fdt+%3D+b+exp(a+t)
+pexp_int_func <- function(rates1, rates2, intervals, initial1=1, initial2=0)
 {
-  current    <- initial
-  factor     <- if(length(factor)==1) rep(factor, length(rates)) else factor
-  
-  boundaries <- c(initial, sapply(1:(length(rates)-1), function(n){
+  current    <- initial1
+
+  boundaries <- c(initial1, sapply(1:(length(rates1)-1), function(n){
     current <<- current * exp(rates[n] * (intervals[n+1] - intervals[n]))
     current
   }))
-  # solution dy/dt = f b exp(a t)
-  # https://www.wolframalpha.com/input/?i=dy%2Fdt+%3D+b+exp(a+t)
-  boundaries <- boundaries * factor / rates
+
+  boundaries <- boundaries * rates2 / rates1
   
+  current    <- initial2
+  offset     <- sapply(1:length(rates1), function(n) {
+    boundary <<- current - boundaries[n]
+    current  <<- boundaries[n]* exp(rates1[n]) + boundary
+    boundary
+  })
+
   function (t)
   {
     n <- sapply(t, function(x) {
@@ -88,10 +119,15 @@ pexp_int_func <- function(rates, intervals, initial=1, factor=1)
       ),
       1)
     })
-    boundaries[n]*exp(rates[n]*(t - intervals[n])) - boundaries[n]
+    ifelse(boundaries[n] == 0.0,
+           offset[n],
+           boundaries[n]*exp(rates1[n]*(t - intervals[n])) + offset[n])
   }
 }
 
-event_a_rate <- leaving_healthy_rate[1:6]
+event_a_rate <- -leaving_healthy_rate[1:6]
 
-a <- pexp_int_func(event_a_rate, 0:6, 0, c(rep(params['r_a'], 5), 0))
+a <- pexp_int_func(event_a_rate, c(rep(params['r_a'], 5), 0), 0:5)
+curve(a, from=0, to=5.5)
+lines(out[,'time'], out[,'a'], col='red', lty=2)
+

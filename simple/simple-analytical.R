@@ -69,27 +69,6 @@ curve(h, add=TRUE, col='red', lty=2)
 # We only need to do the first 5 years since
 # Known Numerical Solution: 0.09963058
 
-# Work out 0 to 1
-plot(out[,'time'], out[,'a'], xlim=c(0, 1), typ='l', ylim=c(0, 0.03))
-a <- function(t) (params["r_a"] / leaving_healthy_rate[1] )*
-                   exp(leaving_healthy_rate[1] * t) -
-                   params["r_a"] / leaving_healthy_rate[1]
-curve(a, add=TRUE, lty=2, col='red')
-
-# Work out from 1 to 2
-a <- function(t) ifelse( t <= 1, 
-                         (params["r_a"]*boundaries[1] / leaving_healthy_rate[1] )*
-                           exp(leaving_healthy_rate[1] * t) +
-                           0.0 - # a(0) boundary condition
-                           params["r_a"]*boundaries[1] / leaving_healthy_rate[1],
-                         (params["r_a"]*boundaries[2] / leaving_healthy_rate[2] )*
-                           exp(leaving_healthy_rate[2] * (t-1)) +
-                           0.02083817 -  # a(1) previously
-                           params["r_a"]*boundaries[2] / leaving_healthy_rate[2]
-                       )
-plot(out[,'time'], out[,'a'], xlim=c(0, 2), typ='l', ylim=c(0, 0.05))
-curve(a, add=TRUE, lty=2, col='red')
-
 # solution dy/dt = b exp(a t) => y = b/a exp(a t) + c
 # https://www.wolframalpha.com/input/?i=dy%2Fdt+%3D+b+exp(a+t)
 pexp_int_func <- function(rates1, rates2, intervals, initial1=1, initial2=0)
@@ -97,7 +76,7 @@ pexp_int_func <- function(rates1, rates2, intervals, initial1=1, initial2=0)
   current    <- initial1
 
   boundaries <- c(initial1, sapply(1:(length(rates1)-1), function(n){
-    current <<- current * exp(rates[n] * (intervals[n+1] - intervals[n]))
+    current <<- current * exp(rates1[n] * (intervals[n+1] - intervals[n]))
     current
   }))
 
@@ -125,9 +104,9 @@ pexp_int_func <- function(rates1, rates2, intervals, initial1=1, initial2=0)
   }
 }
 
-event_a_rate <- -leaving_healthy_rate[1:6]
+event_a_rate <- leaving_healthy_rate[1:6]
 
 a <- pexp_int_func(event_a_rate, c(rep(params['r_a'], 5), 0), 0:5)
-curve(a, from=0, to=5.5)
+curve(a, from=4.5, to=5.5)
 lines(out[,'time'], out[,'a'], col='red', lty=2)
 

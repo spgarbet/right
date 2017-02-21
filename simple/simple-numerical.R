@@ -3,19 +3,17 @@ library(flexsurv) # For pgompertz
 
 ss_death <- read.csv("ss-death-2011.csv")
 
-
 inst_rate <- function(percent, timeframe)
 {
   - log(1-percent) / timeframe
 }
 
-
 ###################################
 # Numerical approach to secular death (very high accuracy!)
 f_40yr_percent_d    <- c(ss_death$f_death_prob[41:120])
-sim_adj_age         <- 0:79
+sim_adj_age         <- 0:79 + 0.5 # 0.5 offset since percentage is for whole year
 f_40yr_per_d_spline <- splinefun(sim_adj_age, f_40yr_percent_d)
-dev.off()
+plot(1:2); dev.off()
 curve(f_40yr_per_d_spline, col='red', from=0, to=82, xlab="years past 40", ylab="percent chance of death")
 points(sim_adj_age, f_40yr_percent_d)
 
@@ -23,25 +21,37 @@ points(sim_adj_age, f_40yr_percent_d)
 f_40yr_drate <- function(t) inst_rate(pmin(f_40yr_per_d_spline(t), 1),1)
 curve(f_40yr_drate, from=0, to=90)
 
-###################################
-# Use exact same Gompertz approx as DES instead, but work above is very nice
-f_40yr_drate <- function(t) dgompertz(t, 0.100751, 0.000837072) / (1-pgompertz(t, 0.100751, 0.000837072))
-curve(inst_rate(pmin(f_40yr_per_d_spline(x), 1),1), col='red', lty=2, from=0, to=90, ylab="rate of death")
-curve(f_40yr_drate, add=TRUE)
-
 ####################################
 # Integrations of death rates for exposure calculations in delay
 # Now, a special function used in delay equation (Had to put upper bound at 81)
-F_40yr_drate <- Vectorize(function(t) 
+F_40yr_drate_5yr <- Vectorize(function(t)
 {
   integrate(f_40yr_drate, lower=max(t-5, 0), upper=min(t, 81))$value
 })
 
-# A second special equation for death due to 
-F_40yr_rate_int <- Vectorize(function(lower, upper) 
+
+F_40yr_drate_1yr <- Vectorize(function(t)
 {
-  integrate(f_40yr_drate, lower=max(lower, 0), upper=min(upper, 81))$value
+  integrate(f_40yr_drate, lower=max(t-1, 0), upper=min(t, 81))$value
 })
+
+
+# Does a spline work faster?
+
+x <- 0:160 / 2
+y <- F_40yr_drate_5yr(x)
+plot(x, y, typ='l')
+f <- splinefun(x, y)
+curve(f, add=TRUE, col='red', lty=2)
+F_40yr_drate_5yr <- f
+
+
+x <- 0:160 / 2
+y <- F_40yr_drate_1yr(x)
+plot(x, y, typ='l')
+f <- splinefun(x, y)
+curve(f, add=TRUE, col='red', lty=2)
+F_40yr_drate_1yr <- f
 
 # This is for doing numberical integration of a set of numbers at an even interval
 alt_simp_coef <- function(i)
@@ -49,7 +59,7 @@ alt_simp_coef <- function(i)
   if (i < 8) stop("Invalid Simpson coefficient size")
   
   # pg.117 4.1.14, Numerical Recipes in C, 1st edition
-  c(17/48, 50/48, 43/48, 49/48, rep(1, i-8 ), 49/48, 43/48, 50/48, 17/48) 
+  c(17/48, 50/48, 43/48, 49/48, rep(1, i-8), 49/48, 43/48, 50/48, 17/48) 
 }
 
 ###################################
@@ -79,7 +89,7 @@ Simple <- function(t, y, params)
     if(is.infinite(r_d)) r_d <- 1e16 # A really large number
 
     # Event B stops at time 5 years after event A (delay equation)
-    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t-5, 2)*exp(-5*r_b - F_40yr_drate(t)) 
+    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t-5, 2)*exp(-5*r_b - F_40yr_drate_5yr(t)) 
     
     # Event A stops at time t=5 years
     if(t > 5) r_a <- 0
@@ -93,7 +103,7 @@ Simple <- function(t, y, params)
             b    = r_b*e10,
             e2   = r_b*e10 - r_d*e2,
             d    = r_ad*r_a*h + r_d*(h+e10+e15+e2),
-            db   = r_b*e10 - r_d*db - if (t < 1) 0 else lagderiv(t-1, 6)*exp(-F_40yr_rate_int(t-1, t))
+            db   = r_b*e10 - r_d*db - if (t < 1) 0 else lagderiv(t-1, 6)*exp(-F_40yr_drate_1yr(t))
           )
     )
   })
@@ -101,12 +111,15 @@ Simple <- function(t, y, params)
 
 yinit <- c(disc=1, h=1, a=0, e10=0, e15=0, b=0, e2=0, d=0, db=0)
 times <- seq(0, 80, by=1/365)  # units of years, increments of days, everyone dies after 120, so simulation is cut short
-out   <- dede(yinit, times, Simple, params)
+system.time(out <- dede(yinit, times, Simple, params)) #, control=list(mxhist=1e6)))
+#out   <- dede(yinit, times, Simple, params, control=list(mxhist=1e6))
 
 plot(out)
 
 # Check sensibility, i.e. all occupancy buckets sum to 1
 all((rowSums(out[,c('h','e10','e15', 'e2','d')]) - 1) < 1e-8)
+
+stop("Working halt")
 
 costs <- function(solution, params)
 {

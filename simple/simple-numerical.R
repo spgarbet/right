@@ -8,6 +8,24 @@ inst_rate <- function(percent, timeframe)
   - log(1-percent) / timeframe
 }
 
+
+###################################
+# Main model parameters
+params <- c(
+  r_a  = inst_rate(0.1, 5),  # Rate of healthy having event A
+  r_b  = inst_rate(0.5, 5),  # Rate of post-A  having event B
+  r_ad = 0.05,               # Rate of death as direct result of A
+  
+  c_a  = 10000,              # Cost of event A
+  c_b  = 25000,              # Cost of event B for a year
+  c_t  = 0,                  # Cost of therapy
+  d_a  = 0.25,               # Permanent disutility for a
+  d_b  = 0.1,                # 1-year disutility for b 
+  
+  disc_rate = 1e-12          # For computing discount
+)
+
+
 ###################################
 # Numerical approach to secular death (very high accuracy!)
 f_40yr_percent_d    <- c(ss_death$f_death_prob[41:120])
@@ -39,7 +57,7 @@ F_40yr_drate_1yr <- Vectorize(function(t)
 # Does a spline work faster?
 
 x <- 0:160 / 2
-y <- F_40yr_drate_5yr(x)
+y <- exp(-5*params['r_b'] - F_40yr_drate_5yr(x))
 plot(x, y, typ='l')
 f <- splinefun(x, y)
 curve(f, add=TRUE, col='red', lty=2)
@@ -47,7 +65,7 @@ F_40yr_drate_5yr <- f
 
 
 x <- 0:160 / 2
-y <- F_40yr_drate_1yr(x)
+y <- exp(-F_40yr_drate_1yr(x))
 plot(x, y, typ='l')
 f <- splinefun(x, y)
 curve(f, add=TRUE, col='red', lty=2)
@@ -63,22 +81,6 @@ alt_simp_coef <- function(i)
 }
 
 ###################################
-# Main model parameters
-params <- c(
-  r_a  = inst_rate(0.1, 5),  # Rate of healthy having event A
-  r_b  = inst_rate(0.5, 5),  # Rate of post-A  having event B
-  r_ad = 0.05,               # Rate of death as direct result of A
-  
-  c_a  = 10000,              # Cost of event A
-  c_b  = 25000,              # Cost of event B for a year
-  c_t  = 0,                  # Cost of therapy
-  d_a  = 0.25,               # Permanent disutility for a
-  d_b  = 0.1,                # 1-year disutility for b 
-  
-  disc_rate = 1e-12          # For computing discount
-)
-
-###################################
 # Numerical Delay Differential Equation
 Simple <- function(t, y, params)
 {
@@ -89,8 +91,8 @@ Simple <- function(t, y, params)
     if(is.infinite(r_d)) r_d <- 1e16 # A really large number
 
     # Event B stops at time 5 years after event A (delay equation)
-    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t-5, 2)*exp(-5*r_b - F_40yr_drate_5yr(t)) 
-    
+    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t-5, 2)*F_40yr_drate_5yr(t)
+
     # Event A stops at time t=5 years
     if(t > 5) r_a <- 0
       
@@ -103,14 +105,14 @@ Simple <- function(t, y, params)
             b    = r_b*e10,
             e2   = r_b*e10 - r_d*e2,
             d    = r_ad*r_a*h + r_d*(h+e10+e15+e2),
-            db   = r_b*e10 - r_d*db - if (t < 1) 0 else lagderiv(t-1, 6)*exp(-F_40yr_drate_1yr(t))
+            db   = r_b*e10 - r_d*db - if (t < 1 || t > 11) 0 else lagderiv(t-1, 6)*F_40yr_drate_1yr(t)
           )
     )
   })
 }
 
 yinit <- c(disc=1, h=1, a=0, e10=0, e15=0, b=0, e2=0, d=0, db=0)
-times <- seq(0, 80, by=1/365)  # units of years, increments of days, everyone dies after 120, so simulation is cut short
+times <- seq(0, 40, by=1/365)  # units of years, increments of days, everyone dies after 120, so simulation is cut short
 system.time(out <- dede(yinit, times, Simple, params)) #, control=list(mxhist=1e6)))
 #out   <- dede(yinit, times, Simple, params, control=list(mxhist=1e6))
 

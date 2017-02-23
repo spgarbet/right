@@ -1,0 +1,359 @@
+---
+title: "Simple Event Model Value of Information"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+The objective of this notebook is to explore probabilistic sensitivity analysis with a discrete event simulation model with the following parameters:
+
+1. A population of 40-year old women are at risk for both secular death and an event (A) that happens at a **10% [8-12%]** rate over a 5 year period.
+2. All those who experience the event incur a cost of $10,000.
+3. Among those who experience the event, there is a **5% [2-7%]** case fatality rate.  
+4. Among those who survive, they experience a **0.25 [0.2-0.3]** utility decrement for the remainder of their life. 
+5. Among the surviors, there is a second event (B) that occurs with probability **50% [30-70]** over a 5 year period.
+6. Event B has no case fatality but incurs a $25,000 cost and a **0.10 [0.7-0.13]** disutility for 1 year 
+7. There is a new therapy available that reduces the rate of the first event by a relative risk of **0.5 [0.45-0.55]**, however the therapy costs $8,000.
+
+This model was intially coded up as a DES and then a numerical solution was derived using a delay differential equation. 
+
+
+# Numerical Solution to Model
+```{r,include=FALSE}
+library(deSolve)
+library(flexsurv) # For pgompertz
+
+ss_death <- read.csv("ss-death-2011.csv")
+
+inst_rate <- function(percent, timeframe)
+{
+  - log(1-percent) / timeframe
+}
+
+###################################
+# Main model parameters
+params <- c(
+  r_a  = inst_rate(0.1, 5),  # Rate of healthy having event A
+  r_b  = inst_rate(0.5, 5),  # Rate of post-A  having event B
+  r_ad = 0.05,               # Rate of death as direct result of A
+  
+  c_a  = 10000,              # Cost of event A
+  c_b  = 25000,              # Cost of event B for a year
+  c_t  = 0,                  # Cost of therapy
+  d_a  = 0.25,               # Permanent disutility for a
+  d_b  = 0.1,                # 1-year disutility for b 
+  
+  disc_rate = 1e-12          # For computing discount
+)
+
+
+###################################
+# Numerical approach to secular death (very high accuracy!)
+f_40yr_percent_d    <- c(ss_death$f_death_prob[41:120])
+sim_adj_age         <- 0:79 + 0.5 # 0.5 offset since percentage is for whole year
+f_40yr_per_d_spline <- splinefun(sim_adj_age, f_40yr_percent_d)
+#plot(1:2); dev.off()
+#curve(f_40yr_per_d_spline, col='red', from=0, to=82, xlab="years past 40", ylab="percent chance of death")
+#points(sim_adj_age, f_40yr_percent_d)
+
+# Clamped at infinite rate via pmin
+f_40yr_drate <- function(t) inst_rate(pmin(f_40yr_per_d_spline(t), 1),1)
+#curve(f_40yr_drate, from=0, to=90)
+
+####################################
+# Integrations of death rates for exposure calculations in delay
+# Now, a special function used in delay equation (Had to put upper bound at 81)
+F_40yr_drate_5yr <- Vectorize(function(t)
+{
+  integrate(f_40yr_drate, lower=max(t-5, 0), upper=min(t, 81))$value
+})
+
+
+F_40yr_drate_1yr <- Vectorize(function(t)
+{
+  integrate(f_40yr_drate, lower=max(t-1, 0), upper=min(t, 81))$value
+})
+
+
+# Does a spline work faster?
+
+x <- 0:160 / 2
+y <- exp(-5*params['r_b'] - F_40yr_drate_5yr(x))
+#plot(x, y, typ='l')
+f <- splinefun(x, y)
+#curve(f, add=TRUE, col='red', lty=2)
+F_40yr_drate_5yr <- f
+
+
+x <- 0:160 / 2
+y <- exp(-F_40yr_drate_1yr(x))
+#plot(x, y, typ='l')
+f <- splinefun(x, y)
+#curve(f, add=TRUE, col='red', lty=2)
+F_40yr_drate_1yr <- f
+
+# This is for doing numberical integration of a set of numbers at an even interval
+alt_simp_coef <- function(i)
+{
+  if (i < 8) stop("Invalid Simpson coefficient size")
+  
+  # pg.117 4.1.14, Numerical Recipes in C, 1st edition
+  c(17/48, 50/48, 43/48, 49/48, rep(1, i-8), 49/48, 43/48, 50/48, 17/48) 
+}
+
+###################################
+# Numerical Delay Differential Equation
+Simple <- function(t, y, params)
+{
+  with(as.list(c(y, params)), {
+    
+    # Use table for death_prob, Female 40 (offset 1)
+    r_d <- f_40yr_drate(t)
+    if(is.infinite(r_d)) r_d <- 1e16 # A really large number
+
+    # Event B stops at time 5 years after event A (delay equation)
+    dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t-5, 2)*F_40yr_drate_5yr(t)
+
+    # Event A stops at time t=5 years
+    if(t > 5) r_a <- 0
+      
+    list(c(
+            disc = -disc_rate*disc,            # Simple discount r ate
+            h    = -(r_a+r_d)*h,
+            a    = r_a*h,
+            e10  = (1-r_ad)*r_a*h-r_d*e10-dd_b-r_b*e10,
+            e15  = dd_b - r_d*e15,
+            b    = r_b*e10,
+            e2   = r_b*e10 - r_d*e2,
+            d    = r_ad*r_a*h + r_d*(h+e10+e15+e2),
+            db   = r_b*e10 - r_d*db - if (t < 1 || t > 11) 0 else lagderiv(t-1, 6)*F_40yr_drate_1yr(t)
+          )
+    )
+  })
+}
+
+yinit <- c(disc=1, h=1, a=0, e10=0, e15=0, b=0, e2=0, d=0, db=0)
+times <- seq(0, 40, by=1/365)  # units of years, increments of days, everyone dies after 120, so simulation is cut short
+#system.time(out <- dede(yinit, times, Simple, params)) #, control=list(mxhist=1e6)))
+#out   <- dede(yinit, times, Simple, params, control=list(mxhist=1e6))
+
+costs <- function(solution, params)
+{
+  n <- length(solution[,1])
+  simpson <- alt_simp_coef(n)
+
+  with(as.list(params), {
+    # Compute Discounted Cost
+    cost <- c_a*sum(diff(solution[,'a'])*solution[2:n,'disc']) + # Cost * Number of events in bucket a
+            c_b*sum(diff(solution[,'b'])*solution[2:n,'disc']) + # Cost * Number of events in bucket b
+            c_t*solution[1, 'h']  # Therapy Cost * Initial healthy individuals
+    
+    # Step size of simulation
+    step     <- solution[2,'time'] - solution[1,'time']
+    
+    # Total possible life units is integral of discounted time
+    life <- sum(simpson*solution[,'disc'])*step
+    
+    # Permanent disutility for A (integration)
+    disA <- d_a*sum(simpson*solution[,'e10']*solution[,'disc'])*step + 
+            d_a*sum(simpson*solution[,'e15']*solution[,'disc'])*step +
+            d_a*sum(simpson*solution[,'e2' ]*solution[,'disc'])*step
+    
+    # Event B
+    disB <- d_b*sum(simpson*solution[,'db']*solution[,'disc'])*step
+
+    # Death disutility
+    disD <- sum(simpson*solution[,'d']*solution[,'disc'])*step       # Death disutility (integration)
+    
+    c(cost       = unname(cost),
+      qaly       = unname(life-disA-disB-disD),
+      possible   = unname(life),
+      disutility = unname(disA+disB+disD),
+      a_count    = unname(solution[n,'a']),
+      disutil_a  = unname(disA),
+      b_count    = unname(solution[n,'b']),
+      disutil_b  = unname(disB),
+      dead_count = unname(solution[n,'d']), 
+      disutil_d  = unname(disD),
+      living     = unname(solution[n,'h']+solution[n,'e10']+solution[n,'e15']+solution[n,'e2'])
+      )
+  })
+}
+expected <- function(params) costs(dede(yinit, times, Simple, params), params)
+```
+
+# Single Model Run
+```{r,cache=TRUE}
+lambda <- 50000
+
+# Baseline Run
+params['r_a'] <- params['r_a']
+params['c_t']  <- 0
+A <- as.data.frame(expected(params))
+NMB.A <- lambda*A["qaly",] - A["cost",]; NMB.A
+  
+# With Treatment
+params['r_a'] <- params['r_a']*0.5
+params['c_t']  <- 2000
+B <- as.data.frame(expected(params))
+NMB.B <- lambda*B["qaly",] - B["cost",]; NMB.B
+
+(ICER = (B["cost",]- A["cost",]) / (B["qaly",]-A["qaly",]))
+
+```
+
+# Probabilistic Sensitivity Analysis
+```{r}
+# Parameter List
+params.psa <- list(
+  r_a = list( # Rate of healthy having event A [uinform(8,12)]
+    value = inst_rate(0.1, 5),
+    type = "uniform",
+    parameter = "r_a",
+    min = 0.08,
+    max = 0.10
+  ),
+  r_b = list( # Rate of post-A  having event B [unifirm(30-70)]
+    value = inst_rate(0.5, 5),
+    type = "uniform",
+    parameter = "r_a",
+    min = 0.30,
+    max = 0.70
+    ),
+  r_ad = list( # Rate of death as direct result of A [beta(50,950)]
+    value = 0.05,
+    type = "beta",
+    parameter = "r_ad",
+    shape1 = 50,
+    shape2 = 950
+    ),
+  c_a = list( # Cost of event A
+    value = 10000,
+    type = "uniform",
+    parameter = "c_a",
+    min = 10000,
+    max = 10000
+    ),  
+  c_b = list( # Cost of event B
+    value = 25000,
+    type = "uniform",
+    parameter = "c_b",
+    min = 25000,
+    max = 25000
+    ), 
+  c_t = list( # Cost of therapy
+    value = 2000,
+    type = "uniform",
+    parameter = "c_b",
+    min = 2000,
+    max = 2000
+    ),
+  d_a = list( # Permanent disutility for a [beta(25,75)]
+    value = 0.25,
+    type = "beta",
+    parameter = "d_a",
+    shape1 = 25,
+    shape2 = 75  
+    ),
+  d_b = list(    # 1-year disutility for b  [beta(100,900)]
+    value = 0.10,
+    type = "beta",
+    parameter = "d_b",
+    shape1 = 100,
+    shape2 = 900
+  ),
+  rr_t = list( #RR of reducing A = 0.5 [beta(50,50)]
+    value = 1,
+    type = "beta",
+    parameter = "rr_t",
+    shape1 = 50,
+    shape2 = 50             
+  ),
+  disc_rate = list( # Discount Rate
+    value = 1e-12,
+    type = "uniform",
+    parameter = "disc_rate",
+    min = 1e-12,
+    max = 1e-12
+    )
+)
+
+params <- unlist(lapply(params.psa,function(x) x$value))
+
+```
+We'll now draw a random hypercube sample based on the number of parameters listed in the list object.  Once we draw the uniform draws from the hypercube sample, we'll apply the specific quantile function for the model parameter to get its draw for that iteration of the model.
+
+```{r}
+PSA.N = 250
+require(lhs)
+require(tidyverse)
+X <- randomLHS(PSA.N, length(params.psa))
+colnames(X) = names(params.psa)
+
+lhc.draws.transformed <- cbind.data.frame(lapply(params.psa,function(x) 
+  {
+    if (x[["type"]]=="beta")
+    {
+      qbeta(X[,x[["parameter"]]],shape1=x[["shape1"]],shape2=x[["shape2"]])
+    } 
+    else if (x[["type"]]=="uniform")
+    {
+      qunif(X[,x[["parameter"]]],min=x[["min"]],max=x[["max"]])
+    }   
+  }
+))
+lhc.draws.transformed %>% head()
+
+```
+
+
+```{r,cache=TRUE}
+# Set up Parallel Processing
+# require(doParallel)
+# nworkers <- detectCores()
+# cl <- makePSOCKcluster(nworkers)
+# clusterSetRNGStream(cl, c(1,2,3,4,5,6,7,8))
+# registerDoParallel(cl)
+# 
+# # Split Into Chunks
+# d = 1:dim(lhc.draws.transformed)[1]
+# chunks = split(d,ceiling(seq_along(d)/100))
+
+PSA <- foreach (i = 1:dim(lhc.draws.transformed)[1],.combine=rbind) %do%
+{
+  cat(i)
+  # Standard of Care
+  params = lhc.draws.transformed[i,]
+  params$r_a = inst_rate(params$r_a, 5)
+  params$r_b = inst_rate(params$r_b, 5)
+  params['rr_t'] = 1
+  params['r_a'] <- params['r_a']*params['rr_t']
+  params['c_t']  <- 0
+  A <- as.data.frame(expected(params))
+  params.A <- params
+  names(params.A) = paste0(names(params.A),".A")
+  
+  # Treatment
+  params = lhc.draws.transformed[i,]
+  params$r_a = inst_rate(params$r_a, 5)
+  params$r_b = inst_rate(params$r_b, 5)
+  params['r_a'] <- params['r_a']*params['rr_t']
+  B <- as.data.frame(expected(params))
+  params.B <- params
+  names(params.B) = paste0(names(params.B),".B")
+  
+  
+  out <- unlist(c(params.A,
+                  params.B, 
+                  cost.A = A["cost",] , qaly.A = A["qaly",] , Strategy.A = lambda*A["qaly",] - A["cost",],
+                  cost.B = B["cost",] , qaly.B = B["qaly",] , Strategy.B = lambda*B["qaly",] - B["cost",]))
+  out
+}
+
+PSA %>% tbl_df() %>% save(file="./psa-toy.Rdata")
+PSA %>% tbl_df() %>% mutate(icer = (cost.B-cost.A)/(qaly.B-qaly.A)) %>% select(icer)
+
+```
+
+
+

@@ -94,8 +94,8 @@ prob = ConstantLagDDEProblem(
   (0.0, 80.0))
  
 ########## How to run 
-sol=solve(prob, MethodOfSteps(Tsit5()))
-plot(sol)
+#sol=solve(prob, MethodOfSteps(Tsit5()))
+#plot(sol)
 
 function discounted_a(sol, discount, a_rate)
   quadgk(function(t) a_rate*(sol(t)[1])*exp(-discount * t) end, 0, 5)[1]
@@ -128,10 +128,7 @@ function outcome(sol, params)
          (1-params[:disA])*disutility_a_time(sol, params[:discount]) -
          params[:disB]*disutility_b_time(sol, params[:discount])
 
-  Dict(
-    :dCost => cost,
-    :dQALY => qaly
-  )
+  [cost, qaly]
 end
 
 function params_as_dict(df)
@@ -151,9 +148,7 @@ function params_as_dict(df)
   )
 end
 
-function solution(df::DataFrames.DataFrame)
-
-  params = params_as_dict(df)
+function solution(params)
 
   pf_simple.params[1] = params[:riskA]
   pf_simple.params[2] = params[:riskB]
@@ -173,13 +168,21 @@ function solution(df::DataFrames.DataFrame)
   sol2=solve(prob, MethodOfSteps(Tsit5()))
   
   (sol1, sol2)
-
-  #[1,2,3]
 end
 
 #### Main Loop
 cube = readtable("test-cube.csv")
+
+println("dCostNoTreat,dQALYNoTreat,dCostTreat,dQALYTreat")
 for i in [1:(size(cube)[1])...]
-  println(join([@sprintf "%.f" x for x in solution(cube[i,:])], ", "))
+  params = params_as_dict(cube[i,:])
+  solutions = solution(params)
+  
+  outcomes = outcome(solutions[1], params)
+  params[:costT] = 2000.0
+  params[:riskB] = params[:riskB]*params[:rrB]
+  append!(outcomes, outcome(solutions[2], params))
+  
+  println(join([@sprintf "%.f" x for x in outcomes], ", "))
 end
 

@@ -77,16 +77,26 @@ function simple(t, y, h, p, dy)
   dy[6] = r_b*y[3]                                        # B bucket
   dy[7] = r_b*y[3] - r_d*y[7]                             # Disutility of B
   
+  if(y[3] < 0) 
+    dy[3] = -y[3]
+  end
+  
   if(t>=1 && t <= 11) 
     dy[7] = dy[7] - (r_b*h(t-1)[3])*f_40yr_death_rate_1yr(t)
   end
 end
             
-pf_simple = DDEParameterizedFunction(simple, [instantaneous_rate(0.1, 5), instantaneous_rate(0.5, 5),  0.05])
+pf_simple = DDEParameterizedFunction(
+  simple,
+  [instantaneous_rate(0.1, 5), instantaneous_rate(0.5, 5),  0.05])
 
 hh(t) = zeros(7)
 
-prob = ConstantLagDDEProblem(pf_simple,hh,vcat([1.0], zeros(6)),[1,5],(0.0, 80.0))
-#sol=solve(prob, MethodOfSteps(Tsit5(), constrained=true))
+prob = ConstantLagDDEProblem(
+  pf_simple,
+  hh,
+  vcat([1.0], zeros(6)),
+  [1,5],
+  (0.0, 80.0))
 sol=solve(prob, MethodOfSteps(Tsit5()))
 plot(sol)

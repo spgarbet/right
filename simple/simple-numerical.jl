@@ -24,13 +24,7 @@ instantaneous_rate(percent, timeframe) = - log(1-percent) / timeframe
 ################################################
 # Parameters
 
-c_a  = 10000.0            # Cost of event A
-c_b  = 25000.0            # Cost of event B for a year
-c_t  = 0.0                # Cost of therapy
-d_a  = 0.25               # Permanent disutility for a
-d_b  = 0.1                # 1-year disutility for b 
-  
-disc_rate = 1e-12         # For computing discount
+
 
 #################################################
 # Determine death rate function via spline
@@ -98,5 +92,94 @@ prob = ConstantLagDDEProblem(
   vcat([1.0], zeros(6)),
   [1,5],
   (0.0, 80.0))
+ 
+########## How to run 
 sol=solve(prob, MethodOfSteps(Tsit5()))
 plot(sol)
+
+function discounted_a(sol, discount, a_rate)
+  quadgk(function(t) a_rate*(sol(t)[1])*exp(-discount * t) end, 0, 5)[1]
+end
+
+function discounted_b(sol, discount, b_rate)
+  quadgk(function(t) b_rate*(sol(t)[3])*exp(-discount * t) end, 0, 10)[1]
+end
+
+function disutility_a_time(sol, discount)
+  quadgk(function(t) sol(t)[3]*exp(-discount*t) end, 0, 80)[1] +
+  quadgk(function(t) sol(t)[4]*exp(-discount*t) end, 0, 80)[1] +
+  quadgk(function(t) sol(t)[5]*exp(-discount*t) end, 0, 80)[1]
+end
+
+function disutility_b_time(sol, discount)
+  quadgk(function(t) sol(t)[7]*exp(-discount*t) end, 0, 20)[1]
+end
+
+function healthy_time(sol, discount)
+  quadgk(function(t) sol(t)[1]*exp(-discount*t) end, 0, 80)[1]
+end
+
+function outcome(sol, params)
+  cost = params[:costT] + 
+         params[:costA]*discounted_a(sol, params[:discount], params[:riskA]) +
+         params[:costB]*discounted_b(sol, params[:discount], params[:riskB])
+  
+  qaly = healthy_time(sol, params[:discount]) +
+         (1-params[:disA])*disutility_a_time(sol, params[:discount]) -
+         params[:disB]*disutility_b_time(sol, params[:discount])
+
+  Dict(
+    :dCost => cost,
+    :dQALY => qaly
+  )
+end
+
+function params_as_dict(df)
+  Dict(
+    :riskA  => instantaneous_rate(df[1,:vRiskA],5),
+    :riskB  => instantaneous_rate(df[1,:vRiskB],5),
+    :fatalA => df[1,:vFatalA],
+    :rrB    => df[1,:vRR],
+    
+    :costA  => 10000.0,
+    :costB  => 25000.0,
+    :costT  => 0.0,
+    :disA   => 0.25,  # Permanent disutility for a
+    :disB   => 0.1,   # 1-year disutility for b
+
+    :discount => 0.03         # For computing discount
+  )
+end
+
+function solution(df::DataFrames.DataFrame)
+
+  params = params_as_dict(df)
+
+  pf_simple.params[1] = params[:riskA]
+  pf_simple.params[2] = params[:riskB]
+  pf_simple.params[3] = params[:fatalA]
+  
+  prob = ConstantLagDDEProblem(
+    pf_simple,
+    hh,
+    vcat([1.0], zeros(6)),
+    [1,5],
+    (0.0, 80.0))
+    
+  sol1=solve(prob, MethodOfSteps(Tsit5()))
+
+  pf_simple.params[1] = pf_simple.params[1]*params[:rrB]
+  
+  sol2=solve(prob, MethodOfSteps(Tsit5()))
+  
+  (sol1, sol2)
+
+  #[1,2,3]
+end
+
+#### Main Loop
+cube = readtable("test-cube.csv")
+for i in [1:(size(cube)[1])...]
+  println(join([@sprintf "%.f" x for x in solution(cube[i,:])], ", "))
+end
+

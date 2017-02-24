@@ -20,9 +20,14 @@ This model was intially coded up as a DES and then a numerical solution was deri
 
 # Numerical Solution to Model
 ```{r,include=FALSE}
+require(tidyverse)
 library(deSolve)
 library(flexsurv) # For pgompertz
-
+library(scales)
+require(plyr)
+require(reshape2)
+require(ellipse)
+source("./ce-psa-functions.r")
 ss_death <- read.csv("ss-death-2011.csv")
 
 inst_rate <- function(percent, timeframe)
@@ -37,8 +42,8 @@ params <- c(
   r_b  = inst_rate(0.5, 5),  # Rate of post-A  having event B
   r_ad = 0.05,               # Rate of death as direct result of A
   
-  c_a  = 10000,              # Cost of event A
-  c_b  = 25000,              # Cost of event B for a year
+  c_a  = 15000,              # Cost of event A
+  c_b  = 15000,              # Cost of event B for a year
   c_t  = 0,                  # Cost of therapy
   d_a  = 0.25,               # Permanent disutility for a
   d_b  = 0.1,                # 1-year disutility for b 
@@ -194,7 +199,7 @@ NMB.A <- lambda*A["qaly",] - A["cost",]; NMB.A
   
 # With Treatment
 params['r_a'] <- params['r_a']*0.5
-params['c_t']  <- 2000
+params['c_t']  <- 10000
 B <- as.data.frame(expected(params))
 NMB.B <- lambda*B["qaly",] - B["cost",]; NMB.B
 
@@ -228,25 +233,25 @@ params.psa <- list(
     shape2 = 950
     ),
   c_a = list( # Cost of event A
-    value = 10000,
+    value = 15000,
     type = "uniform",
     parameter = "c_a",
-    min = 10000,
-    max = 10000
+    min = 15000,
+    max = 15000
     ),  
   c_b = list( # Cost of event B
-    value = 25000,
+    value = 15000,
     type = "uniform",
     parameter = "c_b",
-    min = 25000,
-    max = 25000
+    min = 15000,
+    max = 15000
     ), 
   c_t = list( # Cost of therapy
-    value = 2000,
+    value = 10000,
     type = "uniform",
     parameter = "c_b",
-    min = 2000,
-    max = 2000
+    min = 10000,
+    max = 10000
     ),
   d_a = list( # Permanent disutility for a [beta(25,75)]
     value = 0.25,
@@ -284,7 +289,7 @@ params <- unlist(lapply(params.psa,function(x) x$value))
 We'll now draw a random hypercube sample based on the number of parameters listed in the list object.  Once we draw the uniform draws from the hypercube sample, we'll apply the specific quantile function for the model parameter to get its draw for that iteration of the model.
 
 ```{r}
-PSA.N = 250
+PSA.N = 4000
 require(lhs)
 require(tidyverse)
 X <- randomLHS(PSA.N, length(params.psa))
@@ -319,41 +324,311 @@ lhc.draws.transformed %>% head()
 # d = 1:dim(lhc.draws.transformed)[1]
 # chunks = split(d,ceiling(seq_along(d)/100))
 
-PSA <- foreach (i = 1:dim(lhc.draws.transformed)[1],.combine=rbind) %do%
+if (!file.exists("./psa-toy.Rdata"))
 {
-  cat(i)
-  # Standard of Care
-  params = lhc.draws.transformed[i,]
-  params$r_a = inst_rate(params$r_a, 5)
-  params$r_b = inst_rate(params$r_b, 5)
-  params['rr_t'] = 1
-  params['r_a'] <- params['r_a']*params['rr_t']
-  params['c_t']  <- 0
-  A <- as.data.frame(expected(params))
-  params.A <- params
-  names(params.A) = paste0(names(params.A),".A")
+  PSA <- foreach (i = 1:dim(lhc.draws.transformed)[1],.combine=rbind) %do%
+  {
+    cat(i)
+    # Standard of Care
+    params = lhc.draws.transformed[i,]
+    params$r_a = inst_rate(params$r_a, 5)
+    params$r_b = inst_rate(params$r_b, 5)
+    params['rr_t'] = 1
+    params['r_a'] <- params['r_a']*params['rr_t']
+    params['c_t']  <- 0
+    A <- as.data.frame(expected(params))
+    params.A <- params
+    names(params.A) = paste0(names(params.A),".A")
+    
+    # Treatment
+    params = lhc.draws.transformed[i,]
+    params$r_a = inst_rate(params$r_a, 5)
+    params$r_b = inst_rate(params$r_b, 5)
+    params['r_a'] <- params['r_a']*params['rr_t']
+    B <- as.data.frame(expected(params))
+    params.B <- params
+    names(params.B) = paste0(names(params.B),".B")
+    
+    
+    out <- unlist(c(params.A,
+                    params.B, 
+                    cost.A = A["cost",] , qaly.A = A["qaly",] , Strategy.A = lambda*A["qaly",] - A["cost",],
+                    cost.B = B["cost",] , qaly.B = B["qaly",] , Strategy.B = lambda*B["qaly",] - B["cost",]))
+    out
+  }
   
-  # Treatment
-  params = lhc.draws.transformed[i,]
-  params$r_a = inst_rate(params$r_a, 5)
-  params$r_b = inst_rate(params$r_b, 5)
-  params['r_a'] <- params['r_a']*params['rr_t']
-  B <- as.data.frame(expected(params))
-  params.B <- params
-  names(params.B) = paste0(names(params.B),".B")
-  
-  
-  out <- unlist(c(params.A,
-                  params.B, 
-                  cost.A = A["cost",] , qaly.A = A["qaly",] , Strategy.A = lambda*A["qaly",] - A["cost",],
-                  cost.B = B["cost",] , qaly.B = B["qaly",] , Strategy.B = lambda*B["qaly",] - B["cost",]))
-  out
+  PSA <- PSA %>% tbl_df()
+  save(PSA,file="./psa-toy.Rdata")
+} else
+{
+  load("./psa-toy.Rdata")
 }
 
-PSA %>% tbl_df() %>% save(file="./psa-toy.Rdata")
-PSA %>% tbl_df() %>% mutate(icer = (cost.B-cost.A)/(qaly.B-qaly.A)) %>% select(icer)
 
 ```
+
+
+# Probalisitc Sensitivity Analysis
+```{r}
+load("./psa-toy.Rdata")
+select <- dplyr::select
+mutate <- dplyr::mutate
+Sim <- PSA %>% tbl_df()
+Sim <- PSA %>% mutate(iteration=row_number()) %>% select(iteration,cost.A,qaly.A,cost.B,qaly.B,contains(".B"))
+Sim2 <- read.csv("../../VOI_SMDM_2016/Metamodeling_SensitivityAnalysis_SMDM2014/PSA.csv")
+
+Strategies<-c("Standard", "Therapy")
+
+#Determine the number of strategies
+ndep<-length(Strategies)
+
+#Create vector of variable names
+Names <- colnames(Sim)
+Parms <- Sim %>% select(-iteration,-cost.A,-cost.B,-qaly.A,-qaly.B,-Strategy.B,-disc_rate.B) %>% data.frame() #Sim2[,(ndep*2+2):dim(Sim2)[2]]
+#Get parameter names
+paramNames<-colnames(Parms)
+indep<-ncol(Parms)
+Outcomes <- Sim %>%  select(Standard_cost=cost.A,Standard_eff=qaly.A,Therapy_cost=cost.B,Therapy_eff=qaly.B) %>% data.frame
+
+```
+
+In the simulation file we only have each parameter's sample and the resulting cost and effectiveness for each of the strategies for each set of the parameters' realization. We need to construct the **Net Health Benefit (NHB)** for each of the strategies. The NHB for strategy $k$ is defined as 
+$$ \bar{NHB}_k = \bar{E}_k - \bar{C}_k/\lambda ,$$
+where $\bar{E}_k$ and $\bar{C}_k$ are the expected effectiveness and cost for strategy $k$, respectively; and $\lambda$ is the willingness-to-pay threshold.
+
+
+```{r}
+  lambda <- 50000
+```
+
+## Calculate NHB For Each Strategy
+
+```{r}
+  Sim$A_NHB <- Sim$qaly.A- Sim$cost.A/lambda
+  Sim$B_NHB <- Sim$qaly.B- Sim$cost.B/lambda
+  #Save the NHB for each strategy into a new data frame
+  NHB <- Sim %>% select(A_NHB,B_NHB)
+```
+
+# Linear Metamodel
+
+
+```{r}
+
+# Identify the parameters that vary
+paramvar <- Sim[,paramNames] %>% summarise_all(function(x) var(x))
+paramNames.varying <- names(paramvar)[which(paramvar!=0)]
+
+## Cost ##
+YY = "cost.A"
+fmla.unstd <- as.formula(paste0(YY,"~",paste0(paramNames.varying,collapse="+")))
+fmla.std <- as.formula(paste0(YY,"~",paste0(paste0("scale(",paramNames.varying,")"),collapse="+")))
+A.cost.fit <- lm(fmla.unstd, data=Sim)
+A.cost.fit.std <- lm(fmla.std,data=Sim)
+
+## Effectiveness ##
+YY = "qaly.A"
+fmla.unstd <- as.formula(paste0(YY,"~",paste0(paramNames.varying,collapse="+")))
+fmla.std <- as.formula(paste0(YY,"~",paste0(paste0("scale(",paramNames.varying,")"),collapse="+")))
+A.eff.fit <- lm(fmla.unstd, data=Sim)
+A.eff.fit.std <- lm(fmla.std,data=Sim)
+
+## NHB ##
+YY = "A_NHB"
+fmla.unstd <- as.formula(paste0(YY,"~",paste0(paramNames.varying,collapse="+")))
+fmla.std <- as.formula(paste0(YY,"~",paste0(paste0("scale(",paramNames.varying,")"),collapse="+")))
+A.nhb.fit <- lm(fmla.unstd, data=Sim)
+A.nhb.fit.std <- lm(fmla.std,data=Sim)
+
+
+```
+
+```{r,results='asis'}
+stargazer::stargazer(A.cost.fit,A.eff.fit,A.nhb.fit,
+          title="Regression Coefficients from Metamodels on the Outcomes of Chemotherapy",
+          type='html',
+          dep.var.caption=" With **unstandardized** predictors ",
+          dep.var.labels=c("Cost","Effectiveness","NHB"),
+          digits=2,
+          digits.extra=1,
+          keep.stat=c("rsq","n"),
+          notes = c('NHB: Net health benefit  '),
+          notes.align = 'l',
+          notes.append = FALSE,
+          omit.table.layout="#",
+          report=c("vc"))
+```  
+  
+  
+  
+```{r,results='asis'}
+stargazer::stargazer(A.cost.fit.std,A.eff.fit.std,A.nhb.fit.std,
+          title="Regression Coefficients from Metamodels on the Outcomes of Chemotherapy",
+          type='html',
+          dep.var.caption=" With **standardized** predictors ",
+          dep.var.labels=c("Cost","Effectiveness","NHB"),
+          digits=2,
+          digits.extra=1,
+          keep.stat=c("rsq","n"),
+          notes = c('NHB: Net health benefit  '),
+          notes.align = 'l',
+          notes.append = FALSE,
+          omit.table.layout="#",
+          report=c("vc"))
+```  
+
+
+## One-Way Sensitivity Analysis
+
+
+
+```{r, eval=FALSE}
+Sim.Long <- Sim %>% tbl_df() %>% select(one_of(c("iteration",paramNames.varying,"A_NHB","B_NHB"))) %>% data.frame() %>% 
+  melt(id.vars=c("iteration",paramNames.varying),measure.vars= c("A_NHB","B_NHB"))
+```
+
+Next we define the parameter for which we desire to do the one-way sensitivity analysis and its range. 
+```{r}
+parm<-'d_a.B'
+```
+
+The graph over the parameter's sample domain looks like
+```{r Oneway-NoRange, fig.width=8, fig.height=6}
+OneWaySA(Strategies,Parms,NHB,parm) 
+```
+# Tornado Diagram
+
+```{r Tornado Opt, fig.width=7, fig.height=6,warning=FALSE}
+NHB <- NHB %>% data.frame()
+Parms <- Parms %>% data.frame()
+TornadoOpt(Parms[,paramNames.varying],NHB)
+```
+
+```{r Tornado All, fig.width=7, fig.height=6,warning=FALSE, message=FALSE}
+TornadoAll(Strategies,Parms[,paramNames.varying],NHB)
+```
+
+# Threshold Analysis
+
+To perfom a threshold analysis we need to do a linear metamodel over all the different strategies. We will do it only for the standardized parameters. We will also include the interactions of the variables to perform a two-way sensitivity analysis in the next section.
+
+# Cost Effectiveness Plane
+```{r}
+#PlaneCE(Strategies,Outcomes)
+```
+
+
+# Cost-Effectiveness Scatterplot
+
+```{r CE-Scatter, fig.width=7, fig.height=6,warning=FALSE}
+ScatterCE(Strategies,Outcomes)
+```
+
+
+```{r}
+  lambda_range<-c(1000,150000,50)
+```
+
+```{r CEAC, fig.width=7, fig.height=6,warning=FALSE}
+  CEAC(lambda_range,Strategies,Outcomes)
+```
+
+
+# Value of Information 
+
+## Plot Net Monetary Benefit For Each Strategy
+
+```{r}
+lambda <- 50000
+n.sim <- nrow(PSA)
+nmb <-  PSA %>% mutate(Standard = qaly.A*lambda-cost.A, Therapy = qaly.B*lambda - cost.B) %>% select(Standard, Therapy) %>% data.frame()
+
+# Number of Strategies
+n.strategies <- ncol(nmb)
+n.strategies
+
+# Assign name of strategies
+strategies <- c("Standard","Therapy")
+colnames(nmb) <- strategies
+
+## Format data frame suitably for plotting
+require(reshape2)
+nmb.gg <- melt(nmb,  
+               variable.name = "Strategy", 
+               value.name = "NMB")
+```
+
+
+```{r,results='asis'}
+## Plot NMB for different strategies
+require(ggplot2)
+require(scales)  # For dollar labels
+require(grid)
+number_ticks <- function(n) {function(limits) pretty(limits, n)} 
+# Faceted plot by Strategy
+ggplot(nmb.gg, aes(x = NMB/1000)) +
+  geom_histogram(aes(y =..density..), col="black", fill = "gray") +
+  geom_density(color = "red") +
+  facet_wrap(~ Strategy, scales = "free_y") +
+  xlab("Net Monetary Benefit (NMB) x10^3") +
+  scale_x_continuous(breaks = number_ticks(5), labels = dollar) + 
+  scale_y_continuous(breaks = number_ticks(5)) + 
+  theme_bw()
+```
+
+```{r}
+#### Incremental NMB (INMB) ####
+# Calculate INMB of B vs A
+# Only B vs A but we could have plotted all combinations
+
+inmb <- data.frame(Simulation = 1:n.sim,
+                   `Therapy vs Standard` = nmb$`Therapy` - nmb$`Standard`) 
+
+## Format data frame suitably for plotting
+inmb.gg <- melt(inmb, id.vars = "Simulation", 
+                variable.name = "Comparison", 
+                value.name = "INMB")
+txtsize<-16
+```
+
+```{r,results='asis'}
+## Plot INMB
+ggplot(inmb.gg, aes(x = INMB/1000)) +
+  geom_histogram(aes(y =..density..), col="black", fill = "gray") +
+  geom_density(color = "red") +
+  geom_vline(xintercept = 0, col = 4, size = 1.5, linetype = "dashed") +
+  facet_wrap(~ Comparison, scales = "free_y") +
+  xlab("Incremental Net Monetary Benefit (INMB) in thousand $") +
+  scale_x_continuous(breaks = number_ticks(5), limits = c(-100, 100)) + 
+  scale_y_continuous(breaks = number_ticks(5)) + 
+  theme_bw(base_size = 14)
+```
+
+```{r}
+#### Loss Matrix ####  
+# Find optimal strategy (d*) based on the highest expected NMB
+d.star <- which.max(colMeans(nmb))
+d.star
+
+## Compute Loss matrix iterating over all strategies
+# Initialize loss matrix of dimension: number of simulation by number of strategies
+loss <- matrix(0, n.sim, n.strategies)
+# Or without iterating (much faster!)
+loss <- as.matrix(nmb - nmb[, d.star])
+head(loss)
+
+#### EVPI ####
+## Find maximum loss overall strategies at each state of the world 
+## (i.e., PSA sample)
+require(matrixStats)
+max.loss.i <- rowMaxs(loss)
+head(max.loss.i)
+## Average across all states of the world
+evpi <- mean(max.loss.i)
+evpi
+
+```
+
 
 
 

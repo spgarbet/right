@@ -92,7 +92,7 @@ days_till_mild_myopathy <- function(attrs, inputs)
 mild_myopathy <- function(traj, inputs)
 {
   traj %>%
-  mark("mild_myopathy") %>%
+    mark("mild_myopathy") %>% mark("myopathy_event") %>%
   next_step(inputs, inputs$simvastatin$vProbSimStopMild)
 }
 
@@ -134,7 +134,7 @@ days_till_mod_myopathy <- function(attrs, inputs)
 mod_myopathy <- function(traj,inputs)
 {
   traj %>%
-  mark("mod_myopathy") %>%
+    mark("mod_myopathy") %>% mark("myopathy_event") %>%
   next_step(inputs, inputs$simvastatin$vProbSimStopMod)
 }
 
@@ -180,7 +180,7 @@ sev_myopathy <- function(traj,inputs)
   branch(
     function() sample(1:2, 1, prob=c(inputs$simvastatin$vProbRahbdoDeath, 1-inputs$simvastatin$vProbRahbdoDeath)),
     continue = c(FALSE, TRUE),
-    trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_termination(),
-    trajectory("Do we stop treatment?") %>% mark("sev_myopathy") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)
+    trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% mark("myopathy_event") %>% cleanup_on_termination(),
+    trajectory("Do we stop treatment?") %>% mark("sev_myopathy") %>% mark("myopathy_event") %>% next_step(inputs, inputs$simvastatin$vProbSimStopSev)
   )
 }

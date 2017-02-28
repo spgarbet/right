@@ -4,82 +4,59 @@ source("run.R")
 source("costs.R")
 
 shinyServer(function(input, output) {
-  #update inputs (simulation) with input (ui values)
+
+  #copy and update inputs
+  inputs_update <- eventReactive(input$run,{
+    ip <- inputs
+    ip$vN <- input$vN
+    ip$vHorizon <- input$vHorizon
+    ip$vReactive <- "None" 
+    ip$whichDrug <- input$wDrug
+    ip$vDrugs <- trans_model(input$wDrug)
+    ip$iseed <- input$iseed
+    if(input$wDrug=="Clopidogrel") {
+      ip$clopidogrel$vCYP2C19.Poor <- input$vCYP2C19.Poor
+      ip$clopidogrel$vCYP2C19.Rapid <- input$vCYP2C19.Rapid
+      ip$clopidogrel$vDAPT.SecondLine <- input$vDAPT.SecondLine
+      ip$costs$clopidogrel <- input$C_clopidogrel
+      ip$costs$aspirin <- input$C_aspirin
+      ip$costs$ticagrelor <- input$C_ticagrelor
+      ip$costs$prasugrel <- input$C_prasugrel
+      ip$costs$single_test <- input$C_single_test
+    } 
+    return(ip)
+  })
+  
+  #base case results
   base <- eventReactive(input$run,{
-      #simulation setting
-      inputs$iseed <- input$iseed
-      inputs$vN <- input$vN
-      inputs$vHorizon <- input$vHorizon
-      inputs$clopidogrel$vCYP2C19.Poor <- input$vCYP2C19.Poor
-      inputs$clopidogrel$vCYP2C19.Rapid <- input$vCYP2C19.Rapid
-      #inputs$vCYP2C19.Unknown <- input$vCYP2C19.Unknown
-      #inputs$clopidogrel$vPREDICTsens <- input$vPREDICTsens
-      #inputs$clopidogrel$vPREDICTspec <- input$vPREDICTspec
-      inputs$clopidogrel$vDAPT.SecondLine <- input$vDAPT.SecondLine
-      inputs$vReactive <- "None" 
-      
-      inputs$costs$clopidogrel <- input$C_clopidogrel
-      inputs$costs$aspirin <- input$C_aspirin
-      inputs$costs$ticagrelor <- input$C_ticagrelor
-      inputs$costs$prasugrel <- input$C_prasugrel
-      
+      inputs <- inputs_update()
       out <- exec.simulation(inputs)
-      out$summary <- out$summary %>% arrange(num) %>% select(Event,Count)
+      out$sm <- out$sm %>% arrange(num) %>% select(Event,Count)
       return(out)
   })
-
+  
+  #None vs Reactive results
   add <- eventReactive(input$run,{
     
-  #if(length(input$vStrategy)>0) {
   if(input$test) {
-    inputs$iseed <- input$iseed
-    inputs$vN <- input$vN
-    inputs$vHorizon <- input$vHorizon
-    inputs$clopidogrel$vCYP2C19.Poor <- input$vCYP2C19.Poor
-    inputs$clopidogrel$vCYP2C19.Rapid <- input$vCYP2C19.Rapid
-    #inputs$vCYP2C19.Unknown <- input$vCYP2C19.Unknown
-    #inputs$clopidogrel$vPREDICTsens <- input$vPREDICTsens
-    #inputs$clopidogrel$vPREDICTspec <- input$vPREDICTspec
-    inputs$clopidogrel$vDAPT.SecondLine <- input$vDAPT.SecondLine
-    inputs$costs$single_test <- input$C_single_test
+    inputs <- inputs_update()
     inputs$vReactive <- "Single"  
-    
-    inputs$costs$clopidogrel <- input$C_clopidogrel
-    inputs$costs$aspirin <- input$C_aspirin
-    inputs$costs$ticagrelor <- input$C_ticagrelor
-    inputs$costs$prasugrel <- input$C_prasugrel
-    
+
     add <- exec.simulation(inputs)
-    names(add$summary)[2] <- "Genotyping"
+    names(add$sm)[2] <- "Genotyping"
     add$sum_costs$Strategy <- "Genotyping"
-    
-    #add <- NULL
-    #for(i in 1:length(input$vStrategy)) {
-     #inputs$vPreemptive <- trans_strategy(input$vStrategy[i])$preemptive
-     #inputs$vReactive <- trans_strategy(input$vStrategy[i])$reactive  
-     #run <- exec.simulation(inputs)
-     #names(run$summary)[2] <- paste(input$vStrategy[i]) #name event count 
-     #run$sum_costs$Strategy <- paste(input$vStrategy[i]) #name costs
-     
-     #if(is.null(add)) { 
-      # add$summary <- run$summary 
-      # add$sum_costs <- run$sum_costs
-     #} else {
-      # add$summary <- merge(add$summary, run$summary, by=c("Event","num"))
-      # add$sum_costs <- rbind(add$sum_costs,run$sum_costs)
-      # }
-    #} 
+
     return(add)
     } else {NULL}
     })
   
+  #combine and format results
   out <- eventReactive(input$run,{
     full <- list()
     if(input$test) {
-    #if(length(input$vStrategy)>0) {
-      ne <- base()$summary
+      ne <- base()$sm
       names(ne)[2] <- "None" 
-      full$summary <- merge(ne,add()$summary,by="Event") %>% arrange(num) %>% select(-num)
+      full$sm <- merge(ne,add()$sm,by="Event") %>% arrange(num) %>% select(-num)
       
       nc <- base()$sum_costs
       nc$Strategy <- "None"
@@ -89,7 +66,7 @@ shinyServer(function(input, output) {
       names(full$sum_costs) <- c("Strategy","QALY","Total Cost","Test Cost","Drug Cost","AE Cost","ICER to None")
 
     } else {
-      full$summary <- base()$summary
+      full$sm <- base()$sm
       full$sum_costs <- base()$sum_costs
       full$sum_costs$dQALY <- sprintf("%.5f",full$sum_costs$dQALY)
       names(full$sum_costs) <- c("QALY","Total Cost","Test Cost","Drug Cost","AE Cost")
@@ -103,16 +80,16 @@ shinyServer(function(input, output) {
   }) 
   
   output$events <- renderDataTable({
-    out()$summary
+    out()$sm
     }, escape=FALSE)
   
   output$costs <- renderTable({
     out()$sum_costs     
   }, rownames = FALSE, digits=1, bordered=FALSE)
   
-  output$last_e <- renderTable({
-    save_dt()$summary
-  }, rownames = FALSE, digits=0, bordered=FALSE)
+  output$last_e <- renderDataTable({
+    save_dt()$sm
+  }, escape=FALSE)
   
   output$last_c <- renderTable({
     save_dt()$sum_costs

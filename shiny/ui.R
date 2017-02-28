@@ -22,6 +22,8 @@ shinyUI(fluidPage(
         tabPanel(
           "Simulation",
           br(),
+          selectInput("wDrug","Which model?",c("Clopidogrel","Simvastatin"),"None",FALSE),
+          br(),
           
           #sliderInput("vN","Sample size:",min=10,max=10000,value=10,step=10),
           numericInput("vN", "Sample Size", min = 0, max = 100000, value = 500, step=50),
@@ -84,9 +86,6 @@ shinyUI(fluidPage(
     mainPanel(
       width=6,
       
-      verbatimTextOutput("sele"),
-      tableOutput("add"),
-      
       h2("Simulation Results"),
       h3("Event Counts"),
       dataTableOutput("events"),
@@ -96,7 +95,7 @@ shinyUI(fluidPage(
       tableOutput("costs"),
       
       h3("Last Saved Results"),
-      tableOutput("last_e"),
+      dataTableOutput("last_e"),
       tableOutput("last_c"),
       
       h3("Simulation Method"),

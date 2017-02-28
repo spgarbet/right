@@ -350,19 +350,17 @@ inputs$vDrugs = list(vSimvastatin = F,
                      vClopidogrel = T)
 
 inputs$clopidogrel$vDAPTScale <- epsilon
-
 inputs$clopidogrel$vRRRepeat.DAPT <- 0 #only for low-weibull runs, to fix retrigger clopidogrel prescription
-inputs$clopidogrel$vProbabilityDAPTSwitch = 1 #all switch
 
-#inputs$warfarin$vscale_timetowarfarin <- epsilon
-#inputs$simvastatin$vScale <- epsilon
+inputs$warfarin$vscale_timetowarfarin <- epsilon
+inputs$simvastatin$vScale <- epsilon
 
 ##################
 #output generating func
 #run
-inputs$vPreemptive = "None"
-inputs$vReactive = "None"
-#inputs$iseed = 12345
+inputs$vPreemptive <- "None"
+inputs$vReactive <- "None"
+inputs$iseed <- 12345
 
 ####
 ## 
@@ -389,22 +387,22 @@ exec.simulation <- function(inputs)
   
   #counts
   DT <- data.table(arrivals)
-  summary <- DT[, .N, by = resource]
+  sm <- DT[, .N, by = resource]
   #summary[summary$resource=="panel_test",]$resource <- "single_test"
-  events <- summary %>% merge(form,by="resource",all.y=TRUE) %>%
+  events <- sm %>% merge(form(inputs$whichDrug),by="resource",all.y=TRUE) %>%
     mutate(Event=txt, Count=ifelse(is.na(N),0,N)) %>% select(Event,Count,num)
   
   #C&Q
   sum_costs <- cost.qaly(arrivals,inputs)
   
   
-  return(list(summary=events,sum_costs=sum_costs))
+  return(list(sm=events,sum_costs=sum_costs))
   
 }
 
 #####Shiny functions
 #filter outputs and rename
-form <- data.frame(
+form_Clopidogrel <- data.frame(
   txt = c("<b>N</b>",
           "&nbsp;&nbsp;&nbsp;Secular Death     	",
           "&nbsp;&nbsp;&nbsp;Single Test	",
@@ -457,9 +455,60 @@ form <- data.frame(
                "	bleed_min_nonfatal	",
                "	bleed_fatal	",
                "	cabg_bleed	"))
-form$num <- as.numeric(row.names(form))
-form$resource <- trimws(form$resource,which="both")
-#form$txt <- trimws(form$txt,which="both")
+
+form_Simvastatin <- data.frame(
+  txt = c("<b>N</b>",
+          "&nbsp;&nbsp;&nbsp;Secular Death     	",
+          "&nbsp;&nbsp;&nbsp;Single Test	",
+          "&nbsp;&nbsp;&nbsp;Statin Therapy    	",
+          "<b>Drug Exposure</b>",
+          "&nbsp;&nbsp;&nbsp;Simvastatin       	",
+          "&nbsp;&nbsp;&nbsp;Alternate Statin  	",
+          "Switch to Alt     	",
+          "Halt Statin       	",
+          "<b>CVD Events</b>",
+          "&nbsp;&nbsp;&nbsp;CVD               	",
+          "&nbsp;&nbsp;&nbsp;CVD Death         	",
+          "<b>Myopathy Events</b>",
+          "&nbsp;&nbsp;&nbsp;Mild Myopathy     	",
+          "&nbsp;&nbsp;&nbsp;Moderate Myopathy 	",
+          "&nbsp;&nbsp;&nbsp;Severe Myopathy   	",
+          "&nbsp;&nbsp;&nbsp;Severe Myopathy Death	"),
+  resource = c("	time_in_model	",
+               "	secular_death	",
+               "	single_test	",
+               "	statin_any	",
+               "drug_exposure",
+               "	simvastatin	",
+               "	alt_simvastatin	",
+               "	sim_switched	",
+               "	sim_stopped	",
+               "cvd_event",
+               "	cvd	",
+               "	cvd_death	",
+               "myopathy_event",
+               "	mild_myopathy	",
+               "	mod_myopathy	",
+               "	sev_myopathy	",
+               "	rahbdo_death	"
+  )
+)
+
+form <- function(x) {
+  if(x=="Clopidogrel") {
+    fo <- form_Clopidogrel 
+  } else if (x=="Simvastatin") {
+    fo <- form_Simvastatin 
+  } else if (x=="Warfarin") {
+    fo <- form_Warfarin
+  } else {
+    print("Unrecognized Input")
+    stop()
+  }
+  fo$num <- as.numeric(row.names(fo))
+  fo$resource <- trimws(fo$resource,which="both")
+  return(fo)
+}  
 
 #transfer input strategy to parameters
 trans_strategy <- function(x) {
@@ -485,7 +534,23 @@ trans_strategy <- function(x) {
   return(list(preemptive=preemptive,reactive=reactive))
 }
 
-
+#identify which model to run
+trans_model <- function(x) {
+  if(x=="Clopidogrel") {
+    list(vSimvastatin = FALSE, 
+         vWarfarin = FALSE,
+         vClopidogrel = TRUE)
+  } else if
+  (x=="Simvastatin") {
+    list(vSimvastatin = TRUE, 
+         vWarfarin = FALSE,
+         vClopidogrel = FALSE)
+  } else {
+    list(vSimvastatin = FALSE, 
+         vWarfarin = TRUE,
+         vClopidogrel = FALSE)       
+  }
+}
 
 
 

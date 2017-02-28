@@ -77,10 +77,10 @@ assign_statin <- function(traj, inputs)
             sample(1:2, 1, prob=c(1-inputs$simvastatin$vProbSimvastatinAlt, inputs$simvastatin$vProbSimvastatinAlt))
           },  
           continue = rep(TRUE,2),
-          trajectory("Simvastatin") %>%
+          trajectory("Simvastatin") %>% mark("drug_exposure") %>%
             seize("simvastatin") %>% 
             set_attribute("aCVDdrug", 1),
-          trajectory("Alt. Simvastatin") %>%
+          trajectory("Alt. Simvastatin") %>% mark("drug_exposure") %>%
             seize("alt_simvastatin") %>% 
             set_attribute("aCVDdrug", 2)
         ) %>% 

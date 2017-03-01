@@ -29,7 +29,7 @@ shinyUI(fluidPage(
       selectInput("wDrug","Which model?",c("Clopidogrel","Simvastatin"),"None",FALSE),
       br(),
       
-      h4("Genotyping Strategy (by default no testing):"),
+      h5("Genotyping Strategy (by default no testing):"),
       checkboxInput("test","genotyping"),
       br(),
       

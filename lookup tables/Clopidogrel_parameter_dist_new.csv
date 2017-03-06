@@ -1,0 +1,84 @@
+param,cat,descrip,value,source,distribution,dist notes,variability,variability:lb,variability:ub
+vPREDICTsens,risk,sensitivity of PREDICT,0.23,study,beta,,,,
+vPREDICTspec,risk,specificity of PREDICT,0.93,study,beta,,,,
+vProbabilityRead,risk,Probability of physician using available test result at time of prescription,1,assumption,beta,,,,
+vProbabilityReactive,risk,Probability of physician ordering test for patient not yet genotyped at time of prescription,1,assumption,beta,,,,
+vDAPT.SecondLine,risk,Second-line drug,Ticagrelor,assumption,,,,,
+vCYP2C19.Poor,risk,Population-Level Allele Frequency Distribution: poor metabolizer,0.21,Kazi 2014 Annals,Dirichlet multinomial ,literature,range,0.15,0.4
+vCYP2C19.Rapid,risk,Population-Level Allele Frequency Distribution: rapid metabolizer,0.33,Kazi 2014 Annals,Dirichlet multinomial ,literature,range,0.1,0.4
+vCYP2C19.Unknown,risk,Population-Level Allele Frequency Distribution: unknown metabolizer,0.07,Kazi 2014 Annals,Dirichlet multinomial ,literature,range,0.05,0.09
+vDAPTShape,risk,Weibull shape for time to DAPT,0.59,study,,,,,
+vDAPTScale,risk,Weibull scale for time to DAPT,60475.53,study,,,,,
+vRRRepeat.DAPT,risk,Relative risk for repeat DAPT therapy,1.00E-12,assumption,,epsilon,,,
+vMaxDAPT,risk,Maximum number of DAPT therapies an individual can have,4,assumption,,,,,
+vDAPT.Tx.Duration,risk,Duration of DAPT therapy,365,assumption,,,,,
+vProbabilityDAPTSwitch,risk,Probability of switching to second-line DAPT if genotyped,0.55,VUMC PREDICT DATA,beta,study,,missing,
+vRR.ST.LOF,risk,Relative Risk of ST for patients with loss of function allele who are treated with Clopidogrel,1.75,Kazi 2014 Annals,lognormal,literature,range,1.5,2.03
+vRiskST30,risk,30-day rate of Stent Thrombosis,0.015,Kazi 2014 Annals,lognormal,literature,range,0.01,0.02
+vRiskST365,risk,365-day rate of Stent Thrombosis,0.006,Kazi 2014 Annals,lognormal,literature,range,0.003,0.009
+vRiskSTgt365,risk,post 1 year rate of Stent Thrombosis,0.0022,Kazi 2014 Annals,lognormal,literature,range,0.001,0.003
+vRR.ST.Ticagrelor,risk,Relative risk of ST for Ticagrelor users,0.75,Kazi 2014 Annals,lognormal,literature,range,0.59,0.95
+vRR.ST.Prasugrel,risk,Relative risk of ST for Prasugrel users,0.48,Kazi 2014 Annals,lognormal,literature,range,0.36,0.64
+vRR.ST.Aspirin,risk,Relative risk of ST for Aspirin users,1.29,Kazi 2014 Annals,lognormal,literature,range,1.12,1.48
+vSt.Case.Fatality,risk,ST case fatality,0.2,Kazi 2014 Annals,beta,literature,range,0.15,0.3
+vPrCABG.ST,risk,Non-fatal ST: Probability of CABG,0.1,Kazi 2014 Annals,beta,,,missing,
+vRiskMI,risk,rate of Myocardial Infarction,0.035,Kazi 2014 Annals,lognormal,literature,range,0.013,0.097
+vRR.MI.Ticagrelor,risk,Relative risk of MI for Ticagrelor users,0.84,Kazi 2014 Annals,lognormal,literature,range,0.75,0.95
+vRR.MI.Prasugrel,risk,Relative risk of MI for Prasugrel users,0.76,Kazi 2014 Annals,lognormal,literature,range,0.67,0.85
+vRR.MI.Aspirin,risk,Relative risk of MI for Aspirin users,1.29,Kazi 2014 Annals,lognormal,literature,range,1.12,1.48
+vPrCABG.MI,risk,MI: probability of CABG,0.08,Kazi 2014 Annals,Dirichlet multinomial ,literature,range,0.04,0.12
+vPrPCI.MI,risk,MI: probability of PCI,0.55,Kazi 2014 Annals,Dirichlet multinomial ,literature,range,0.45,0.65
+vRiskRV365,risk,365-day rate of revascularization,0.1,Kazi 2014 Annals,lognormal,literature,range,0.05,0.15
+vRiskRVgt365,risk,post 1 year rate of revascularization,0.03,Kazi 2014 Annals,lognormal,literature,range,0.02,0.04
+vPrCABG.RV,risk,Revasc: probability of CABG,0.25,Kazi 2014 Annals,beta,literature,range,0.15,0.35
+vRiskExtBleed,risk,rate of extracranial bleed,0.023,Kazi 2014 Annals,lognormal,literature,range,0.05,0.15
+vRiskIntBleed,risk,rate of intracranial bleed,0.0015,Kazi 2014 Annals,lognormal,literature,range,0.001,0.002
+vRiskTIMIMinor,risk,rate of minor bleed,0.02,Kazi 2014 Annals,lognormal,literature,range,0.01,0.06
+vRiskFatalBleed,risk,rate of fatal bleed,0.0015,Kazi 2014 Annals,lognormal,literature,range,0.001,0.003
+vRR.ExtBleed.Ticagrelor,risk,Relative risk of extracranial bleed for Ticagrelor users,1.3,Kazi 2014 Annals,lognormal,literature,range,1.05,1.61
+vRR.ExtBleed.Prasugrel,risk,Relative risk of extracranial bleed for Prasugrel users,1.22,Kazi 2014 Annals,lognormal,literature,range,0.93,1.6
+vRR.ExtBleed.Aspirin,risk,Relative risk of extracranial bleed for Aspirin users,0.72,Kazi 2014 Annals,lognormal,literature,range,0.6,1
+vRR.IntBleed.Ticagrelor,risk,Relative risk of intracranial bleed for Ticagrelor users,1.15,Kazi 2014 Annals,lognormal,literature,range,0.55,2.41
+vRR.IntBleed.Prasugrel,risk,Relative risk of intracranial bleed for Prasugrel users,0.83,Kazi 2014 Annals,lognormal,literature,range,0.36,1.92
+vRR.IntBleed.Aspirin,risk,Relative risk of intracranial bleed for Aspirin users,0.71,Kazi 2014 Annals,lognormal,literature,range,0.23,2.23
+vRR.TIMIMinor.Ticagrelor,risk,Relative risk of minor bleed for Ticagrelor users,1.07,Kazi 2014 Annals,lognormal,literature,range,0.91,1.26
+vRR.TIMIMinor.Prasugrel,risk,Relative risk of minor bleed for Prasugrel users,1.16,Kazi 2014 Annals,lognormal,literature,range,0.91,1.49
+vRR.TIMIMinor.Aspirin,risk,Relative risk of minor bleed for Aspirin users,0.47,Kazi 2014 Annals,lognormal,literature,range,0.39,0.57
+vRR.FatalBleed.Ticagrelor,risk,Relative risk of fatal bleed for Ticagrelor users,1.35,Kazi 2014 Annals,lognormal,literature,range,0.62,2.95
+vRR.FatalBleed.Prasugrel,risk,Relative risk of fatal bleed for Prasugrel users,0.87,Kazi 2014 Annals,lognormal,literature,range,0.48,1.59
+vRR.FatalBleed.Aspirin,risk,Relative risk of fatal bleed for Aspirin users,4.19,Kazi 2014 Annals,lognormal,literature,range,1.58,11.11
+vRiskCABGTIMImajor,risk,rate of CABG-related TIMI major bleed,0.022,Kazi 2014 Annals,lognormal,literature,range,0.013,0.031
+vRR.RiskCABGTIMImajor.Ticagrelor,risk,Relative risk of CABG-related TIMI major bleed for Ticagrelor users,1.08,Kazi 2014 Annals,lognormal,literature,range,0.85,1.36
+vRR.RiskCABGTIMImajor.Prasugrel,risk,Relative risk of CABG-related TIMI major bleed for Prasugrel users,4.73,Kazi 2014 Annals,lognormal,literature,range,1.9,11.82
+vRR.RiskCABGTIMImajor.Aspirin,risk,Relative risk of CABG-related TIMI major bleed for Aspirin users,1.08,Kazi 2014 Annals,lognormal,literature,range,0.61,1.91
+vRR.MI.LOF,risk,Relative Risk of MI for patients with loss of function allele who are treated with Clopidogrel,1.48,Kazi 2014 Annals,lognormal,literature,range,1.05,2.07
+vRR.Bleed.LOF,risk,Relative Risk of bleeding events for patients with loss of function allele who are treated with Clopidogrel,0.84,Kazi 2014 Annals,lognormal,literature,range,0.75,1
+bleed_ext_maj_nonfatal,disutility,Temporary disutility of non-fatal extracranial bleed (14d),0.2,Kazi 2014 Annals,beta,literature,range,7,21
+bleed_int_maj_nonfatal,disutility,Permanent disutility of non-fatal intracranial bleed,0.61,Kazi 2014 Annals,beta,literature,range,0.4,0.8
+bleed_min_nonfatal,disutility,Temporary disutility of non-fatal minor bleed (2d),0.2,Kazi 2014 Annals,beta,literature,range,0,7
+bleed_fatal,disutility,Permanent disutility of fatal bleed,1,,,,,,
+st_fatal,disutility,Permanent disutility of fatal Stent Thrombosis,1,,,,,,
+st_pci,disutility,Permanent disutility of ST PCI,0.12,Kazi 2014 Annals,beta,literature,range,0.07,0.16
+st_cabg,disutility,Permanent disutility of fatal Stent Thrombosis,1,,,,,,
+mi_cabg,disutility,Permanent disutility of MI CABG,0.12,Kazi 2014 Annals,beta,literature,range,0.07,0.16
+mi_med_manage,disutility,Permanent disutility of MI medical management,0.12,Kazi 2014 Annals,beta,literature,range,0.07,0.16
+mi_pci,disutility,Permanent disutility of MI PCI,0.12,Kazi 2014 Annals,beta,literature,range,0.07,0.16
+revasc_cabg,disutility,Temporary disutility of revascularization CABG (14d),0.5,Kazi 2014 Annals,log normal?,literature,range - days,7,21
+revasc_pci,disutility,Temporary disutility of revascularization PCI (7d),0.5,Kazi 2014 Annals,log normal?,literature,range - days,3,14
+cabg_bleed,disutility,Temporary disutility of CABG-related bleed (7d),0.5,Kazi 2014 Annals,log normal?,literature,range - days,3,14
+clopidogrel,cost,Total cost of Clopidogrel,30,Kazi 2014 Annals,lognormal,literature,range,4,200
+ticagrelor,cost,Total cost of Ticagrelor,220,Kazi 2014 Annals,lognormal,literature,range,150,300
+prasugrel,cost,Total cost of Prasugrel,261,Kazi 2014 Annals,lognormal,literature,range,150,300
+bleed_ext_maj_nonfatal,cost,Total cost of non-fatal extracranial bleed (/14d),10120,Kazi 2014 Annals,lognormal,literature,range,5060,20240
+bleed_int_maj_nonfatal,cost,Total cost of non-fatal intracranial bleed,20740,Kazi 2014 Annals,lognormal,literature,range,10370,41480
+bleed_min_nonfatal,cost,Total cost of non-fatal minor bleed (/2d),79,Kazi 2014 Annals,lognormal,literature,range,40,158
+bleed_fatal,cost,Total cost of fatal bleed,17920,Kazi 2014 Annals,lognormal,literature,range,8950,35840
+st_fatal,cost,copy MI,24540,Kazi 2014 Annals,lognormal,literature,range,12270,49080
+st_pci,cost,copy MI,27840,Kazi 2014 Annals,lognormal,literature,range,13920,55680
+st_cabg,cost,copy MI,67720,Kazi 2014 Annals,lognormal,literature,range,33860,135440
+mi_cabg,cost,Total cost of MI CABG,67720,Kazi 2014 Annals,lognormal,literature,range,33860,135440
+mi_med_manage,cost,Total cost of MI med manage,17200,Kazi 2014 Annals,lognormal,literature,range,8600,34400
+mi_pci,cost,Total cost of MI PCI,27840,Kazi 2014 Annals,lognormal,literature,range,13920,55680
+revasc_cabg,cost,Total cost of revascularization CABG (/14d),50560,Kazi 2014 Annals,lognormal,literature,range,25280,101120
+revasc_pci,cost,Total cost of revascularization PCI (/7d),20670,Kazi 2014 Annals,lognormal,literature,range,10340,41340
+cabg_bleed,cost,Total cost of CABG-related bleed (/7d),35570,Kazi 2014 Annals,lognormal,literature,range,17790,71140

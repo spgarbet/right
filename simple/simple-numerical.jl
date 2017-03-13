@@ -21,11 +21,6 @@ ss_death = readtable("ss-death-2011.csv")
 # Instantaneous exponential rate from percent over some time frame
 instantaneous_rate(percent, timeframe) = - log(1-percent) / timeframe
 
-################################################
-# Parameters
-
-
-
 #################################################
 # Determine death rate function via spline
 f_40yr_percent_d    = ss_death[:_f_death_prob][41:120]
@@ -137,12 +132,12 @@ function params_as_dict(df)
     :riskB  => instantaneous_rate(df[1,:vRiskB],5),
     :fatalA => df[1,:vFatalA],
     :rrB    => df[1,:vRR],
-    
+
     :costA  => 10000.0,
     :costB  => 25000.0,
     :costT  => 0.0,
-    :disA   => 0.25,  # Permanent disutility for a
-    :disB   => 0.1,   # 1-year disutility for b
+    :disA   => df[1,:A_survive],  # Permanent disutility for a
+    :disB   => df[1,:B],          # 1-year disutility for b
 
     :discount => 0.03         # For computing discount
   )
@@ -171,7 +166,7 @@ function solution(params)
 end
 
 #### Main Loop
-cube = readtable("test-cube.csv")
+cube = readtable(ARGS[1])
 
 println("dCostNoTreat,dQALYNoTreat,dCostTreat,dQALYTreat")
 for i in [1:(size(cube)[1])...]

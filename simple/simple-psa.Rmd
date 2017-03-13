@@ -1,0 +1,28 @@
+---
+title: "SimplePSA"
+author: "Shawn Garbett"
+date: "March 10, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Halton PSA Results
+
+Using Saltelli's method of variance based sensitivity analysis, the following results were produced for an $n=15,000$ on 6 parameters: Risk of A, Fatalities of A, A survival disutility, Risk of B, disutility for 1 year of B, and relative risk given treatment. I used the halton sequence and generated 15,000 parameters to work with for the permuations in the method.
+
+
+   X             All Terms   A Risk   A Fatal   A Disutil   B Risk   B Disutil   B RR Treated
+--------------  ----------  -------  --------  ----------  -------  ----------  -------------
+ A Risk               0.95    0.45        .          .         .          .             .
+ A Fatal              0.51    0.91     0.01          .         .          .             . 
+ A Disutil            0.50    0.89     0.02       0.00         .          .             . 
+ B Risk               0.55    0.99     0.11       0.09      0.05          .             . 
+ B Disutil            0.50    0.89     0.02       0.00      0.00       0.00             .
+ B RR Treated         0.50    0.89     0.02       0.00      0.00       0.00          0.00
+
+Table: Sensitivity of dCost to parameters for no treatment.
+
+The "All Terms" column shows the sum of that parameter, with all parameter interactions included. The terms and interactions with "A Risk" account for 95% of the variance, with the "A Risk" alone accounting for 45% of the variance. The second impactful term is "B Risk". The disutilities, are correctly zeroed however their interaction terms are still included around 50%. This is probably due to some variance in the estimator of sensisitivy as these terms are by definition zero. 

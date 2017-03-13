@@ -30,7 +30,14 @@ points = np.loadtxt('test-cube.csv',delimiter=',',skiprows=1)
 # Load Latin hypercube
 #sample = Sample(6, 7500, raw=points[0:15000,...])
 # Try Halton
-sample = Sample(6, 7500, scaling=simple_scale, verbose=True)
+n = 15000
+sample = Sample(6, n, scaling=simple_scale, verbose=True)
+np.corrcoef(sample.M_1[:,0], sample.M_2[:,0])[0,1]
+np.corrcoef(sample.M_1[:,1], sample.M_2[:,1])[0,1]
+np.corrcoef(sample.M_1[:,2], sample.M_2[:,2])[0,1]
+np.corrcoef(sample.M_1[:,3], sample.M_2[:,3])[0,1]
+np.corrcoef(sample.M_1[:,4], sample.M_2[:,4])[0,1]
+np.corrcoef(sample.M_1[:,5], sample.M_2[:,5])[0,1]
 
 sampleFilename = 'saltelli-cube.csv'
 
@@ -50,6 +57,6 @@ os.system("julia simple-numerical.jl "+ sampleFilename +" > psa.out")
 objectives = np.loadtxt('psa.out',delimiter=',',skiprows=1)
 
 # Let's look at the first result
-o = Objective(6, 7500, objective_vals=objectives[:,[0]])
+o = Objective(6, n, objective_vals=objectives[:,[0]], verbose=True)
 
-v = Varsens(o, sample=sample, k=6, n=7500, verbose=True)
+v = Varsens(o, sample=sample, k=6, n=n, verbose=True)

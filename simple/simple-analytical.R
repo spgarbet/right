@@ -110,3 +110,11 @@ a <- pexp_int_func(event_a_rate, c(rep(params['r_a'], 5), 0), 0:5)
 curve(a, from=4.5, to=5.5)
 lines(out[,'time'], out[,'a'], col='red', lty=2)
 
+# Up next dy/dt = b exp(a t) + c y
+# https://www.wolframalpha.com/input/?i=dy%2Fdt+%3D+b+exp(a+t)+%2B+c+y
+# Solution y(t) = (b/(a-c)) * exp(a t) + k1 exp(c t)
+# For t < 5
+# (1-r_ad)*r_a*h - (r_d+r_b)*e10
+# b = (1-r_ad)*r_a * h[boundary]
+# a = h[rate]
+# c = -r_d - r_b

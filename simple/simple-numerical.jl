@@ -15,6 +15,13 @@ using DifferentialEquations
 using Dierckx
 using Plots
 
+@everywhere module MyModule
+
+using DataFrames
+using DifferentialEquations
+using Dierckx
+using Plots
+
 # Read 2011 SS death tables
 ss_death = readtable("ss-death-2011.csv")
 
@@ -165,19 +172,41 @@ function solution(params)
   (sol1, sol2)
 end
 
+export solution, params_as_dict, outcome
+
+end ## MyModule
+
+using MyModule
+
 #### Main Loop
+println("Loading "*ARGS[1])
 cube = readtable(ARGS[1])
 
 println("dCostNoTreat,dQALYNoTreat,dCostTreat,dQALYTreat")
-for i in [1:(size(cube)[1])...]
+n = size(cube)[1]
+x = SharedArray{Float64}(n*4)
+fut =  @parallel for i in [1:n...]
   params = params_as_dict(cube[i,:])
   solutions = solution(params)
   
   outcomes = outcome(solutions[1], params)
+  j = i*4 - 3
+  x[j]   = outcomes[1]
+  x[j+1] = outcomes[2]
   params[:costT] = 2000.0
-  params[:riskB] = params[:riskB]*params[:rrB]
-  append!(outcomes, outcome(solutions[2], params))
-  
-  println(join([@sprintf "%.f" x for x in outcomes], ", "))
+  # params[:riskB] = params[:riskB]*params[:rrB]
+  outcomes = outcome(solutions[2], params)
+  x[j+2] = outcomes[1]
+  x[j+3] = outcomes[2]
 end
+
+# @sync didn't work, but this does
+for i in fut
+  fetch(i)
+end
+
+for i in [1:n...]
+  j = i*4-3
+  @printf "%.f, %.f, %.f, %.f\n"  x[j] x[j+1] x[j+2] x[j+3]
+end 
 

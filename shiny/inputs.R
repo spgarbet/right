@@ -270,7 +270,7 @@ inputs <- list(
   vReactive    = "None", # Can be one of following: "None", "Single", "Panel"
 
 # Control Which Drugs Are Run in the Model 
-  vDrugs       = list(vSimvastatin = TRUE, 
+  vDrugs       = list(vSimvastatin = FALSE, 
                       vWarfarin = FALSE,
                       vClopidogrel = FALSE),
 

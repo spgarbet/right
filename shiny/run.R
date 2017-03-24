@@ -390,7 +390,7 @@ exec.simulation <- function(inputs)
   sm <- DT[, .N, by = resource]
   #summary[summary$resource=="panel_test",]$resource <- "single_test"
   events <- sm %>% merge(form(inputs$whichDrug),by="resource",all.y=TRUE) %>%
-    mutate(Event=txt, Count=ifelse(is.na(N),0,N)) %>% select(Event,Count,num)
+    mutate(Event=txt, Count=ifelse(is.na(N),0,N)) %>% select(Event,Count,num) 
   
   #C&Q
   sum_costs <- cost.qaly(arrivals,inputs)
@@ -402,12 +402,22 @@ exec.simulation <- function(inputs)
 
 #####Shiny functions
 #filter outputs and rename
-form_Clopidogrel <- data.frame(
+form_top <- data.frame(
   txt = c("<b>N</b>",
           "&nbsp;&nbsp;&nbsp;Secular Death     	",
           "&nbsp;&nbsp;&nbsp;Single Test	",
-          "&nbsp;&nbsp;&nbsp;DAPT Start        	",
-          "<b>Drug Exposure</b>",
+          "&nbsp;&nbsp;&nbsp;Panel Test	"),
+  resource = c("	time_in_model	",
+               "	secular_death	",
+               "	single_test	",
+               "  panel_test")
+  )
+  
+
+form_Clopidogrel <- data.frame(
+  txt = c(
+          "<b>DAPT Start</b>",
+          "<b>Drug Exposure - C</b>",
           "&nbsp;&nbsp;&nbsp;Clopidogrel       	",
           "&nbsp;&nbsp;&nbsp;Ticagrelor        	",
           "&nbsp;&nbsp;&nbsp;Prasugrel",
@@ -430,11 +440,9 @@ form_Clopidogrel <- data.frame(
           "&nbsp;&nbsp;&nbsp;Bleed Min NonFatal  	",
           "&nbsp;&nbsp;&nbsp;Bleed Fatal       	",
           "&nbsp;&nbsp;&nbsp;CABG-related Bleed	"),
-  resource = c("	time_in_model	",
-               "	secular_death	",
-               "	single_test	",
+  resource = c(
                "	dapt_start	",
-               "drug_exposure",
+               "drug_exposure_c",
                "	clopidogrel	",
                "	ticagrelor	",
                "prasugrel",
@@ -459,11 +467,9 @@ form_Clopidogrel <- data.frame(
                "	cabg_bleed	"))
 
 form_Simvastatin <- data.frame(
-  txt = c("<b>N</b>",
-          "&nbsp;&nbsp;&nbsp;Secular Death     	",
-          "&nbsp;&nbsp;&nbsp;Single Test	",
-          "&nbsp;&nbsp;&nbsp;Statin Therapy    	",
-          "<b>Drug Exposure</b>",
+  txt = c(
+          "<b>Statin Therapy</b>    	",
+          "<b>Drug Exposure - S</b>",
           "&nbsp;&nbsp;&nbsp;Simvastatin       	",
           "&nbsp;&nbsp;&nbsp;Alternate Statin  	",
           "Switch to Alt     	",
@@ -476,11 +482,9 @@ form_Simvastatin <- data.frame(
           "&nbsp;&nbsp;&nbsp;Moderate Myopathy 	",
           "&nbsp;&nbsp;&nbsp;Severe Myopathy   	",
           "&nbsp;&nbsp;&nbsp;Severe Myopathy Death	"),
-  resource = c("	time_in_model	",
-               "	secular_death	",
-               "	single_test	",
+  resource = c(
                "	statin_any	",
-               "drug_exposure",
+               "drug_exposure_s",
                "	simvastatin	",
                "	alt_simvastatin	",
                "	sim_switched	",
@@ -497,16 +501,16 @@ form_Simvastatin <- data.frame(
 )
 
 form <- function(x) {
-  if(x=="Clopidogrel") {
-    fo <- form_Clopidogrel 
-  } else if (x=="Simvastatin") {
-    fo <- form_Simvastatin 
-  } else if (x=="Warfarin") {
-    fo <- form_Warfarin
-  } else {
-    print("Unrecognized Input")
-    stop()
-  }
+  fo <- form_top
+  if(any(x %in% "Clopidogrel")) {
+    fo <- rbind(fo,form_Clopidogrel) 
+  } 
+  if (any(x %in% "Simvastatin")) {
+    fo <- rbind(fo,form_Simvastatin) 
+  } 
+  if (any(x %in% "Warfarin")) {
+    fo <- rbind(fo,form_Warfarin) 
+  } 
   fo$num <- as.numeric(row.names(fo))
   fo$resource <- trimws(fo$resource,which="both")
   return(fo)
@@ -536,23 +540,6 @@ trans_strategy <- function(x) {
   return(list(preemptive=preemptive,reactive=reactive))
 }
 
-#identify which model to run
-trans_model <- function(x) {
-  if(x=="Clopidogrel") {
-    list(vSimvastatin = FALSE, 
-         vWarfarin = FALSE,
-         vClopidogrel = TRUE)
-  } else if
-  (x=="Simvastatin") {
-    list(vSimvastatin = TRUE, 
-         vWarfarin = FALSE,
-         vClopidogrel = FALSE)
-  } else {
-    list(vSimvastatin = FALSE, 
-         vWarfarin = TRUE,
-         vClopidogrel = FALSE)       
-  }
-}
 
 
 

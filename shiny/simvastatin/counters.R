@@ -13,4 +13,5 @@ counters.simvastatin <-
               "statin_switched_PGx",
               "on_simvastatin",
               "cvd_event",
-              "myopathy_event")
+              "myopathy_event",
+              "drug_exposure_s")

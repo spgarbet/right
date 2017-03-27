@@ -27,6 +27,7 @@ counters.dapt = c(
               "mi_cabg",
               "mi_pci",
               "mi_med_manage",
-              "cabg_bleed"
+              "cabg_bleed",
+              "drug_exposure_c"
               
 )

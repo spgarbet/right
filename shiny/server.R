@@ -5,107 +5,107 @@ source("costs.R")
 
 shinyServer(function(input, output) {
 
-  output$uiClo <- renderUI({
-    if(input$wDrug=="Clopidogrel") {
-      tabsetPanel(type="tabs",
-                  
-                  tabPanel(
-                    "Strategy",
-                    br(),
-                    selectInput("vDAPT.SecondLine", "DAPT: Alternative Drug",
-                                c("Ticagrelor", "Prasugrel"), "None", FALSE)
-                  ),
-                  
-                  tabPanel(
-                    "Population",
-                    br(),
-                    h4("Phenotypic Prevalence:"),
-                    br(),
-                    sliderInput("vCYP2C19.Poor",  "Poor or Intermediate Metabolizer %",  value=0.21, min=0.15, max=1, step=0.01),
-                    sliderInput("vCYP2C19.Rapid", "Rapid Metabolizer %", value=0.33, min=0.1, max=1, step=0.01)
-                    #sliderInput("vCYP2C19.Unknown", "Unknown %", value=0.07, min=0.05, max=0.09, step=0.01)
-                    #sliderInput vs parameter/numeric input: need to limit bounds?, should not sum up over 1????
-                  ),
-                  
-                  tabPanel(
-                    "Risks",
-                    br()
-                    #sliderInput("vCYP2C19.Poor",  "Poor or Intermediate Metabolizer %",  value=0.21, min=0.15, max=1, step=0.01),
-                    #sliderInput("vCYP2C19.Rapid", "Rapid Metabolizer %", value=0.33, min=0.1, max=1, step=0.01)
-                  ),
-                  
-                  tabPanel(
-                    "Costs",
-                    br(),
-                    h4("Genetic Testing Cost:"),
-                    numericInput("C_single_test",  "Single Test $", 100, 50, 300, 10),
-                    br(),
-                    
-                    h4("Drug Daily Cost:"),
-                    numericInput("C_clopidogrel",  "Clopidogrel $", 1, 0.1, 6.7, 0.1),
-                    numericInput("C_ticagrelor",  "Ticagrelor $", 7.3, 5, 10, 0.1),
-                    numericInput("C_prasugrel",  "Prasugrel $", 8.7, 5, 10, 0.1),
-                    numericInput("C_aspirin",  "Aspirin $", 0.13, 0.2, 0.3, 0.01)
-                  ))}
-  })
-  
-  output$uiSim <- renderUI({
-    if(input$wDrug=="Simvastatin") {
-      tabsetPanel(type="tabs",
-                  
-                  tabPanel(
-                    "Population",
-                    br(),
-                    h4("Phenotypic Prevalence:"),
-                    br(),
-                    sliderInput("vMedMetabolizer",  "Medium Metabolizer %",  value=0.249, min=0.15, max=1, step=0.01),
-                    sliderInput("vPoorMetabolizer", "Poor Metabolizer %", value=0.021, min=0.1, max=1, step=0.01)
-                    
-                  ),
-                  
-                  tabPanel(
-                    "Risks",
-                    br(),
-                    h4("Clopidogrel:"),
-                    numericInput("vMildMyoSimNoVar",  "Mild Myopathy Baseline Risk",  value=0.05, min=0.01, max=0.2, step=0.01),
-                    numericInput("vMildMyoSimMedVar",  "Mild Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
-                    numericInput("vMildMyoSimPoorVar", "Mild Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
-                    numericInput("vModMyoSimNoVar",  "Moderate Myopathy Baseline Risk",  value=0.00011, min=0.0001, max=0.2, step=0.0001),
-                    numericInput("vModMyoSimMedVar",  "Moderate Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
-                    numericInput("vModMyoSimPoorVar", "Moderate Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
-                    numericInput("vSevMyoSimNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.00001, max=0.001, step=0.00001),
-                    numericInput("vSevMyoSimMedVar",  "Severe Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
-                    numericInput("vSevMyoSimPoorVar", "Severe Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
-                    br(),
-                    
-                    h4("Alternative Drug:"),
-                    h5("Mild Myopathy"),
-                    numericInput("vMildMyoAltNoVar",  "Mild Myopathy Baseline Risk",  value=0.05, min=0.01, max=0.2, step=0.01),
-                    numericInput("vMildMyoAltMedVar",  "Mild Myopathy RR for Medium Metabolizer",  value=1, min=1, max=10, step=0.1),
-                    numericInput("vMildMyoAltPoorVar", "Mild Myopathy RR for Poor Metabolizer", value=1, min=1, max=10, step=0.1),
-                    numericInput("vModMyoAltNoVar",  "Moderate Myopathy Baseline Risk",  value=0.00011, min=0.0001, max=0.2, step=0.0001),
-                    numericInput("vModMyoAltMedVar",  "Moderate Myopathy RR for Medium Metabolizer",  value=1.08, min=1, max=10, step=0.1),
-                    numericInput("vModMyoAltPoorVar", "Moderate Myopathy RR for Poor Metabolizer", value=4.05, min=1, max=10, step=0.1),
-                    numericInput("vSevMyoAltNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.00001, max=0.001, step=0.00001),
-                    numericInput("vSevMyoAltMedVar",  "Severe Myopathy RR for Medium Metabolizer",  value=1.08, min=1, max=10, step=0.1),
-                    numericInput("vSevMyoAltPoorVar", "Severe Myopathy RR for Poor Metabolizer", value=4.05, min=1, max=10, step=0.1),
-                    br(),
-                    
-                    h4("Other Risks:"),
-                    sliderInput("vProbRahbdoDeath",  "Case Fatality of Severe Myopathy",  value=0.1, min=0, max=1, step=0.01),
-                    sliderInput("vProbcvdDeath",  "Case Fatality of CVD",  value=0.117, min=0, max=1, step=0.01)
-                    
-                  ),
-                  
-                  tabPanel(
-                    "Costs",
-                    br(),
-                    h4("Genetic Testing Cost:"),
-                    numericInput("C_single_test",  "Single Test $", 100, 50, 300, 10)
-                  ))}
-  })  
-  
-  
+  #reactive UI panels for drug-specific parameters
+  output$uim <- renderUI({
+    if(length(input$wDrug)>0) {
+      navlistPanel(
+        
+        tabPanel(
+          "Clopidogrel",
+          conditionalPanel(
+            condition = "input.wDrug.includes('Clopidogrel')",
+            tabsetPanel(
+              tabPanel("Strategy",
+                       br(),
+                       selectInput("vDAPT.SecondLine", "DAPT: Alternative Drug",
+                                   c("Ticagrelor", "Prasugrel"), "None", FALSE)),
+              tabPanel(
+                "Population",
+                br(),
+                h4("Phenotypic Prevalence:"),
+                br(),
+                sliderInput("vCYP2C19.Poor",  "Poor or Intermediate Metabolizer %",  value=0.21, min=0.15, max=1, step=0.01),
+                sliderInput("vCYP2C19.Rapid", "Rapid Metabolizer %", value=0.33, min=0.1, max=1, step=0.01)
+                #sliderInput("vCYP2C19.Unknown", "Unknown %", value=0.07, min=0.05, max=0.09, step=0.01)
+                #sliderInput vs parameter/numeric input: need to limit bounds?, should not sum up over 1????
+              ),
+              tabPanel(
+                "Risks",
+                br()
+                #sliderInput("vCYP2C19.Poor",  "Poor or Intermediate Metabolizer %",  value=0.21, min=0.15, max=1, step=0.01),
+                #sliderInput("vCYP2C19.Rapid", "Rapid Metabolizer %", value=0.33, min=0.1, max=1, step=0.01)
+              ),
+              tabPanel(
+                "Costs",
+                br(),
+                h4("Genetic Testing Cost:"),
+                numericInput("C_single_test",  "Single Test $", 100, 50, 300, 10),
+                br(),
+                
+                h4("Drug Daily Cost:"),
+                numericInput("C_clopidogrel",  "Clopidogrel $", 1, 0.1, 6.7, 0.1),
+                numericInput("C_ticagrelor",  "Ticagrelor $", 7.3, 5, 10, 0.1),
+                numericInput("C_prasugrel",  "Prasugrel $", 8.7, 5, 10, 0.1),
+                numericInput("C_aspirin",  "Aspirin $", 0.13, 0.2, 0.3, 0.01)
+              )
+              
+        ))),
+        
+        tabPanel(
+          "Simvastatin",
+          conditionalPanel(
+            condition = "input.wDrug.includes('Simvastatin')",
+            tabsetPanel(
+              tabPanel(
+                "Population",
+                br(),
+                h4("Phenotypic Prevalence:"),
+                br(),
+                sliderInput("vMedMetabolizer",  "Medium Metabolizer %",  value=0.249, min=0.15, max=1, step=0.01),
+                sliderInput("vPoorMetabolizer", "Poor Metabolizer %", value=0.021, min=0.1, max=1, step=0.01)
+                
+              ),
+              tabPanel(
+                "Risks",
+                br(),
+                h4("Clopidogrel:"),
+                numericInput("vMildMyoSimNoVar",  "Mild Myopathy Baseline Risk",  value=0.05, min=0.01, max=0.2, step=0.01),
+                numericInput("vMildMyoSimMedVar",  "Mild Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
+                numericInput("vMildMyoSimPoorVar", "Mild Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
+                numericInput("vModMyoSimNoVar",  "Moderate Myopathy Baseline Risk",  value=0.00011, min=0.0001, max=0.2, step=0.0001),
+                numericInput("vModMyoSimMedVar",  "Moderate Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
+                numericInput("vModMyoSimPoorVar", "Moderate Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
+                numericInput("vSevMyoSimNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.00001, max=0.001, step=0.00001),
+                numericInput("vSevMyoSimMedVar",  "Severe Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
+                numericInput("vSevMyoSimPoorVar", "Severe Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
+                br(),
+                
+                h4("Alternative Drug:"),
+                h5("Mild Myopathy"),
+                numericInput("vMildMyoAltNoVar",  "Mild Myopathy Baseline Risk",  value=0.05, min=0.01, max=0.2, step=0.01),
+                numericInput("vMildMyoAltMedVar",  "Mild Myopathy RR for Medium Metabolizer",  value=1, min=1, max=10, step=0.1),
+                numericInput("vMildMyoAltPoorVar", "Mild Myopathy RR for Poor Metabolizer", value=1, min=1, max=10, step=0.1),
+                numericInput("vModMyoAltNoVar",  "Moderate Myopathy Baseline Risk",  value=0.00011, min=0.0001, max=0.2, step=0.0001),
+                numericInput("vModMyoAltMedVar",  "Moderate Myopathy RR for Medium Metabolizer",  value=1.08, min=1, max=10, step=0.1),
+                numericInput("vModMyoAltPoorVar", "Moderate Myopathy RR for Poor Metabolizer", value=4.05, min=1, max=10, step=0.1),
+                numericInput("vSevMyoAltNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.00001, max=0.001, step=0.00001),
+                numericInput("vSevMyoAltMedVar",  "Severe Myopathy RR for Medium Metabolizer",  value=1.08, min=1, max=10, step=0.1),
+                numericInput("vSevMyoAltPoorVar", "Severe Myopathy RR for Poor Metabolizer", value=4.05, min=1, max=10, step=0.1),
+                br(),
+                
+                h4("Other Risks:"),
+                sliderInput("vProbRahbdoDeath",  "Case Fatality of Severe Myopathy",  value=0.1, min=0, max=1, step=0.01),
+                sliderInput("vProbcvdDeath",  "Case Fatality of CVD",  value=0.117, min=0, max=1, step=0.01)
+                
+              ),
+              
+              tabPanel(
+                "Costs",
+                br(),
+                h4("Genetic Testing Cost:"),
+                numericInput("C_single_test",  "Single Test $", 100, 50, 300, 10))
+        )))
+      )}})
   
   #copy and update inputs
   inputs_update <- eventReactive(input$run,{
@@ -114,10 +114,10 @@ shinyServer(function(input, output) {
     ip$vHorizon <- input$vHorizon
     ip$vReactive <- "None" 
     ip$whichDrug <- input$wDrug
-    ip$vDrugs <- trans_model(input$wDrug)
     ip$iseed <- input$iseed
     ip$costs$single_test <- input$C_single_test
-    if(input$wDrug=="Clopidogrel") {
+    if(any(input$wDrug %in% "Clopidogrel")) {
+      ip$vDrugs$vClopidogrel <- TRUE
       ip$clopidogrel$vCYP2C19.Poor <- input$vCYP2C19.Poor
       ip$clopidogrel$vCYP2C19.Rapid <- input$vCYP2C19.Rapid
       ip$clopidogrel$vDAPT.SecondLine <- input$vDAPT.SecondLine
@@ -126,7 +126,9 @@ shinyServer(function(input, output) {
       ip$costs$ticagrelor <- input$C_ticagrelor
       ip$costs$prasugrel <- input$C_prasugrel
       
-    } else if(input$wDrug=="Simvastatin")  {
+    } 
+    if(any(input$wDrug=="Simvastatin"))  {
+      ip$vDrugs$vSimvastatin <- TRUE
       ip$simvastatin$vMedMetabolizer  <- input$vMedMetabolizer
       ip$simvastatin$vPoorMetabolizer <- input$vPoorMetabolizer
       ip$simvastatin$vMildMyoSimNoVar <- input$vMildMyoSimNoVar

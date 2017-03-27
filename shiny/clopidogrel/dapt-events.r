@@ -81,14 +81,14 @@ assign_DAPT_medication <- function(traj,inputs)
       },
       continue=rep(TRUE,3),
       trajectory("sClopidogrel") %>%  
-        seize("clopidogrel") %>% mark("drug_exposure") %>%
+        seize("clopidogrel") %>% mark("drug_exposure_c") %>%
         set_attribute("aDAPT.Rx", 1) %>% set_attribute("aTest",inputs$clopidogrel$vProbabilityDAPTSwitch),  
       trajectory("sTicagrelor")  %>% 
-        seize('ticagrelor') %>% mark("drug_exposure") %>%
+        seize('ticagrelor') %>% mark("drug_exposure_c") %>%
         set_attribute("aDAPT.Rx", 2) %>% set_attribute("aSwitchedDAPT",1) %>% set_attribute("aTest",inputs$clopidogrel$vProbabilityDAPTSwitch) %>% 
         mark("dapt_switched"),
       trajectory("sPrasugrel") %>% 
-        seize('prasugrel') %>% mark("drug_exposure") %>%
+        seize('prasugrel') %>% mark("drug_exposure_c") %>%
         set_attribute("aDAPT.Rx", 3) %>% set_attribute("aSwitchedDAPT",1) %>% set_attribute("aTest",inputs$clopidogrel$vProbabilityDAPTSwitch) %>% 
         mark("dapt_switched")
     ) %>%
@@ -100,7 +100,7 @@ assign_DAPT_medication <- function(traj,inputs)
      branch(
        function(attrs) ifelse(attrs[['aAspirin']]==2 & attrs[["aDAPT.Rx"]] %in% c(1,2,3) ,1,2),
       continue=c(TRUE,TRUE),
-      trajectory() %>% seize("aspirin") %>% mark("drug_exposure") %>% set_attribute("aAspirin",1),
+      trajectory() %>% seize("aspirin") %>% mark("drug_exposure_c") %>% set_attribute("aAspirin",1),
       trajectory() %>% timeout(0)
      )
   }

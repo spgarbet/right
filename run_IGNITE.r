@@ -385,16 +385,4 @@ counters <- c(counters.gen, counters.dapt, counters.simvastatin, counters.warfar
 ####
 source('./main/event_main_loop.R')
 
-###############################
-options(digits=5)
-inputs$vN <- 100
 
-###Single Drug 
-inputs$vDrugs = list(vSimvastatin = F, 
-                     vWarfarin = F,
-                     vClopidogrel = T)
-#inputs$warfarin$vscale_timetowarfarin <- epsilon
-inputs$clopidogrel$vDAPTScale <- epsilon
-#inputs$simvastatin$vScale <- epsilon
-inputs$clopidogrel$vRRRepeat.DAPT <- 0 #only for low-weibull runs, to fix retrigger clopidogrel prescription
-inputs$clopidogrel$vProbabilityDAPTSwitch = 1 #all switch

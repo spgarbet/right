@@ -197,11 +197,12 @@ dapt_30d_strategy <- function(traj,inputs)
     set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test") %>%
     branch(
       function(attrs) {
-        if(attrs[['aCYP2C19']] == 1) {return(2)}
-        return(1)
+        if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1)
+          {return(sample(c(1,2),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
+      } else {return(1)} 
       },
       continue=rep(TRUE,2),
-      trajectory("switch to Clopidogrel") %>%
+      trajectory("LOF & Non-LOF switch to clopidogrel") %>%
         branch(
           function(attrs) ifelse(attrs[['aDAPT.Rx']] %in% c(1:3),attrs[['aDAPT.Rx']],4),
           continue=rep(TRUE,4),
@@ -210,7 +211,7 @@ dapt_30d_strategy <- function(traj,inputs)
           trajectory() %>% release("prasugrel") %>% seize("clopidogrel") %>% set_attribute("aDAPT.Rx",1),
           trajectory() %>% timeout(0)
         ),
-      trajectory("stay alt") %>% timeout(0)
+      trajectory("LOF stay alt") %>% timeout(0)
     )} %>%
     set_attribute("aSwitch30d",2)
 }

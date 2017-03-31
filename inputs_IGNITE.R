@@ -35,9 +35,9 @@ clopidogrel = list(
     #vSpecificityPrDAPT = .9,#0.61,
 
     # Population-Level Allele Frequency Distribution
-    vCYP2C19.Poor    = 0.21, # (0.15-0.40)
-    vCYP2C19.Rapid   = 0.33, # (0.10-.40)
-    vCYP2C19.Unknown = 0.07, # (0.05-0.09)
+    vCYP2C19.Poor    = 0.03+0.285, #IGNITE input 0.21, # (0.15-0.40)
+    vCYP2C19.Rapid   = 0.257, #IGNITE input 0.33, # (0.10-.40)
+    vCYP2C19.Unknown = 0.038, #IGNITE input 0.07, # (0.05-0.09)
 
     # Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
     vDAPTShape = 0.59,
@@ -52,13 +52,13 @@ clopidogrel = list(
 
     vDAPT.Tx.Duration = 365, # (12mo-48mo)
 
-    vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
+    vProbabilityDAPTSwitch = 0.62, #IGNITE input  0.55, # Source: VUMC PREDICT DATA
     
     # Stent Thrombosis: Event Rates and Relative Risks
     
     # Relative Risk of ST for patients with loss of function allele who are treated with 
     # Clopidogrel.
-    vRR.ST.LOF = 1.75, #(1.50-2.03) High Discrimination Scenario =  2.81 (1.81-4.37)
+    vRR.ST.LOF = 1.72, #IGNITE input  1.75, #(1.50-2.03) High Discrimination Scenario =  2.81 (1.81-4.37)
     
     # The Stent Thrombosis Risks are drawn from a piecewise exponential with the following
     # durations and rates. 
@@ -111,8 +111,8 @@ clopidogrel = list(
     vRR.RiskCABGTIMImajor.Prasugrel =  4.73,# (1.90-11.82)
     vRR.RiskCABGTIMImajor.Aspirin =  1.08, # (0.61-1.91)
 
-    vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
-    vRR.Mort.LOF = 1.28, #(0.95-1.73) #Not sure how to use this one
+    vRR.MI.LOF = 4.34, #IGNITE input 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
+    vRR.Mort.LOF = 1.65, #IGNITE input  1.28, #(0.95-1.73) Unused parameter
     vRR.Bleed.LOF = 0.84 # (0.75-1.00)
     #vRR.Thrombotic.GOF = 0.75, # (0.66-1.00)
     #vRR.Bleed.GOF = 1.26  # (1.00-1.50)
@@ -288,111 +288,115 @@ inputs <- list(
   
   # If these names match the event names from the simmer model, then computation can be generalized!
   # These must be DAILY costs
-  costs = list(
-    panel_test      =   realdol(250,year=2012),
-    single_test     =   realdol(100,year=2012),
-    mild_myopathy   =   realdol(129,year=2012),
-    mod_myopathy    =  realdol(2255/30,year=2012), # Note this divided by duration
-    sev_myopathy    = realdol(12811/30,year=2012),
-    rahbdo_death    = realdol(12811,year=2012), #pass on total sev_myopathy cost
-    cvd             = realdol(20347/30,year=2012),
-    cvd_death       = realdol(20347,year=2012), #pass on total cvd cost
-    simvastatin     =   realdol(147/365,year=2012),
-    alt_simvastatin = realdol(173.1/365,year=2012),
-    
-    aspirin         = realdol(4/30,year=2011),
-    clopidogrel     = realdol(30/30,year=2011),
-    ticagrelor      = realdol(220/30,year=2011),
-    prasugrel       = realdol(261/30,year=2011),
-    bleed_ext_maj_nonfatal = realdol(10120/14,2011),
-    bleed_int_maj_nonfatal = realdol(20740,2011),
-    bleed_min_nonfatal = realdol(79/2,2011),
-    bleed_fatal     = realdol(17920,2011),
-    st_fatal        = realdol(24540,2011),
-    mi_cabg           = realdol(67720,2011),
-    mi_med_manage   = realdol(17200,2011),
-    mi_pci     = realdol(27840,2011), 
-    revasc_cabg     = realdol(50560/14,2011),
-    revasc_pci      = realdol(20670/7,2011),
-    cabg_bleed      = realdol(35570/7,2011),
-    
-    warfarin        = realdol(71/90,year=2007),
-    #bleeding events: sharing w/ chlopidigrel model??
-    MajorBleed_ICH	= realdol(20740,year=2011),
-    MajorBleed_GI	  = realdol(2328/14,year=2011),
-    MajorBleed_Other = realdol(6154/14,year=2011),
-    MajorBleed_ICH_Fatal =	realdol(17920,year=2011),
-    MajorBleed_GI_Fatal =	realdol(17920,year=2011),
-    MajorBleed_Other_Fatal =	realdol(17920,year=2011),
-    MinorBleed = realdol(79/2,year=2011),
-    Stroke_MajorDeficit = realdol(21537,year=2007),
-    Stroke_MinorDeficit = realdol(15499,year=2007),
-    Stroke_Fatal    = realdol(10396,year=2007),
-    DVT	= realdol(7594,year=2004), 
-    PE =	realdol(13018,year=2004),
-    DVTPE_Fatal =	realdol(7000,year=2004),
-    out_of_range = realdol(29/3,year=2007),
-    in_range = realdol(29/7,year=2007)
-
-  ),
-  # Each listed duration will be corrected in the final data frame (temp disutility)
-  durations = list(
-    mild_myopathy =  1,
-    mod_myopathy  = 30,
-    sev_myopathy  = 30,
-    cvd           = 30,
-   
-    bleed_ext_maj_nonfatal = 14,
-    bleed_min_nonfatal = 2,
-    revasc_cabg     = 14,
-    revasc_pci      = 7,
-    cabg_bleed      = 7,
-    
-    MajorBleed_GI	= 14,
-    MajorBleed_Other =	14,
-    MinorBleed = 2
-    
-  ),
-  disutilities = list(
-    mild_myopathy = 0.0100,
-    mod_myopathy  = 0.0500,
-    sev_myopathy  = 0.5300,
-    cvd           = 0.2445,
-    cvd_death     = 1,
-    rahbdo_death  = 1,
-    
-    
-    bleed_ext_maj_nonfatal = .2,
-    bleed_int_maj_nonfatal = .61,
-    bleed_min_nonfatal = .2,
-    bleed_fatal     = 1,
-    st_fatal        = 1,
-    mi_cabg         = .12,
-    mi_med_manage   = .12,
-    mi_pci     = .12,
-    revasc_cabg     = .5,
-    revasc_pci      = .5,
-    cabg_bleed      = .5,
-    
-    MajorBleed_ICH	= 0.61,
-    MajorBleed_GI	  = 0.1511,
-    MajorBleed_Other = 0.1511,
-    MajorBleed_ICH_Fatal = 1, 
-    MajorBleed_GI_Fatal =	1, 
-    MajorBleed_Other_Fatal = 1,
-    MinorBleed      = 0.2,
-    Stroke_MajorDeficit = 0.64,
-    Stroke_MinorDeficit = 0.24,
-    Stroke_Fatal   = 1, 
-    DVT         	 = 0.79,
-    PE             = 0.79,
-    DVTPE_Fatal    = 1,
-    out_of_range = 0.012/3,
-    in_range = 0.012/7,
-    
-    secular_death = 1
+costs = list(
+  panel_test      =   realdol(250,year=2012),
+  single_test     =   realdol(100,year=2012),
+  mild_myopathy   =   realdol(129,year=2012),
+  mod_myopathy    =  realdol(2255/30,year=2012), # Note this divided by duration
+  sev_myopathy    = realdol(12811/30,year=2012),
+  rahbdo_death    = realdol(12811,year=2012), #pass on total sev_myopathy cost
+  cvd             = realdol(20347/30,year=2012),
+  cvd_death       = realdol(20347,year=2012), #pass on total cvd cost
+  simvastatin     =   realdol(147/365,year=2012),
+  alt_simvastatin = realdol(173.1/365,year=2012),
   
-  ),
+  aspirin         = realdol(4/30,year=2011),
+  clopidogrel     = realdol(30/30,year=2011),
+  ticagrelor      = realdol(220/30,year=2011),
+  prasugrel       = realdol(261/30,year=2011),
+  bleed_ext_maj_nonfatal = realdol(10120/14,2011),
+  bleed_int_maj_nonfatal = realdol(20740,2011),
+  bleed_min_nonfatal = realdol(79/2,2011),
+  bleed_fatal     = realdol(17920,2011),
+  st_fatal        = realdol(24540,2011),
+  st_cabg         = realdol(67720,2011),
+  st_pci     = realdol(27840,2011), 
+  mi_cabg           = realdol(67720,2011),
+  mi_med_manage   = realdol(17200,2011),
+  mi_pci     = realdol(27840,2011), 
+  revasc_cabg     = realdol(50560/14,2011),
+  revasc_pci      = realdol(20670/7,2011),
+  cabg_bleed      = realdol(35570/7,2011),
+  
+  warfarin        = realdol(71/90,year=2007),
+  #bleeding events: sharing w/ chlopidigrel model??
+  MajorBleed_ICH	= realdol(20740,year=2011),
+  MajorBleed_GI	  = realdol(2328/14,year=2011),
+  MajorBleed_Other = realdol(6154/14,year=2011),
+  MajorBleed_ICH_Fatal =	realdol(17920,year=2011),
+  MajorBleed_GI_Fatal =	realdol(17920,year=2011),
+  MajorBleed_Other_Fatal =	realdol(17920,year=2011),
+  MinorBleed = realdol(79/2,year=2011),
+  Stroke_MajorDeficit = realdol(21537,year=2007),
+  Stroke_MinorDeficit = realdol(15499,year=2007),
+  Stroke_Fatal    = realdol(10396,year=2007),
+  DVT	= realdol(7594,year=2004), 
+  PE =	realdol(13018,year=2004),
+  DVTPE_Fatal =	realdol(7000,year=2004),
+  out_of_range = realdol(29/3,year=2007),
+  in_range = realdol(29/7,year=2007)
+  
+),
+# Each listed duration will be corrected in the final data frame (temp disutility)
+durations = list(
+  mild_myopathy =  1,
+  mod_myopathy  = 30,
+  sev_myopathy  = 30,
+  cvd           = 30,
+  
+  bleed_ext_maj_nonfatal = 14,
+  bleed_min_nonfatal = 2,
+  revasc_cabg     = 14,
+  revasc_pci      = 7,
+  cabg_bleed      = 7,
+  
+  MajorBleed_GI	= 14,
+  MajorBleed_Other =	14,
+  MinorBleed = 2
+  
+),
+disutilities = list(
+  mild_myopathy = 0.0100,
+  mod_myopathy  = 0.0500,
+  sev_myopathy  = 0.5300,
+  cvd           = 0.2445,
+  cvd_death     = 1,
+  rahbdo_death  = 1,
+  
+  
+  bleed_ext_maj_nonfatal = .2,
+  bleed_int_maj_nonfatal = .61,
+  bleed_min_nonfatal = .2,
+  bleed_fatal     = 1,
+  st_fatal        = 1,
+  st_cabg         = .12,
+  st_pci     = .12,    
+  mi_cabg         = .12,
+  mi_med_manage   = .12,
+  mi_pci     = .12,
+  revasc_cabg     = .5,
+  revasc_pci      = .5,
+  cabg_bleed      = .5,
+  
+  MajorBleed_ICH	= 0.61,
+  MajorBleed_GI	  = 0.1511,
+  MajorBleed_Other = 0.1511,
+  MajorBleed_ICH_Fatal = 1, 
+  MajorBleed_GI_Fatal =	1, 
+  MajorBleed_Other_Fatal = 1,
+  MinorBleed      = 0.2,
+  Stroke_MajorDeficit = 0.64,
+  Stroke_MinorDeficit = 0.24,
+  Stroke_Fatal   = 1, 
+  DVT         	 = 0.79,
+  PE             = 0.79,
+  DVTPE_Fatal    = 1,
+  out_of_range = 0.012/3,
+  in_range = 0.012/7,
+  
+  secular_death = 1
+  
+),
 # Each shows whether the event permanently decreases utility (type==0) vs temporarily(type==1)
 type= list(
   mild_myopathy = 1,
@@ -408,6 +412,8 @@ type= list(
   bleed_min_nonfatal = 1,
   bleed_fatal     = 0,
   st_fatal        = 0,
+  st_cabg         = 0,
+  st_pci     = 0,    
   mi_cabg         = 0,
   mi_med_manage   = 0,
   mi_pci     = 0,
@@ -435,9 +441,6 @@ type= list(
   
 )   
 )
-
-
-
 
 
 

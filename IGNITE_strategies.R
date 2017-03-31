@@ -1,6 +1,17 @@
 setwd("/Users/zilu/Desktop/right-simulation")
 source("./run_IGNITE.r")
 
+###Single Drug 
+inputs$vDrugs = list(vSimvastatin = F, 
+                     vWarfarin = F,
+                     vClopidogrel = T)
+
+#inputs$warfarin$vscale_timetowarfarin <- epsilon
+inputs$clopidogrel$vDAPTScale <- epsilon
+#inputs$simvastatin$vScale <- epsilon
+inputs$clopidogrel$vRRRepeat.DAPT <- 0 #only for low-weibull runs, to fix retrigger clopidogrel prescription
+
+
 results <- NULL
 for(Istrategy in 0:4) {
   if(Istrategy==0) 
@@ -20,8 +31,8 @@ for(Istrategy in 0:4) {
     inputs$vSwitch = "All"
     inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
   } else if(Istrategy==3){
-    inputs$vPreemptive = "Panel"
-    inputs$vReactive = "None"
+    inputs$vPreemptive = "None"
+    inputs$vReactive = "Single"
     inputs$vSwitch = "None"
     inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
   } else {    
@@ -38,7 +49,7 @@ for(Istrategy in 0:4) {
 }
 
 source("./costs_ICER.R")
-inputs$vN <- 100 #change according to combined count
+inputs$vN <- 500 #change according to combined count
 
 sum_costs <- NULL
 for(i in 0:4) {
@@ -109,10 +120,11 @@ arrivals2 <- arrivals
 attributes <- arrange(get_mon_attributes(env),name,key,time) 
 
 #Strategy 3
-inputs$vPreemptive = "Panel"
-inputs$vReactive = "None"
+inputs$vPreemptive = "None"
+inputs$vReactive = "Single"
 inputs$vSwitch = "None"
-inputs$clopidogrel$vProbabilityDAPTSwitch = 1
+#inputs$clopidogrel$vProbabilityDAPTSwitch = 1
+inputs$clopidogrel$vDAPT.Start <- "Clopidogrel"
 
 results <- exec.simulation(inputs)
 results3 <- results
@@ -122,7 +134,7 @@ summary3 <- DT[, .N, by = resource]
 arrivals  <- get_mon_arrivals(env, per_resource = T)
 arrivals3 <- arrivals
 attributes <- arrange(get_mon_attributes(env),name,key,time)
-summary3[summary3$resource=="panel_test",]$resource <- "single_test"
+#summary3[summary3$resource=="panel_test",]$resource <- "single_test"
 
 
 #Strategy 4

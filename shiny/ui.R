@@ -1,4 +1,5 @@
 library(shiny)
+options(shiny.fullstacktrace = TRUE)
 
 parameterInput <- function(inputId, label, value, min=NA, max=NA, step=NA, width=NULL)
 {
@@ -18,7 +19,7 @@ shinyUI(fluidPage(
   )),
   
   titlePanel("Clopidogrel Simulation"),
-  p("A discrete event simulation model for evaluation of clinical benefit and costs-effectiveness of utilizing pharmacogenomic testing in treatement"),
+  p("A discrete event simulation model for evaluation of clinical benefit and costs-effectiveness of utilizing pharmacogenomic testing in treatment"),
   
   #input panel
   sidebarLayout(
@@ -29,7 +30,7 @@ shinyUI(fluidPage(
       h3("General Settings"),
       br(),
       
-      numericInput("vN", "Sample Size:", min = 0, max = 100000, value = 500, step=50),
+      numericInput("vN", "Sample Size (Suggest < 1000):", min = 0, max = 1000, value = 500, step=100),
       br(),
       
       sliderInput("vHorizon","Time Horizon (Year):", min=1, max=80, value=10, step=1),

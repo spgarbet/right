@@ -361,6 +361,9 @@ inputs$simvastatin$vScale <- epsilon
 inputs$vPreemptive <- "None"
 inputs$vReactive <- "None"
 inputs$iseed <- 12345
+inputs$whichDrug <- c() 
+inputs$test <- FALSE
+
 
 ####
 ## 
@@ -425,8 +428,8 @@ form_Clopidogrel <- data.frame(
           "&nbsp;&nbsp;&nbsp;DAPT Switch       	",
           "<b>ST Event</b>",
           "&nbsp;&nbsp;&nbsp;ST Fatal          	",
-          "&nbsp;&nbsp;&nbsp;ST CABG            	",
-          "&nbsp;&nbsp;&nbsp;ST PCI          	",
+          "&nbsp;&nbsp;&nbsp;ST PCI            	",
+          "&nbsp;&nbsp;&nbsp;ST CABG          	",
           "<b>MI Event</b>",
           "&nbsp;&nbsp;&nbsp;MI CABG      	",
           "&nbsp;&nbsp;&nbsp;MI PCI    	",

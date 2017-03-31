@@ -18,7 +18,7 @@ shinyUI(fluidPage(
     "#image2 img {max-width: 100%; width: 100%; height: auto}"
   )),
   
-  titlePanel("Clopidogrel Simulation"),
+  titlePanel("Pharmacogenomic Test Simulator"),
   p("A discrete event simulation model for evaluation of clinical benefit and costs-effectiveness of utilizing pharmacogenomic testing in treatment"),
   
   #input panel

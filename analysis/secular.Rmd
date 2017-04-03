@@ -1,0 +1,76 @@
+---
+title: "SecularDeathSim"
+author: "Shawn Garbett"
+date: "April 3, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Problem
+
+DES supports drawing from any observed distribution via sample to create patients. Modeling via differential equations requires a function. Since current simulations are using the observed data for establishment of a medical home. To convert this into a secular mortality probability that is a function of time for the simulation takes some effort.
+
+## The data
+
+The raw distributions taken from the Vanderbilt data sets, which was used for the PREDICT algorithm are as follows:
+
+```{r studypop, echo=FALSE}
+study_pop <- read.csv("../main/Age_Sex.csv")
+study_pop.m <- subset(study_pop, gender=='M')$age.mh
+study_pop.f <- subset(study_pop, gender=='F')$age.mh
+par(mfrow=c(1,2))
+hist(study_pop.m, main="Male", xlab="Age at Medical Home Start")
+hist(study_pop.f, main="Female", xlab="Age at Medical Home Start")
+
+```
+
+## Strategy
+
+Each individual's expected survival from social security can be overlaid into an array and this be used as the distribution of rates. We begin by fitting a spline to the 2011 social security data representing percent chance of death.
+```{r spline, echo=FALSE}
+ss_death <- read.csv("../mortality/ss-death-2011.csv", header=TRUE)
+
+f_percent_d    <- c(ss_death$f_death_prob)
+f_d_spline <- splinefun(ss_death$age + 0.5, f_percent_d)
+curve(f_d_spline, col='red', from=0, to=120, xlab="Age", ylab="Probability of Secular Death")
+m_percent_d    <- c(ss_death$m_death_prob)
+m_d_spline <- splinefun(ss_death$age + 0.5, m_percent_d)
+curve(m_d_spline, col='blue', add=TRUE)
+
+# Construct it!
+bins <- rep(0, 120) # Bin for each year possible
+N    <- rep(0, 120)
+for(i in 1:length(study_pop$age.mh))
+{
+  spl <- NULL
+  spl <- if(study_pop[i, 'gender'] == 'F') f_d_spline else m_d_spline
+  
+  age <- study_pop[i,'age.mh']
+  j   <- 1
+  while(age < 120)
+  {
+    bins[j] <- bins[j] + spl(age)
+    N[j]    <- N[j] + 1
+    age     <- age + 1.0
+    j       <- j + 1
+  }
+  bins[j]   <- bins[j] + 1.0
+  N[j]      <- N[j] + 1
+  
+}
+bins <- bins / N
+```
+
+The observed Vanderbilt's population's change of death post establishment of medical home is thus found to be the following:
+
+```{r final, echo=FALSE}
+plot(bins, typ='l', xlab="time in simulation", ylab="Probability of Secular Death")
+
+final <- data.frame(time=0:102, death_rate=bins[1:103])
+
+write.csv(final, "vandy-secular-death.csv", row.names=FALSE)
+```
+

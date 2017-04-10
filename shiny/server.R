@@ -259,7 +259,7 @@ shinyServer(function(input, output) {
   #None vs Reactive results
   add <- eventReactive(input$run,{
     
-  if(input$test) {
+  if(input$wTest =="Single") {
     inputs <- inputs_update()
     inputs$vReactive <- "Single"  
 
@@ -274,7 +274,7 @@ shinyServer(function(input, output) {
   #combine and format results
   out <- eventReactive(input$run,{
     full <- list()
-    if(input$test) {
+    if(input$wTest=="Single") {
       ne <- base()$sm
       names(ne)[2] <- "None" 
       full$sm <- merge(ne,add()$sm,by="Event") %>% arrange(num) %>% select(-num)

@@ -362,7 +362,6 @@ inputs$vPreemptive <- "None"
 inputs$vReactive <- "None"
 inputs$iseed <- 12345
 inputs$whichDrug <- c() 
-inputs$test <- FALSE
 
 
 ####

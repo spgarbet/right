@@ -1,7 +1,4 @@
 library(deSolve)
-library(flexsurv) # For pgompertz
-
-ss_death <- read.csv("ss-death-2011.csv")
 
 inst_rate <- function(percent, timeframe)
 {
@@ -69,33 +66,14 @@ params = list(
     disc_rate = 0.03
 )
 
-###################################
-# Numerical approach to secular death (very high accuracy!)
-f_40yr_percent_d    <- c(ss_death$f_death_prob[41:120])
-sim_adj_age         <- 0:79 + 0.5 # 0.5 offset since percentage is for whole year
-f_40yr_per_d_spline <- splinefun(sim_adj_age, f_40yr_percent_d)
-plot(1:2); dev.off()
-curve(f_40yr_per_d_spline, col='red', from=0, to=82, xlab="years past 40", ylab="percent chance of death")
-points(sim_adj_age, f_40yr_percent_d)
 
-# Clamped at infinite rate via pmin
-f_40yr_drate <- function(t) inst_rate(pmin(f_40yr_per_d_spline(t), 1),1)
-curve(f_40yr_drate, from=0, to=90)
+# Estimated Vanderbilt Secular Death first 10 years See:Secular.html
+drate <- function(t) inst_rate(0.01272623*exp(0.0940359*t), 1)
 
-####################################
-# Integrations of death rates for exposure calculations in delay
-# Now, a special function used in delay equation (Had to put upper bound at 81)
-F_40yr_drate_5yr <- Vectorize(function(t)
-{
-  integrate(f_40yr_drate, lower=max(t-5, 0), upper=min(t, 81))$value
+# Compute rate exposure for delay differential usage
+F_drate <- Vectorize(function(t, years) {
+  integrate(drate, lower=max(t-years, 0), upper=min(t, 100))$value
 })
-
-
-F_40yr_drate_1yr <- Vectorize(function(t)
-{
-  integrate(f_40yr_drate, lower=max(t-1, 0), upper=min(t, 81))$value
-})
-
 
 # This is for doing numberical integration of a set of numbers at an even interval
 alt_simp_coef <- function(i)
@@ -114,40 +92,61 @@ split <- function(params)
   })
 }
 
+pcirate <- function(t)
+{
+  rep(0.01, length(t))
+}
+
+F_pcirate <- function(t)
+{
+  integrate(pcirate, lower=max(t-1, 0), upper=min(t, 100))$value
+}
+
 ###################################
 # Numerical Delay Differential Equation
 Clopidogrel <- function(t, y, params)
 {
   with(as.list(c(y, params)), {
-    # Use table for death_prob, Female 40 (offset 1)
-    r_d <- f_40yr_drate(t)
-    if(is.infinite(r_d)) r_d <- 1e16 # A really large number as approximation
+
+    r_d <- drate(t)
     
-    alt_p    <- split(params) 
-    incoming <- if (t <= 0) 0 else params$vDAPTShape * t^(params$vDAPTShape - 1) / params$vDAPTScale^params$vDAPTShape
-    off_clop <- if (t < 1) 0 else (1-alt_p)*lagderiv(t-1, 7)*exp(-F_40yr_drate_1yr(t))
-    off_alta <- if (t < 1) 0 else (  alt_p)*lagderiv(t-1, 7)*exp(-F_40yr_drate_1yr(t))
+    # Start of therapy Weibull rate
+    incoming <- if (t <= 0)     0 else params$vDAPTShape * t^(params$vDAPTShape - 1) / params$vDAPTScale^params$vDAPTShape
+    # Starting 2nd 11 month phase of therapy (basically, minus mortality)
+    start2   <- if (t < 30/365) 0 else lagderiv(t-30/365, 2)*exp(-F_drate(t, 30/365))
+    # Available at end of 12 months of therapy (phase1+phase2) minus mortality
+    avail3   <- if (t < 1)      0 else lagderiv(t-335/365,3)*exp(-F_drate(t, 335/365))
+    # Those that finished therapy (minus PCI for last year)
+    finish   <- avail3*exp(-F_pcirate(t))
+    # Those that restart and continue therapy due to PCi
+    start3   <- avail3 - finish
     
-    mortality_rate <- f_40yr_per_d_spline(t) # This needs to be convolution
-    
+    # Those that finished 2nd therapy
+    finish2  <- if (t < 1) 0 else lagderiv(t-1, 4)*exp(-F_drate(t, 1))
+
     list(c(
-            disc = -disc_rate*disc,            # Simple discount r ate
-            clop = (1-alt_p)*incoming - off_clop - mortality_rate*clop,
-            alta = (alt_p)  *incoming - off_alta - mortality_rate*alta,
-            mort = mortality_rate*(clop+alta+aspr+good),
-            aspr = off_clop + off_alta-mortality_rate*aspr,
-            good = -incoming - mortality_rate*good,
-            trac = incoming # Useful for tracking incoming.
+            notreat = -incoming,
+            p1entry = incoming,
+            p2entry = start2,
+            restart = pcirate(t)*(phase1+phase2),
+            phase1  = incoming - r_d*phase1 - start2,
+            phase2  = start2   - r_d*phase2 - avail3,
+            phase3  = start3   - r_d*phase3 - finish2,
+            maint   = finish   - r_d*maint  + finish2,
+            mort    = r_d*(phase1+phase2+phase3+maint),
+            disc    = -disc_rate*disc            # Simple discount rate
           )
     )
   })
 }
 
-yinit <- c(disc=1, clop=0, alta=0, mort=0, aspr=0, good=1, trak=0)
+yinit <- c(notreat=1, p1entry=0, p2entry=0, restart=0,
+           phase1=0,  phase2=0,   phase3=0, maint=0, mort=0, 
+           disc=1)
 times <- seq(0, 10, by=1/365)  # units of years, increments of days, everyone dies after 120, so simulation is cut short
 system.time(out <- dede(yinit, times, Clopidogrel, params))
 
 plot(out)
 
 # Check sensibility, i.e. all occupancy buckets sum to 1
-all((rowSums(out[,c('good','alta','clop', 'aspr', 'mort')]) - 1) < 1e-8)
+all((rowSums(out[,c('notreat','phase1','phase2', 'phase3', 'maint', 'mort')]) - 1) < 1e-8)

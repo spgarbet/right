@@ -69,8 +69,22 @@ The observed Vanderbilt's population's predicted rate of death post establishmen
 ```{r final, echo=FALSE}
 plot(bins, typ='l', xlab="time in simulation", ylab="Probability of Secular Death")
 
-final <- data.frame(time=0:102, death_rate=bins[1:103])
+final <- data.frame(time=0:102, percent_death=bins[1:103])
 
 write.csv(final, "vandy-secular-death.csv", row.names=FALSE)
 ```
 
+Since our simulations are focused on a 10 year time span. All that is required is the first 10 years. The red dashed line is a simple exponential model fit to the first 10 years.
+
+```{r model, echo=TRUE}
+plot(0:10, bins[1:11], typ='l', xlab="time in simulation", ylab="Probability of Secular Death")
+
+model <- lm(log(Y) ~ X, data.frame(Y=bins[1:11], X=0:10))
+
+fit <- model$coefficients
+
+curve(exp(fit[1])*exp(fit[2]*x), col='red', lty=2, add=TRUE)
+
+fit
+
+```

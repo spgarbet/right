@@ -111,7 +111,9 @@ Clopidogrel <- function(t, y, params)
     r_d <- drate(t)
     
     # Start of therapy Weibull rate
-    incoming <- if (t <= 0)     0 else params$vDAPTShape * t^(params$vDAPTShape - 1) / params$vDAPTScale^params$vDAPTShape
+    scale <- params$vDAPTScale/365
+    shape <- params$vDAPTShape
+    incoming <- if (t <= 0)     0 else notreat*shape * t^(shape - 1) / scale^shape
     # Starting 2nd 11 month phase of therapy (basically, minus mortality)
     start2   <- if (t < 30/365) 0 else lagderiv(t-30/365, 2)*exp(-F_drate(t, 30/365))
     # Available at end of 12 months of therapy (phase1+phase2) minus mortality

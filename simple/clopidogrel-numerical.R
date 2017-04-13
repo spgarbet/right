@@ -151,4 +151,4 @@ system.time(out <- dede(yinit, times, Clopidogrel, params))
 plot(out)
 
 # Check sensibility, i.e. all occupancy buckets sum to 1
-all((rowSums(out[,c('notreat','phase1','phase2', 'phase3', 'maint', 'mort')]) - 1) < 1e-8)
+all(abs(rowSums(out[,c('notreat','phase1','phase2', 'phase3', 'maint', 'mort')]) - 1) < 1e-8)

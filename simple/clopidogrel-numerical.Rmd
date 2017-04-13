@@ -1,0 +1,215 @@
+---
+title: "Clopidogrel Numerical Solution"
+author: "Shawn Garbett"
+date: "April 12, 2017"
+output:
+  html_document:
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Model
+
+The numerical solution is a 3 step approach. Step 1 is a delay differential equation (DDE) solution that is a subset of the full model. Step 2 is integrating outcomes over the compartments in the DDE model. Step 3 is running multiple runs and adding outcomes based on chosen strategies.
+
+A delay differential equation model solves the expectation value of infinite runs. All the compartment of the full model are not required since multiple runs can be done on a subset of the model and probablistic sums of results can be done in Step 3. For example, prescribing an alternate and a mainline therapy is not required in the DDE model since each of these can be done in separate runs and averaged together based on the probability of each occurring. There is trade off between number of runs and complexity of DDE model. However, in general derivation of a representative DDE model is more complex thus the simplest is desired.
+
+The DDE model has 6 principal compartments: 'notreat', 'phase1', 'phase2', 'phase3', 'maint' and 'mort'. 'notreat' represents untreated individuals in the simulation. 'phase1' is the initial 30 days of primary DAPT treatment. 'phase2' is the 2-12 months of primary DAPT treatment. 'phase3' is the 2-end of sim years of primary DAPT treatment. 'maint' are those on maintenance medication. 'mort' are those that have died for any reason. An few additional bookkeeping compartments are utilized: 'p1entry', 'p2entry', 'restart', and 'disc'. 'p1entry' are those patients that have been selected for treatment via the Weibull distribution and are entering treatment. 'p2entry' are those patients how are entering 'phase2' of therapy. 'restart' are all those patients who are restarting therapy. Finally, 'disc' is an easy way to compute discount rate in the same result matrix that makes later computation simpler.
+
+The present DDE model does not allow for multiple restarts of treatment, although this could be added the results of allowing one stage are 1/1000 of the effect of primary treatment. Allowing a second round would be effecting the sixth significant digit (1/1000^2), and is neglected in this solution.
+
+For step 2 integrations we use our earlier work in validation of delay differentials applied to queueing theory. 
+
+DESCRIBE STEP 3 HERE
+
+## The DDE Model
+
+First we load the integrator and pull in model parameters.
+
+```{r, echo=TRUE}
+library(deSolve)
+
+###################################
+# Main model parameters
+params = list(
+    vPREDICTsens = 0.23,
+    vPREDICTspec = 0.93,
+    vProbabilityRead       = 1.00, # probability of physician using test results
+    vProbabilityReactive   = 1.00, # Under reactive, probability of ordering test
+    vProbabilityDAPTSwitch = 0.55, # Source: VUMC PREDICT DATA
+
+    # Population-Level Allele Frequency Distribution
+    vCYP2C19.Poor    = 0.21, # (0.15-0.40)
+  
+    # Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
+    vDAPTShape = 0.59,
+    vDAPTScale = 60475.53,
+  
+    # Stent Thrombosis: Event Rates and Relative Risks
+    
+    # Relative Risk of ST for patients with loss of function allele who are treated with 
+    # Clopidogrel.
+    vRR.ST.LOF = 1.75, #(1.50-2.03) High Discrimination Scenario =  2.81 (1.81-4.37)
+    
+    # The Stent Thrombosis Risks are drawn from a piecewise exponential with the following
+    # durations and rates. 
+    vRiskST30    = 0.0150, # (0.010-0.020)
+    vRiskST365   = 0.0060, # (0.003-0.009)
+    vRiskSTgt365 = 0.0022, # (0.001-0.003)
+  
+    vRR.ST.Alternate = 0.75,
+    vRR.ST.Aspirin   = 1.29,
+
+    vST.Case.Fatality = 0.20, #(15-30)
+    vPrCABG.ST = 0.10,  # WHAT IS SOURCE?  CAN'T FIND IN ANNALS PAPER...
+
+    # Myocardial Infarction: Event Rates and Relative Risks
+    vRiskMI = 0.035, #(0.013-0.097)
+    vRR.MI.Alternate =0.84, # (0.75-0.95)
+    vPrCABG.MI = 0.08, # (4-12)
+    vPrPCI.MI = 0.55, # (45-65)
+
+    # Revascularization
+    vRiskRV365   = 0.10, # (0.05-0.15)
+    vRiskRVgt365 = 0.03, # (0.02-0.04)
+    vPrCABG.RV   = .25, # (15-35)
+
+    # Bleeding FIXME!!!
+    vRiskBleed = 0,
+    vRiskBleedFatal = 0,
+    vRR.Alternative = 0,
+    vRR.Fatal.Alternative = 0,
+  
+    vRiskCABGTIMImajor = 0.022, # (0.013-0.031) 
+    vRR.RiskCABGTIMImajor.Alternate = 1.08, # (0.85-1.36)
+
+    vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
+    vRR.Mort.LOF = 1.28, #(0.95-1.73) #Not sure how to use this one
+    vRR.Bleed.LOF = 0.84, # (0.75-1.00)
+  
+    disc_rate = 0.03
+)
+```
+
+Next we set up instantaneous secular death rates, and their integrals.
+
+```{r, echo=TRUE}
+
+# This take a percent rate over a timeframe and returns the
+# instantaneous exponential rate
+inst_rate <- function(percent, timeframe)
+{
+  - log(1-percent) / timeframe
+}
+
+# Estimated Vanderbilt Secular Death first 10 years See:Secular.html
+drate <- function(t) inst_rate(0.01272623*exp(0.0940359*t), 1)
+
+# Compute rate exposure for delay differential usage
+F_drate <- Vectorize(function(t, years) {
+  integrate(drate, lower=max(t-years, 0), upper=min(t, 100))$value
+})
+```
+
+This are the rates of pci events and their exposure integrals.
+
+```{r}
+
+pcirate <- function(t)
+{
+  rep(0.01, length(t))
+}
+
+F_pcirate <- function(t)
+{
+  integrate(pcirate, lower=max(t-1, 0), upper=min(t, 100))$value
+}
+```
+
+The actual model is now constructed.
+
+```{r, echo=TRUE}
+###################################
+# Numerical Delay Differential Equation
+Clopidogrel <- function(t, y, params)
+{
+  with(as.list(c(y, params)), {
+
+    r_d <- drate(t)
+    
+    # Start of therapy Weibull rate
+    # Start of therapy Weibull rate
+    scale <- params$vDAPTScale/365
+    shape <- params$vDAPTShape
+    incoming <- if (t <= 0)     0 else notreat*shape * t^(shape - 1) / scale^shape
+
+    # Starting 2nd 11 month phase of therapy (basically, minus mortality)
+    start2   <- if (t < 30/365) 0 else lagderiv(t-30/365, 2)*exp(-F_drate(t, 30/365))
+    # Available at end of 12 months of therapy (phase1+phase2) minus mortality
+    avail3   <- if (t < 1)      0 else lagderiv(t-335/365,3)*exp(-F_drate(t, 335/365))
+    # Those that finished therapy (minus PCI for last year)
+    finish   <- avail3*exp(-F_pcirate(t))
+    # Those that restart and continue therapy due to PCi
+    start3   <- avail3 - finish
+    
+    # Those that finished 2nd therapy
+    finish2  <- if (t < 1) 0 else lagderiv(t-1, 4)*exp(-F_drate(t, 1))
+
+    list(c(
+            notreat = -incoming,
+            p1entry = incoming,
+            p2entry = start2,
+            restart = pcirate(t)*(phase1+phase2),
+            phase1  = incoming - r_d*phase1 - start2,
+            phase2  = start2   - r_d*phase2 - avail3,
+            phase3  = start3   - r_d*phase3 - finish2,
+            maint   = finish   - r_d*maint  + finish2,
+            mort    = r_d*(phase1+phase2+phase3+maint),
+            disc    = -disc_rate*disc            # Simple discount rate
+          )
+    )
+  })
+}
+```
+
+Let's generate a simple run, and validate that the sum of compartments the represent the population sum to 1. This indicates that individuals were neither created nor lost in the solution. 
+
+```{r, echo=TRUE}
+
+yinit <- c(notreat=1, p1entry=0, p2entry=0,
+           restart=0, phase1=0,  phase2=0,
+           phase3=0,  maint=0,   mort=0, 
+           disc=1)
+# units of years, increments of days
+times <- seq(0, 10, by=1/365)
+
+# Run the simulation
+system.time(out <- dede(yinit, times, Clopidogrel, params))
+
+# Check sensibility, i.e. all occupancy buckets sum to 1
+# If this sums to 1 then no individual was created or lost in the model
+all(abs(rowSums(out[,c('notreat','phase1','phase2', 'phase3', 'maint', 'mort')]) - 1) < 1e-8)
+```
+
+My computer results in about a 6-7 second run for results. This is an excellent time at this stage and better than the simple model's run time of 11 seconds. This is primarily due to the smoother secular death function. Further, the summation validation insures that the model is consistent in that starting with a population size of 1.0, it neither creates nor destroys any of that population within numerical error.
+
+A plot is the next diagnostic validation.
+
+```{r, echo=TRUE}
+x <- out[,c("time", "notreat", "phase1", "phase2", "phase3")]
+class(x) <- c("deSolve", "matrix")
+plot(x)
+```
+
+The healthy population 'notreat' plot matches the original Kaplan Meier curve from Yaping's work. Note the characteristic shark fin shape. This is a result of the Weibull distribution, and theory predicts that if one plotted a bar chart of time to therapy after establishing a medical home on the source data this would be the observed shape. It's the shape of a Weibull with a delayed exit or queue in the time domain.
+
+Notice that very few are in treatment in phase one of the total population at any time. Phase 2 is a little larger as the time frame is longer. An integration of any of these curves results in the amount of time the population is exposed to one of these phases. Phase 3 is on a very small scale over all, as the number of restarts is on a much smaller scale overall. 
+
+```{r, echo=TRUE}
+x <- out[,c("time", "maint", "mort")]
+class(x) <- c("deSolve", "matrix")
+plot(x)
+```

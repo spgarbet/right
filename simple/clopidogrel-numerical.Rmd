@@ -189,28 +189,27 @@ Clopidogrel <- function(t, y, params)
     fb  <- 0 # BleedFatal.rate # Fatal bleed rate for first 1st year only
     
     # Start of therapy Weibull rate
-    # Start of therapy Weibull rate
     scale <- Scale/365
     shape <- Shape
     incoming <- if (t <= 0)     0 else notreat*shape * t^(shape - 1) / scale^shape
     
-    pci.r <- pci.rates(params)
+    pci.r  <- pci.rates(params)
+    cabg.r <- cabg.rates(params)
     
     # Fatal bleed loss
 
-    # Starting 2nd phase of therapy after 1st month (minus mortality of those who started)
-    start2   <- if (t < 30/365) 0 else lagderiv(t-30/365, 2)*exp(-F_drate(t,  30/365))*exp(-fb*30/365)
+    # Starting 2nd phase of therapy after 1st month (minus mortality and cabg of those who started)
+    start2   <- if (t < 30/365) 0 else lagderiv(t-30/365, 2)*exp(-F_drate(t,  30/365))*exp(-F_cabg.rate(30/365, 30/365, params))*exp(-fb*30/365)
     # Available at end of 12 months of therapy (phase1+phase2) minus mortality
-    avail3   <- if (t < 1)      0 else lagderiv(t-335/365,3)*exp(-F_drate(t, 335/365))*exp(-fb*335/365)
+    avail3   <- if (t < 1)      0 else lagderiv(t-335/365,3)*exp(-F_drate(t, 335/365))*exp(-F_cabg.rate(30/365, 30/365, params))*exp(-fb*335/365)
     # Those that finished therapy (minus PCI for last year)
-    finish   <- avail3*exp(-F_pci.rate(1, 1, params))
+    finish   <- avail3 * exp(-F_pci.rate(1, 1, params))
     # Those that restart and continue therapy due to PCi
     start3   <- avail3 - finish
 
     # Those that finished 2nd (restarted) therapy, didn't die or have a fatal bleed in first year
-    #fb.loss  <- -fb*if(abs(t-1) < 1) 1-abs(t-1) else 
     finish2 <- if(t<=1) 0 else integrate(Vectorize(function(a){
-          lagderiv(a, 4)  # *exp(-F_drate(a, 1))
+          lagderiv(a, 4) * exp(-F_cabg.rate(a+1, 1, params))
         }),
         lower=max(0, t-2),
         upper=t-1
@@ -223,10 +222,10 @@ Clopidogrel <- function(t, y, params)
             # Not quite ready to deal with restarts from phase3
             # Subtract out chances of death here is faster than in computing those that finish
             restart = sum(pci.r*c(phase1,phase2,phase3))*exp(-F_drate(t+1, 1)),
-            phase1  = incoming - start2  - (fb+r_d)*phase1,
-            phase2  = start2   - avail3  - (fb+r_d)*phase2,
-            phase3  = start3   - finish2 - r_d*phase3,
-            maint   = finish   + finish2 - r_d*maint,
+            phase1  = incoming - start2  - (fb+r_d+cabg.r[1])*phase1,
+            phase2  = start2   - avail3  - (fb+r_d+cabg.r[2])*phase2,
+            phase3  = start3   - finish2 - (r_d+cabg.r[3])*phase3,
+            maint   = finish   + finish2 - r_d*maint+sum(cabg.r*c(phase1, phase2, phase3)),
             mort    = r_d*(phase1+phase2+phase3+maint) + fb*(phase1+phase2),
             bleed_f = fb*(phase1+phase2),
             disc    = -disc_rate*disc            # Simple discount rate

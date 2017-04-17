@@ -212,12 +212,12 @@ time_to_ST <- function(attrs,inputs)
       
     # Baseline Risk
     rates = c(inputs$clopidogrel$vRiskST30,inputs$clopidogrel$vRiskST365,inputs$clopidogrel$vRiskSTgt365)
-    days = c(30,365,365*4)
+    days = c(30,335,365)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
     
-    timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,30,365,4*365))
     return(timeST)
     
   }
@@ -281,15 +281,15 @@ time_to_MI = function(attrs, inputs)
     if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.MI.Aspirin
     
     # Baseline Risk
-    rates = rep(inputs$clopidogrel$vRiskMI, 4)
-    days = c(365,365*2,365*3,365*4)
+    rates = inputs$clopidogrel$vRiskMI
+    days  = 365
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
     
-    timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    timeMI = rpexp(1, rate=c(rates2,epsilon), t=c(0,4*365))
   
-    return(timeST)
+    return(timeMI)
     
   }
 }
@@ -359,13 +359,13 @@ time_to_RV = function(attrs, inputs)
     rr = attrs[["aRR.DAPT.RV"]]
 
     # Baseline Risk
-    rates = c(inputs$clopidogrel$vRiskRV365,rep( inputs$clopidogrel$vRiskRVgt365,3))
-    days = c(365,365*2,365*3,365*4)
+    rates = c(inputs$clopidogrel$vRiskRV365,inputs$clopidogrel$vRiskRVgt365)
+    days  = c(365, 365)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
     
-    timeRV = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    timeRV = rpexp(1, rate=c(rates2,epsilon), t=c(0,365,4*365))
     
     return(timeRV)
     

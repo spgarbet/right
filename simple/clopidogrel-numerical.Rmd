@@ -90,8 +90,8 @@ inst_rate <- function(percent, timeframe)
 }
 
 # Estimated Vanderbilt Secular Death first 10 years See:Secular.html
-#drate <- function(t) inst_rate(0.01272623*exp(0.0940359*t), 1)
-drate <- function(t) rep(0, length(t))
+drate <- function(t) inst_rate(0.01272623*exp(0.0940359*t), 1)
+#drate <- function(t) rep(0, length(t))
 
 # Compute rate exposure for delay differential usage
 F_drate <- Vectorize(function(t, years) {
@@ -183,7 +183,7 @@ Clopidogrel <- function(t, y, params)
   with(as.list(c(y, params)), {
 
     r_d <- drate(t)
-    fb  <- BleedFatal.rate # Fatal bleed rate for first 1st year only
+    fb  <- 0 # BleedFatal.rate # Fatal bleed rate for first 1st year only
     
     # Start of therapy Weibull rate
     # Start of therapy Weibull rate
@@ -206,13 +206,20 @@ Clopidogrel <- function(t, y, params)
 
     # Those that finished 2nd (restarted) therapy, didn't die or have a fatal bleed in first year
     #fb.loss  <- -fb*if(abs(t-1) < 1) 1-abs(t-1) else 
-    finish2  <- if (t < 1) 0 else lagderiv(t-1, 4)*exp(-F_drate(t, 1))*exp(-fb)
+    finish2 <- if(t<=1) 0 else integrate(Vectorize(function(a){
+          lagderiv(a, 4)  # *exp(-F_drate(a, 1))
+        }),
+        lower=max(0, t-2),
+        upper=t-1
+      )$value 
 
     list(c(
             notreat = -incoming,
             p1entry = incoming,
             p2entry = start2,
-            restart = sum(pci.r*c(phase1,phase2,0)), # Not quite ready to deal with restarts from phase3
+            # Not quite ready to deal with restarts from phase3
+            # Subtract out chances of death here is faster than in computing those that finish
+            restart = sum(pci.r*c(phase1,phase2,phase3))*exp(-F_drate(t+1, 1)),
             phase1  = incoming - start2  - (fb+r_d)*phase1,
             phase2  = start2   - avail3  - (fb+r_d)*phase2,
             phase3  = start3   - finish2 - r_d*phase3,

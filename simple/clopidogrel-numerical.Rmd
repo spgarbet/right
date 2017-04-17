@@ -90,13 +90,16 @@ inst_rate <- function(percent, timeframe)
 }
 
 # Estimated Vanderbilt Secular Death first 10 years See:Secular.html
-drate <- function(t) inst_rate(0.01272623*exp(0.0940359*t), 1)
+drate_alpha <- 0.0940359
+drate_beta  <- 0.01272623
+drate <- function(t) inst_rate(drate_beta*exp(drate_alpha*t), 1)
 #drate <- function(t) rep(0, length(t))
 
 # Compute rate exposure for delay differential usage
-F_drate <- Vectorize(function(t, years) {
-  integrate(drate, lower=max(t-years, 0), upper=min(t, 100))$value
-})
+#F_drate <- Vectorize(function(t, years) {
+#  integrate(drate, lower=max(t-years, 0), upper=min(t, 100))$value
+#})
+F_drate <- function(t, years) drate_beta* (exp(drate_alpha*t) - exp(drate_alpha*pmax((t-years),0))) / drate_alpha
 ```
 
 This are the rates of pci events broken into first 30 days, first year, and thereafter and their exposure integrals.
@@ -139,7 +142,7 @@ F_pci.rate <- function(a, years, params)
 
 Likewise we require rates of CABG and Bleed Fatalities
 ```{r, echo=TRUE}
-cabg.rates <- Vectorize(vectorize.args="t", function(t, params)
+cabg.rates <- function(params)
 {
   with(params,
   {
@@ -154,7 +157,7 @@ cabg.rates <- Vectorize(vectorize.args="t", function(t, params)
 
     rate + fraction*c(ST.rate.30, ST.rate.365, ST.rate.gt365)
   })
-})
+}
 
 F_cabg.rate <- function(a, years, params)
 {

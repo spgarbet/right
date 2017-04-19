@@ -613,3 +613,37 @@ CABGBleed_event = function(traj, inputs)
 }
 
 
+###############
+#Added stroke events
+##
+days_to_stroke <- function(attrs, inputs)
+{ 
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  {
+    
+    rr = 1
+    # Relative Risk
+    #rr = attrs[["aRR.DAPT.Stroke"]]
+    #if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.Stroke.Ticagrelor 
+    #if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.Stroke.Prasugrel
+    #if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.Stroke.Aspirin
+    
+    # Baseline Risk
+    rates = inputs$clopidogrel$vRiskStroke
+    days = c(365)
+    
+    # Convert To Probability 
+    rates2 = (- (log ( 1 - rates)*rr) / days)
+    
+    timeStroke =  rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    
+    return(timeStroke)
+    
+  }
+}
+
+dapt_stroke_event <- function(traj, inputs)
+{
+  traj %>%
+    mark("dapt_stroke") 
+}

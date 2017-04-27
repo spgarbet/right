@@ -159,5 +159,5 @@ simulation <- function(env, inputs)
       continue=TRUE,
       trajectory("main_loop") %>% process_events(env, inputs)
     ) %>% 
-    rollback(amount=1, times=100) # Process up to 100 events per person
+    rollback(amount=1, times=150) # Process up to 100 events per person
 }

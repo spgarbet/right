@@ -41,8 +41,7 @@ panel_test <- function(traj, inputs)
     set_attribute('aGenotyped_CYP2C19', 1)  %>%
     set_attribute('aGenotyped_CVD',     1)  %>%
     set_attribute('aGenotyped_Warfarin', 1) %>%
-    mark("panel_test") %>%
-    set_attribute("aPredicted", 2) # Z.Z: add this attribute to differentiate people picked up by PREDICT vs Reactive, matters in warfarin model
+    mark("panel_test")
 }
 
 #####
@@ -135,7 +134,7 @@ preemptive_strategy <- function(traj, inputs)
     traj # Do nothing
   } else if (inputs$vPreemptive == "Panel"    )
   {
-    traj %>% panel_test(inputs) %>% set_attribute("aPredicted", 1)
+    traj %>% panel_test(inputs) 
   } else if (inputs$vPreemptive == "PREDICT")
   {
     traj %>%
@@ -144,7 +143,7 @@ preemptive_strategy <- function(traj, inputs)
         function(attrs) ifelse(any_genotyped(attrs),2,1),
         continue=rep(TRUE,2),
         trajectory() %>% timeout(0), # Nothing genotyped, do nothing
-        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) # Something was genotyped via PREDICT, do panel
+        trajectory() %>% panel_test(inputs) # Something was genotyped via PREDICT, do panel
       )
   } else if (inputs$vPreemptive == "Age >= 50")
   {
@@ -152,7 +151,7 @@ preemptive_strategy <- function(traj, inputs)
       branch(
         function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
         continue = c(TRUE, TRUE),
-        trajectory() %>% panel_test(inputs) %>% set_attribute("aPredicted", 1) , 
+        trajectory() %>% panel_test(inputs), 
         trajectory() %>% timeout(0)  # Do nothing
       )
   } else stop("Unhandled Preemptive Strategy")
@@ -193,7 +192,7 @@ event_registry <- list(
        reactive      = FALSE),
   list(name          = "Terminate at 10 years",
        attr          = "aTerminate",
-       time_to_event = function(attrs,inputs) 365.0*inputs$vHorizon,
+       time_to_event = function(attrs,inputs) 365.0*(inputs$vHorizon),
        func          = terminate_simulation,
        reactive      = FALSE),
   
@@ -279,6 +278,11 @@ event_registry <- list(
        attr          = "aCABGBleed",
        time_to_event = time_to_CABGBleed,
        func          = CABGBleed_event,
+       reactive      = FALSE),
+  list(name          = "DAPT Stroke",
+       attr          = "aDAPTStroke",
+       time_to_event = days_to_stroke,
+       func          = dapt_stroke_event,
        reactive      = FALSE),
   
   #### Warfarin Events

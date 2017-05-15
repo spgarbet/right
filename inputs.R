@@ -112,9 +112,12 @@ clopidogrel = list(
 
     vRR.MI.LOF = 1.48, #(1.05-2.07) High Discrimination Scenario = 1.45 (1.09-1.92)
     vRR.Mort.LOF = 1.28, #(0.95-1.73) #Not sure how to use this one
-    vRR.Bleed.LOF = 0.84 # (0.75-1.00)
+    vRR.Bleed.LOF = 0.84, # (0.75-1.00)
     #vRR.Thrombotic.GOF = 0.75, # (0.66-1.00)
     #vRR.Bleed.GOF = 1.26  # (1.00-1.50)
+    
+    vRiskStroke = epsilon
+    
 )
 
 simvastatin <- list(

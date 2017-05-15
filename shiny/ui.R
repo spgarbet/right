@@ -40,8 +40,8 @@ shinyUI(fluidPage(
       checkboxGroupInput("wDrug","Which model?",c("Clopidogrel","Simvastatin"),selected = "Clopidogrel"),
       br(),
       
-      h5("Genotyping Strategy (by default no testing):"),
-      checkboxInput("test","genotyping"),
+      radioButtons("wTest", "Genotyping Strategy",
+                  c("None", "Single"), "None", FALSE),
       br(),
       
       numericInput("iseed", "Random number seed:", min = 1, max = 100000, value = 12345, step=1),

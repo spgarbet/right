@@ -13,13 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## The Model
 
-The numerical solution is a 3 step approach. Step 1 is a delay differential equation (DDE) solution that is a subset of the full model. Step 2 is integrating outcomes over the compartments in the DDE model. Step 3 is running multiple runs and adding outcomes based on chosen strategies.
+The numerical solution is a 3 step approach. Step 1 is aan age-structured partial differential (ASPD) solution that is a subset of the full model. Step 2 is integrating outcomes over the compartments in the ASPD model. Step 3 is running multiple runs and adding outcomes based on chosen strategies.
 
-A delay differential equation model solves the expectation value of infinite runs. All the compartment of the full model are not required since multiple runs can be done on a subset of the model and probablistic sums of results can be done in Step 3. For example, prescribing an alternate and a mainline therapy is not required in the DDE model since each of these can be done in separate runs and averaged together based on the probability of each occurring. There is trade off between number of runs and complexity of DDE model. However, in general derivation of a representative DDE model is more complex thus the simplest is desired.
+A delay differential equation model solves the expectation value of infinite runs. All the compartment of the full model are not required since multiple runs can be done on a subset of the model and probablistic sums of results can be done in Step 3. For example, prescribing an alternate and a mainline therapy is not required in the ASPD model since each of these can be done in separate runs and averaged together based on the probability of each occurring. There is trade off between number of runs and complexity of ASPD model. However, in general derivation of a representative DDE model is more complex thus the simplest is desired.
 
-The DDE model has 6 principal compartments: 'notreat', 'phase1', 'phase2', 'phase3', 'maint' and 'mort'. 'notreat' represents untreated individuals in the simulation. 'phase1' is the initial 30 days of primary DAPT treatment. 'phase2' is the 2-12 months of primary DAPT treatment. 'phase3' is the 2-end of sim years of primary DAPT treatment. 'maint' are those on maintenance medication. 'mort' are those that have died for any reason. An few additional bookkeeping compartments are utilized: 'p1entry', 'p2entry', 'restart', and 'disc'. 'p1entry' are those patients that have been selected for treatment via the Weibull distribution and are entering treatment. 'p2entry' are those patients how are entering 'phase2' of therapy. 'restart' are all those patients who are restarting therapy. Finally, 'disc' is an easy way to compute discount rate in the same result matrix that makes later computation simpler.
-
-The present DDE model does not allow for multiple restarts of treatment, although this could be added the results of allowing one stage are 1/1000 of the effect of primary treatment. Allowing a second round would be effecting the sixth significant digit (1/1000^2), and is neglected in this solution.
+The present ASPD model does not allow for multiple restarts of treatment, although this could be added the results of allowing one stage are XXXX of the effect of primary treatment for the default Clopidogrel parameters. Allowing a second round would be effecting the sixth significant digit (1/XXXX^2), and is neglected in this solution.
 
 For step 2 integrations we use our earlier work in validation of delay differentials applied to queueing theory. 
 
@@ -46,10 +44,12 @@ params = list(
     # The Stent Thrombosis Risks are drawn from a piecewise exponential with the following
     # durations and rates. These are for clopidogrel
     ST.rate.30    = risk2rate(0.0150, 30/365),  # (0.010-0.020)
-    ST.rate.365   = risk2rate(0.0060, 1),  # (0.003-0.009) -- ? http://circ.ahajournals.org/content/114/20/2154
+    ST.rate.365   = risk2rate(0.0060, 1),  # (0.003-0.009) 
     ST.rate.gt365 = risk2rate(0.0022, 5),  # (0.001-0.003)
     ST.pr.fatal   = 0.20,  # (15-30)
     ST.pr.CABG    = 0.10,  
+  
+    # NEED ST Fatal and Bleed FATAL for Maintenance!!!
   
     # Myocardial Infarction: Event Rates and Relative Risks
     MI.rate    = risk2rate(0.035,5), # 0.035, #(0.013-0.097)
@@ -78,7 +78,9 @@ params = list(
 )
 ```
 
-Next we set up instantaneous secular death rates, and their integrals.
+Next we set up instantaneous secular death rates, and their integrals. The death rate was derived in another document {Secular} by discrete convolution  Vanderbilt population versus SS deaths. The resulting fit is good for 10 years of simulation time. Longer would require using a spline of the empirical result.
+
+An important detail is that secular death rate is a function to time in simulation. Note that below 1 year it is clipped on the left by the fact that the individuals established a medical home so exposure to death below that threshold is not applicable (an individual would never have made it into the simulation).
 
 ```{r, echo=TRUE}
 
@@ -93,16 +95,18 @@ inst_rate <- function(percent, timeframe)
 drate_alpha <- 0.0940359
 drate_beta  <- 0.01272623
 drate <- function(t) inst_rate(drate_beta*exp(drate_alpha*t), 1)
-#drate <- function(t) rep(0, length(t))
 
-# Compute rate exposure for delay differential usage
-#F_drate <- Vectorize(function(t, years) {
-#  integrate(drate, lower=max(t-years, 0), upper=min(t, 100))$value
-#})
-F_drate <- function(t, years) drate_beta* (exp(drate_alpha*t) - exp(drate_alpha*pmax((t-years),0))) / drate_alpha
+F_drate <- Vectorize(vectorize.args="t",
+              function(t, years) drate_beta* (exp(drate_alpha*t) - exp(drate_alpha*pmax((t-years),0))) /
+                                 drate_alpha
+           )
+
+curve(F_drate(x, 1), from=0, to=10, n=101, ylab="Death Rate", xlab="Time in Simulation", main="Integrated Rate of Secular Death for Last Year")
 ```
 
-This are the rates of pci events broken into first 30 days, first year, and thereafter and their exposure integrals.
+We need the rates of percutaneous coronary intervention (PCI) events broken into first 30 days, first year, and thereafter and the resulting exposure integration for computation use. PCI events can occur from myocardiac infarction, revascularization, and stent thrombosis. These individual rates are added together to create a single risk of PCI restart of therapy. PCI events cause an individual to restart his therapy.
+
+The important property of PCI events is that they are constant risk piecewise relative to age of therapy.
 
 ```{r}
 pci.rates <- function(params)
@@ -124,23 +128,21 @@ pci.rates <- function(params)
 
 
 # Note: PCI rate is a function of therapy age (a) *not* time in simulation.
-F_pci.rate <- function(a, years, params)
+F_pci.rate <- Vectorize(vectorize.args="a", function(a, years, params)
 {
-  low <- a - years
+  low <- max(a - years, 0)
   sum(
-    c(if(low > 30/365) 0 else if (a < 30/365) years else 30/365 - low,
-      if(low < 30/365) {
-        if(a < 1) a - 30/365 else 1 - 30/365
-      } else {
-        if(a < 1) max(a-low,0) else 1 - low
-      },
-      if(a < 1) 0 else if(low < 1) a-1 else a-low
+    c(if(low > 30/365) 0 else min(30/365, a) - low,
+      if(low > 1 || a < 30/365) 0 else min(1, a) - max(30/365, low),
+      if(a < 1) 0 else a - max(1, low)
      ) * pci.rates(params)
   )
-}
+})
+
+curve(F_pci.rate(x, 1, params), from=0, to=3, n=301, ylab="PCI Rate", xlab="Age of Therapy", main="Integrated Rate of PCI for Last Year")
 ```
 
-Likewise we require rates of CABG and Bleed Fatalities
+Likewise we require rates of coronary artery bypass graft (CABG) to be computed as well, which is derived from the same sources as PCI.
 ```{r, echo=TRUE}
 cabg.rates <- function(params)
 {
@@ -159,118 +161,273 @@ cabg.rates <- function(params)
   })
 }
 
-F_cabg.rate <- function(a, years, params)
+F_cabg.rate <- Vectorize(vectorize.args="a", function(a, years, params)
 {
-  low <- a - years
+  low <- max(a - years, 0) # Cap at zero for backward interval
+  
   sum(
-    c(if(low > 30/365) 0 else if (a < 30/365) years else 30/365 - low,
-      if(low < 30/365) {
-        if(a < 1) a - 30/365 else 1 - 30/365
-      } else {
-        if(a < 1) max(a-low,0) else 1 - low
-      },
-      if(a < 1) 0 else if(low < 1) a-1 else a-low
+    c(if(low > 30/365) 0 else min(30/365, a) - low,
+      if(low > 1 || a < 30/365) 0 else min(1, a) - max(30/365, low),
+      if(a < 1) 0 else a - max(1, low)
      ) * cabg.rates(params)
   )
-}
+})
+
+curve(F_cabg.rate(x, 1, params), from=0, to=3, n=301, ylab="CABG Rate", xlab="Age of Therapy", main="Integrated Rate of PCI for Last Year")
 ```
 
+The rate of fatal bleeding in the same format is also necessary.
 
-The actual model is now constructed.
+Bleed rate is still a function of age of therapy, since rate goes to zero after 1 year of therapy.
+
+```{r, echo=TRUE}
+bleed_f.rates <- function(params)
+{
+  with(params,
+  {
+    c(BleedFatal.rate, BleedFatal.rate, 0) # No risk of fatal bleed after first year
+  })
+}
+
+F_bleed_f.rate <- Vectorize(vectorize.args="a", function(a, years, params)
+{
+  low <- max(a - years, 0) # Cap at zero for backward interval
+  
+  sum(
+    c(if(low > 30/365) 0 else min(30/365, a) - low,
+      if(low > 1 || a < 30/365) 0 else min(1, a) - max(30/365, low),
+      if(a < 1) 0 else a - max(1, low)
+     ) * bleed_f.rates(params)
+  )
+})
+
+curve(F_bleed_f.rate(x, 1, params), from=0, to=3, n=301, ylab="Bleed Rate", xlab="Age of Therapy", main="Integrated Rate of Fatal Bleed for Last Year")
+```
+
+Another competing risk is that of death from stent thrombosis (ST). Once again this is only a function of age of therapy.
+
+```{r, echo=TRUE}
+st_f.rates <- function(params)
+{
+  with(params,
+  {
+    # ST
+    fraction <- ST.pr.fatal*(1-ST.pr.CABG)
+
+    fraction*c(ST.rate.30, ST.rate.365, ST.rate.gt365)
+  })
+}
+
+F_st_f.rate <- Vectorize(vectorize.args="a", function(a, years, params)
+{
+  low <- max(a - years, 0) # Cap at zero for backward interval
+  
+  sum(
+    c(if(low > 30/365) 0 else min(30/365, a) - low,
+      if(low > 1 || a < 30/365) 0 else min(1, a) - max(30/365, low),
+      if(a < 1) 0 else a - max(1, low)
+     ) * st_f.rates(params)
+  )
+})
+
+curve(F_st_f.rate(x, 1, params), from=0, to=3, n=301, ylab="ST Fatality Rate", xlab="Age of Therapy", main="Integrated Rate of ST death for Last Year")
+```
+
+The actual model is now constructed using the method of characteristic for age structured equations. The model depends on two primary independent variables: ($a$) age of therapy and ($t$) time in simulation, where there exists a relationship between the age of therapy and time in simulation, $t-a = c$ where $c$ is a constant. Thus one can solve the evolution of an individual along this characteristic line, i.e. as time advances thus does one's age in therapy. Individuals joining therapy are given by a Weibull distribution as provided by Schildcrout and Yaping. The primary therapy surface will be represented by $f(t, a)$ and we wish to eliminate $a$ and find the time evolution $f(t)$ of the primary therapy surface.
+
+Secular death, $s(t)$ is only a function of time $t$ and all other risks are functions of $a$ age of therapy. Given that secular death is only a function of time and we are eliminating the age of therapy $a$ variable, this can be pulled out and applied as a multiplication over all surfaces containing individuals. Therefore we will neglect $s(t)$ and apply as a final scaling factor once the solution of competeting risks is complete. Therefore $f(t,a)$ will not contain a term for secular death.
+
+The incoming boundary is as follows:
+
+$$f(t,0) =
+    \begin{cases}
+      w(t \,|\, \lambda, k) & t > 0            \\
+      0                     & \text{otherwise} \\
+    \end{cases}$$
+    
+Where $w(t \,|\, \lambda, k)$ is the Weibull probability density function. $W(t \,|\, \lambda, k)$ will represent the cumulative probability function.
+
+There are two boundaries on the initial treatment surface, $b_1$ for the first 30 days of treatment and $b_2$ for one year. All initial treatment are completed in the first year, so occupancy of this box above therapy age $b_2$ is zero. Since rates are constant inside these age boundaries a simple exponential is sufficient to model the effect of their loss rates, $l_1$ and $l_2$. 
+
+$$f(t, a) = 
+  \begin{cases}
+    f(t-a, 0) e^{-l_1 a}     & a <= b_1 \\
+    f(t-a, 0) e^{-l_1 b_1} e^{-l_2 (a - b_1)} & b_1 < a <= b_2 \\
+    0                       & \text{otherwise} \\
+  \end{cases}$$
+
+Elimination of the age of therapy dimension is now possible via integration.
+
+$$f(t) = \int^t_0 f(t,a)\, da$$
+This is sufficient to numerical compute occupancy of primary treatment. The first is the Weibull therapy entry rate.
 
 ```{r, echo=TRUE}
 ###################################
-# Numerical Delay Differential Equation
-Clopidogrel <- function(t, y, params)
+# Numerical Age Structured Solution.
+fence <- function(x, lb, ub) pmax(lb, pmin(x, ub))
+tolerance <- 1e-8
+
+# Loss to primary treatment is sum of:
+#  CABG where individuals drop into maintainance therapy
+#  Fatal Bleeds where they die due to blood loss
+#  ST fatalities
+# As noted previously, secular death is treated later
+primary.loss.rate <- function(params)
 {
-  with(as.list(c(y, params)), {
-
-    r_d <- drate(t)
-    fb  <- 0 # BleedFatal.rate # Fatal bleed rate for first 1st year only
-    
-    # Start of therapy Weibull rate
-    scale <- Scale/365
-    shape <- Shape
-    incoming <- if (t <= 0)     0 else notreat*shape * t^(shape - 1) / scale^shape
-    
-    pci.r  <- pci.rates(params)
-    cabg.r <- cabg.rates(params)
-    
-    # Fatal bleed loss
-
-    # Starting 2nd phase of therapy after 1st month (minus mortality and cabg of those who started)
-    start2   <- if (t < 30/365) 0 else lagderiv(t-30/365, 2)*exp(-F_drate(t,  30/365))*exp(-F_cabg.rate(30/365, 30/365, params))*exp(-fb*30/365)
-    # Available at end of 12 months of therapy (phase1+phase2) minus mortality
-    avail3   <- if (t < 1)      0 else lagderiv(t-335/365,3)*exp(-F_drate(t, 335/365))*exp(-F_cabg.rate(30/365, 30/365, params))*exp(-fb*335/365)
-    # Those that finished therapy (minus PCI for last year)
-    finish   <- avail3 * exp(-F_pci.rate(1, 1, params))
-    # Those that restart and continue therapy due to PCi
-    start3   <- avail3 - finish
-
-    # Those that finished 2nd (restarted) therapy, didn't die or have a fatal bleed in first year
-    finish2 <- if(t<=1) 0 else integrate(Vectorize(function(a){
-          lagderiv(a, 4) * exp(-F_cabg.rate(a+1, 1, params))
-        }),
-        lower=max(0, t-2),
-        upper=t-1
-      )$value 
-
-    list(c(
-            notreat = -incoming,
-            p1entry = incoming,
-            p2entry = start2,
-            # Not quite ready to deal with restarts from phase3
-            # Subtract out chances of death here is faster than in computing those that finish
-            restart = sum(pci.r*c(phase1,phase2,phase3))*exp(-F_drate(t+1, 1)),
-            phase1  = incoming - start2  - (fb+r_d+cabg.r[1])*phase1,
-            phase2  = start2   - avail3  - (fb+r_d+cabg.r[2])*phase2,
-            phase3  = start3   - finish2 - (r_d+cabg.r[3])*phase3,
-            maint   = finish   + finish2 - r_d*maint+sum(cabg.r*c(phase1, phase2, phase3)),
-            mort    = r_d*(phase1+phase2+phase3+maint) + fb*(phase1+phase2),
-            bleed_f = fb*(phase1+phase2),
-            disc    = -disc_rate*disc            # Simple discount rate
-          )
-    )
-  })
+  cabg.rates(params)    +
+  bleed_f.rates(params) + 
+  st_f.rates(params)
 }
+
+l_1 <- primary.loss.rate(params)[1]
+l_2 <- primary.loss.rate(params)[2]
+l_3 <- primary.loss.rate(params)[3]
+
+shape <- params$Shape
+scale <- params$Scale / 365 # In terms of years, not days
+w <- function(t) ifelse(t <= 0, 0, dweibull(t, shape, scale))
+W <- function(t) ifelse(t <= 0, 0, pweibull(t, shape, scale))
+
+curve(w, from=0, to=10, n=301, xlab="t", ylab="f(t,0)", main="Patients Therapy Age 0", sub="red are those that finish therapy")
+
+# Works for multiple a, but only single t.
+f_ta <- Vectorize(vectorize.args="t", function(t, a)
+{
+  ifelse(a < 0 | a > 1, 
+         0,
+         w(t-a) *
+            exp(-fence(a,        0,   30/365)*l_1) *
+            exp(-fence(a-30/365, 0, 1-30/365)*l_2)
+        )
+})
+curve(f_ta(x+1, 1), n=301, add=TRUE, col='red', lty=2)
+
+curve(f_ta(1, x), from=0, to=1.1, xlab="a", ylab="f(1, a)", main="Age Profile at t=1")
+
 ```
 
-Let's generate a simple run, and validate that the sum of compartments the represent the population sum to 1. This indicates that individuals were neither created nor lost in the solution. 
+The above shows the initial arrival of patients to therapy one year later on the far right side and the tail to the left as expected.
 
 ```{r, echo=TRUE}
 
-yinit <- c(notreat=1, p1entry=0, p2entry=0,
-           restart=0, phase1=0,  phase2=0,
-           phase3=0,  maint=0,   mort=0,
-           bleed_f=0,
-           disc=1)
-# units of years, increments of days
-times <- seq(0, 10, by=1/365)
+f <- Vectorize(function(t)
+{
+  integrate(function(a) f_ta(t, a), rel.tol=tolerance, lower=0, upper=pmin(t,1))$value
+})
 
-# Run the simulation
-system.time(out <- dede(yinit, times, Clopidogrel, params))
-
-# Check sensibility, i.e. all occupancy buckets sum to 1
-# If this sums to 1 then no individual was created or lost in the model
-all(abs(rowSums(out[,c('notreat','phase1','phase2', 'phase3', 'maint', 'mort')]) - 1) < 1e-8)
+curve(f, from=0, to=10, xlab="t", ylab="Occupancy", main="Primary DAPT Therapy")
 ```
 
-Further, the summation validation insures that the model is consistent in that starting with a population size of 1.0, it neither creates nor destroys any of that population within numerical error.
+The characteristic shark fin is a result of the delay till the exit of therapy coupled with the declining rate of entry.
 
-A plot is the next diagnostic validation.
-
+Those that enter maintenance by completing primary therapy.
 ```{r, echo=TRUE}
-x <- out[,c("time", "notreat", "phase1", "phase2", "phase3")]
-class(x) <- c("deSolve", "matrix")
-plot(x)
+# Works for multiple a, but only single t.
+m_loss <- exp(-30/365*l_1)*exp(-335/365*l_2)
+m_ta <- Vectorize(vectorize.args="t", function(t, a)
+{
+  ifelse(a < 1, 
+         0,
+         w(t-a) * m_loss * exp(-(a-1)*l_3)
+  )
+})
 ```
 
-The healthy population 'notreat' plot matches the original Kaplan Meier curve from Yaping's work. Note the characteristic shark fin shape. This is a result of the Weibull distribution, and theory predicts that if one plotted a bar chart of time to therapy after establishing a medical home on the source data this would be the observed shape. It's the shape of a Weibull with a delayed exit or queue in the time domain.
-
-Notice that very few are in treatment in phase one of the total population at any time. Phase 2 is a little larger as the time frame is longer. An integration of any of these curves results in the amount of time the population is exposed to one of these phases. Phase 3 is on a very small scale over all, as the number of restarts is on a much smaller scale overall. 
+We can now compute those entering maintence from CABG or completion of therapy.
 
 ```{r, echo=TRUE}
-x <- out[,c("time", "restart", "maint", "mort", "bleed_f")]
-class(x) <- c("deSolve", "matrix")
-plot(x)
+# Works for multiple a, but only single t
+# Only tracks CABG in region 1 and 2 as this induces occupancy change
+cl_1 <- cabg.rates(params)[1]
+cl_2 <- cabg.rates(params)[2]
+
+
+## FIXME: This should be for aspirin alone!
+st_f           <- st_f.rates(params)
+bleed_f        <- bleed_f.rates(params)
+st_and_bleed_f <- st_f + bleed_f
+
+maint_st_and_bleed_loss <- function(a)
+{
+  exp(-fence(a,        0,     30/365)*st_and_bleed_f[1]) * 
+  exp(-fence(a-30/365, 0,    335/365)*st_and_bleed_f[2]) *
+  exp(-pmin(a-1, 0)*                  st_and_bleed_f[3])
+}
+
+cabg_ta <- function(t, a)
+{
+  ifelse(a < 0, 
+         0,
+         w(t-a) *
+           (1 - exp(-fence(a,        0,   30/365)*cl_1) *
+                exp(-fence(a-30/365, 0, 1-30/365)*cl_2) )
+        )*maint_st_and_bleed_loss(a)
+}
+
+cabg <- Vectorize(function(t)
+{
+  integrate(function(a) cabg_ta(t, a), rel.tol=tolerance, lower=0, upper=1)$value
+})
+
+curve(cabg, from=0, to=10,  xlab="t", ylab="Joining", main="CABG Occurance")
+
+maint <- Vectorize(function(t)
+{
+  integrate(function(a) cabg_ta(t, a)+m_ta(t,a), rel.tol=tolerance, lower=0, upper=t)$value
+})
+
+curve(maint(x), from=0, to=10, n=301, xlab="t", ylab="Maint", main="Maintenance")
+
+#g <- Vectorize(function(t) integrate(function(x) cabg(x) + f_ta(x, 1),
+#  upper=t, lower=0)$value)
+#curve(g, from=0, to=10, xlab="t", ylab="Occupancy", main="Maintenance")
+```
+
+The computation of PCI is bit tricky, but essentially the age of therapy is important and solution is possible with a bit of calculus. The outbound rate is relative to the inbound rate shift backwards in age by 1. Further primary therapy is only from age 0 to 1. Therefore, the whole solution can be fenced in around these bounds and solved along the characteristic again. The result without any additional losses is as follows:
+
+$$ p(t, a) = w(t-a) e^{-\rho_1(a)} - e^{-\rho_2(a)} $$
+$$ \rho_1(a) = 
+  \begin{cases}
+    \rho (a-1) & 1 \le a \le 2 \\
+    0 & otherwise \\
+  \end{cases}$$
+$$ \rho_2(a) = 
+  \begin{cases}
+    \rho a & 0 \le a \le 1 \\
+    0 & otherwise \\
+  \end{cases}$$
+where $\rho$ represents rate of pci occurrance. Now this has to be adjusted for the 30 day rate boundary and the loss function needs to be added in, but the essential shape is now defined.
+
+```{r, echo=TRUE}
+# Works for multiple a, but only single t
+# Only tracks CABG in region 1 and 2 as this induces occupancy change
+p_1 <- pci.rates(params)[1]
+p_2 <- pci.rates(params)[2]
+
+pci_loss_r       <- st_f + bleed_f + cabg.rates(params)
+
+pci_loss <- function(a)
+{
+  exp(-fence(a,        0,     30/365)*pci_loss_r[1]) * 
+  exp(-fence(a-30/365, 0,    335/365)*pci_loss_r[2]) *
+  exp(-pmin(a-1, 0)*                  pci_loss_r[3])
+}
+
+pci_ta <- function(t, a)
+{
+  r1 <- fence(a-1, 0, 30/365)*p_1+fence(a-30/365-1, 0, 335/365)*p_2
+  r2 <- fence(a,   0, 30/365)*p_1+fence(a-30/365,   0, 335/365)*p_2
+
+  ifelse(a < 0, 
+         0,
+         w(t-a) * (exp(-r1) - exp(-r2))
+        )*pci_loss(a)
+}
+
+pci <- Vectorize(function(t)
+{
+  integrate(function(a) pci_ta(t, a), rel.tol=tolerance, lower=0, upper=t)$value
+})
+
+curve(pci(x), from=0, to=10, n=301, xlab="t", ylab="1st PCI", main="PCI")
 ```

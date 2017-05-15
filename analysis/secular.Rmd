@@ -35,7 +35,7 @@ ss_death <- read.csv("../mortality/ss-death-2011.csv", header=TRUE)
 
 f_percent_d    <- c(ss_death$f_death_prob)
 f_d_spline <- splinefun(ss_death$age + 0.5, f_percent_d)
-curve(f_d_spline, col='red', from=0, to=120, xlab="Age", ylab="Probability of Secular Death")
+curve(f_d_spline, col='red', from=0, to=120, xlab="Age", main="Female Vanderbilt Population", ylab="Probability of Secular Death")
 m_percent_d    <- c(ss_death$m_death_prob)
 m_d_spline <- splinefun(ss_death$age + 0.5, m_percent_d)
 curve(m_d_spline, col='blue', add=TRUE)

@@ -347,7 +347,7 @@ inputs$vN <- 100
 ###Single Drug 
 inputs$vDrugs = list(vSimvastatin = F, 
                      vWarfarin = F,
-                     vClopidogrel = T)
+                     vClopidogrel = F)
 
 inputs$clopidogrel$vDAPTScale <- epsilon
 inputs$clopidogrel$vRRRepeat.DAPT <- 0 #only for low-weibull runs, to fix retrigger clopidogrel prescription
@@ -501,6 +501,52 @@ form_Simvastatin <- data.frame(
                "	rahbdo_death	"
   )
 )
+
+form_Warfarin <- data.frame(
+  txt = c(
+    "<b>Warfarin</b>    	",
+    "	  Initial In Range  	",
+    "	  In Range by 90d 	",
+    "<b>Major Bleed Events</b>",
+    "&nbsp;&nbsp;&nbsp;Bleed GI Non Fatal               	",
+    "&nbsp;&nbsp;&nbsp;Bleed GI Fatal",
+    "&nbsp;&nbsp;&nbsp;Bleed ICH Non Fatal               	",
+    "&nbsp;&nbsp;&nbsp;Bleed ICH Fatal",
+    "&nbsp;&nbsp;&nbsp;Bleed Maj Other Non Fatal               	",
+    "&nbsp;&nbsp;&nbsp;Bleed Other Fatal",
+    "<b>Minor Bleed</b>",
+    "<b>Stroke Events</b>",
+    "&nbsp;&nbsp;&nbsp;Stroke Fatal     	",
+    "&nbsp;&nbsp;&nbsp;Stroke Major Deficit   	",
+    "&nbsp;&nbsp;&nbsp;Stroke Minor Deficit	",
+    "<b>DVTPE Event</b>",
+    "	  PE Non Fatal                	",
+    "	  DVT Non Fatal               	",
+    "	  DVTPE Fatal       	"),
+  
+  resource = c(
+    "	warfarin	",
+    "	Initial_InRange	",
+    "	in_range	",
+    "	MajorBleed_event	",
+    "	MajorBleed_GI	",
+    "	MajorBleed_GI_Fatal	",
+    "	MajorBleed_ICH	",
+    "	MajorBleed_ICH_Fatal	",
+    "	MajorBleed_Other	",
+    "	MajorBleed_Other_Fatal	",
+    "	MinorBleed	",
+    "	Stroke_event	",
+    "	Stroke_Fatal	",
+    "	Stroke_MajorDeficit	",
+    "	Stroke_MinorDeficit	",
+    "	DVTPE_event	",
+    "	PE	",
+    "	DVT	",
+    "	DVTPE_Fatal	"
+  )
+)
+
 
 form <- function(x) {
   fo <- form_top

@@ -37,7 +37,7 @@ shinyUI(fluidPage(
       br(),
       
       #selectInput("wDrug","Which model?",c("Clopidogrel","Simvastatin"),"None",FALSE),
-      checkboxGroupInput("wDrug","Which model?",c("Clopidogrel","Simvastatin"),selected = "Clopidogrel"),
+      checkboxGroupInput("wDrug","Which model?",c("Clopidogrel","Simvastatin","Warfarin")),
       br(),
       
       radioButtons("wTest", "Genotyping Strategy",
@@ -75,7 +75,10 @@ shinyUI(fluidPage(
           img(src="clopidogrel_diagram.png", width="100%"),
           br(),
           h3("Simvastatin"),
-          img(src="simvastatin_diagram.png", width="100%")
+          img(src="simvastatin_diagram.png", width="100%"),
+          br(),
+          h3("Warfarin"),
+          img(src="warfarin_diagram.png", width="100%")
         )
         
       ))),

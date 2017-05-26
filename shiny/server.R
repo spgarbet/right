@@ -157,7 +157,66 @@ shinyServer(function(input, output) {
                 br(),
                 h4("Genetic Testing Cost:"),
                 numericInput("C_single_test",  "Single Test $", 100, 50, 300, 10))
-        )))
+        ))),
+        
+        tabPanel(
+          "Warfarin",
+          conditionalPanel(
+            condition = "input.wDrug.includes('Warfarin')",
+            tabsetPanel(
+              tabPanel(
+                "Population",
+                br(),
+                h4("AF Prevalence:"),
+                br(),
+                sliderInput("vpct_afib",  "AF %",  value=0.09, min=0, max=1, step=0.01)
+                
+              ),
+              tabPanel(
+                "Risks",
+                br(),
+                h4("Major Bleeding Events:"),
+                numericInput("vAF_Risk_Major_Bleed_3",  "Risk among INR < 3 & AF Patients",  value=0.01497, min=0.01, max=0.2, step=0.005),
+                numericInput("vAF_Risk_Major_Bleed_3to4",  "Risk among INR 3~4 & AF Patients",  value=0.06224, min=0.01, max=0.2, step=0.01),
+                numericInput("vAF_Risk_Major_Bleed_Over4", "Risk among INR > 4 & AF Patients", value=0.39118, min=0.1, max=0.8, step=0.1),
+                numericInput("vNonAF_Risk_Major_Bleed_3",  "Risk among INR < 3 & Non-AF Patients",  value=0.01497, min=0.01, max=0.2, step=0.005),
+                numericInput("vNonAF_Risk_Major_Bleed_3to4",  "Risk among INR 3~4 & Non-AF Patients",  value=0.06224, min=0.01, max=0.2, step=0.01),
+                numericInput("vNonAF_Risk_Major_Bleed_Over4", "Risk among INR > 4 & Non-AF Patients", value=0.39118, min=0.1, max=0.8, step=0.1),
+                br(),
+                
+                h4("Minor Bleeding:"),
+                numericInput("vAF_Risk_Minor_Bleed_3",  "Risk among INR < 3 & AF Patients",  value=0.0936, min=0.01, max=0.2, step=0.01),
+                numericInput("vAF_Risk_Minor_Bleed_3to4",  "Risk among INR 3~4 & AF Patients",  value=0.3890, min=0.01, max=1, step=0.1),
+                numericInput("vAF_Risk_Minor_Bleed_Over4", "Risk among INR > 4 & AF Patients", value=0.9999, min=0.1, max=1, step=0.1),
+                numericInput("vNonAF_Risk_Minor_Bleed_3",  "Risk among INR < 3 & Non-AF Patients",  value=0.0936, min=0.01, max=0.2, step=0.01),
+                numericInput("vNonAF_Risk_Minor_Bleed_3to4",  "Risk among INR 3~4 & Non-AF Patients",  value=0.3890, min=0.01, max=1, step=0.1),
+                numericInput("vNonAF_Risk_Minor_Bleed_Over4", "Risk among INR > 4 & Non-AF Patients", value=0.9999, min=0.1, max=1, step=0.1),
+                br(),
+                
+                h4("Stroke Events:"),
+                numericInput("vAF_Risk_Stroke_1.5",  "Risk among INR < 1.5 & AF Patients",  value=0.077, min=0.01, max=0.2, step=0.01),
+                numericInput("vAF_Risk_Stroke_1.5to2",  "Risk among INR 1.5~2 & AF Patients",  value=0.019, min=0.01, max=1, step=0.001),
+                numericInput("vAF_Risk_Stroke_Over2", "Risk among INR > 2 & AF Patients", value=0.006, min=0.001, max=0.1, step=0.001),
+                numericInput("vNonAF_Risk_Stroke_3",  "Risk among INR < 3 & Non-AF Patients",  value=0.00001, min=0.00001, max=0.1, step=0.01),
+                numericInput("vNonAF_Risk_Stroke_Over3",  "Risk among INR > 3 & Non-AF Patients",  value=0.006, min=0.001, max=0.1, step=0.001),
+                br(),                
+                
+                h4("DTVPE events, only among Non-AF patients:"),
+                numericInput("vNonAF_Risk_DVTPE_2",  "Risk among INR < 1.5 & AF Patients",  value=0.077, min=0.01, max=0.2, step=0.01),
+                numericInput("vNonAF_Risk_DVTPE_Over2",  "Risk among INR 1.5~2 & AF Patients",  value=0.019, min=0.01, max=1, step=0.001)
+ 
+              ),
+              
+              tabPanel(
+                "Costs",
+                br(),
+                h4("Genetic Testing Cost:"),
+                numericInput("C_single_test",  "Single Test $", 100, 50, 300, 10),
+                br(),
+                h4("Drug Daily Cost:"),
+                numericInput("C_warfarin",  "Warfarin $", 71/90, 0.5, 5, 0.1))
+            )))
+        
       )}})
   
   #copy and update inputs
@@ -169,7 +228,8 @@ shinyServer(function(input, output) {
     ip$whichDrug <- input$wDrug
     ip$iseed <- input$iseed
     ip$costs$single_test <- input$C_single_test
-    if(any(input$wDrug %in% "Clopidogrel")) {
+    
+    if(any(input$wDrug == "Clopidogrel")) {
       ip$vDrugs$vClopidogrel <- TRUE
       ip$clopidogrel$vCYP2C19.Poor <- input$vCYP2C19.Poor
       ip$clopidogrel$vCYP2C19.Rapid <- input$vCYP2C19.Rapid
@@ -218,8 +278,8 @@ shinyServer(function(input, output) {
       ip$clopidogrel$vRR.MI.LOF <-  input$vRR.MI.LOF
       ip$clopidogrel$vRR.Bleed.LOF  <-  input$vRR.Bleed.LOF
       ip$clopidogrel$vRR.ST.LOF <- input$vRR.ST.LOF
-      
     } 
+    
     if(any(input$wDrug=="Simvastatin"))  {
       ip$vDrugs$vSimvastatin <- TRUE
       ip$simvastatin$vMedMetabolizer  <- input$vMedMetabolizer
@@ -245,6 +305,33 @@ shinyServer(function(input, output) {
       ip$simvastatin$vProbRahbdoDeath <- input$vProbRahbdoDeath
       ip$simvastatin$vProbcvdDeath <- input$vProbcvdDeath
     }
+    
+    if(any(input$wDrug == "Warfarin")) {
+      ip$vDrugs$vWarfarin <- TRUE 
+      ip$warfarin$vpct_afib <- input$vpct_afib
+      ip$warfarin$vAF_Risk_Major_Bleed_3 <- input$vAF_Risk_Major_Bleed_3
+      ip$warfarin$vAF_Risk_Major_Bleed_3to4 <- input$vAF_Risk_Major_Bleed_3to4
+      ip$warfarin$vAF_Risk_Major_Bleed_Over4 <- input$vAF_Risk_Major_Bleed_Over4
+      ip$warfarin$vNonAF_Risk_Major_Bleed_3 <- input$vNonAF_Risk_Major_Bleed_3
+      ip$warfarin$vNonAF_Risk_Major_Bleed_3to4 <- input$vNonAF_Risk_Major_Bleed_3to4
+      ip$warfarin$vNonAF_Risk_Major_Bleed_Over4 <- input$vNonAF_Risk_Major_Bleed_Over4
+      ip$warfarin$vAF_Risk_Minor_Bleed_3 <- input$vAF_Risk_Minor_Bleed_3
+      ip$warfarin$vAF_Risk_Minor_Bleed_3to4 <- input$vAF_Risk_Minor_Bleed_3to4
+      ip$warfarin$vAF_Risk_Minor_Bleed_Over4 <- input$vAF_Risk_Minor_Bleed_Over4
+      ip$warfarin$vNonAF_Risk_Minor_Bleed_3 <- input$vNonAF_Risk_Minor_Bleed_3
+      ip$warfarin$vNonAF_Risk_Minor_Bleed_3to4 <- input$vNonAF_Risk_Minor_Bleed_3to4
+      ip$warfarin$vNonAF_Risk_Minor_Bleed_Over4 <- input$vNonAF_Risk_Minor_Bleed_Over4
+      ip$warfarin$vAF_Risk_Stroke_1.5 <- input$vAF_Risk_Stroke_1.5
+      ip$warfarin$vAF_Risk_Stroke_1.5to2 <- input$vAF_Risk_Stroke_1.5to2
+      ip$warfarin$vAF_Risk_Stroke_Over2 <- input$vAF_Risk_Stroke_Over2
+      ip$warfarin$vNonAF_Risk_Stroke_3 <- input$vNonAF_Risk_Stroke_3
+      ip$warfarin$vNonAF_Risk_Stroke_Over3 <- input$vNonAF_Risk_Stroke_Over3
+      ip$warfarin$vNonAF_Risk_DVTPE_2 <- input$vNonAF_Risk_DVTPE_2
+      ip$warfarin$vNonAF_Risk_DVTPE_Over2 <- input$vNonAF_Risk_DVTPE_Over2
+      ip$costs$warfarin <- input$C_warfarin
+      
+    }
+    
     return(ip)
   })
   

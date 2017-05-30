@@ -214,7 +214,7 @@ time_to_ST <- function(attrs,inputs)
     rates = c(inputs$clopidogrel$vRiskST30,inputs$clopidogrel$vRiskST365,inputs$clopidogrel$vRiskSTgt365)
     days = c(30,335,365)
     
-    # Convert To Probability 
+    # Convert To Exponential Rate from percentage
     rates2 = (- (log ( 1 - rates)*rr) / days)
     
     timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,30,365,4*365))

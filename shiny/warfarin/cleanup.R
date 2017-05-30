@@ -1,5 +1,5 @@
 #adjust clock to redraw warfarin events
-adj_clock <- function(traj)
+adj_clock <- function(traj, inputs)
 {
   traj %>%
     set_attribute("aTimeToInRange",function(attrs) now(env) + days_till_in_range(attrs,inputs)) %>% # event: get in range

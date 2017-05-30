@@ -16,7 +16,7 @@ reach_90d <- function(traj, inputs)
     set_attribute("sINRMonitor", 2) %>% # stop monitoring 
     
     stop_monitor_INR() %>%
-    adj_clock()
+    adj_clock(inputs)
 }
 
 

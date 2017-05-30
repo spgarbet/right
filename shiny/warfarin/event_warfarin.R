@@ -47,13 +47,13 @@ warfarin_reactive_strategy <- function(traj, inputs)
   } else stop("Unhandled Reactive Warfarin Strategy")
 }
 
-initial_INR <- function(x) 
+initial_INR <- function(x,inputs) 
 {
   set.seed(x) 
   sample(inputs$warfarin$vINRvalue, 1, prob=inputs$warfarin$vINRfreq)
 }
 
-assign_indication <- function(x) 
+assign_indication <- function(x,inputs) 
 {
   set.seed(x) 
   sample(1:2, 1, prob=c(inputs$warfarin$vpct_afib, 1-inputs$warfarin$vpct_afib))
@@ -75,10 +75,10 @@ start_warfarin <- function(traj, inputs)
     set_attribute("sINRMonitor", 1) %>% # start monitoring INR in 90 days
     
     #assign indication
-    set_attribute("aWarfarinIndication", function(attrs) assign_indication(attrs[["aSeed"]])) %>%
+    set_attribute("aWarfarinIndication", function(attrs) assign_indication(attrs[["aSeed"]], inputs)) %>%
     
     #assign initial INR
-    set_attribute("aINRInitial", function(attrs) initial_INR(attrs[["aSeed"]])) %>%
+    set_attribute("aINRInitial", function(attrs) initial_INR(attrs[["aSeed"]], inputs)) %>%
     set_attribute("aINR", function(attrs) attrs[["aINRInitial"]]) %>%
     set_attribute("aInRange", function(attrs) INR_status(attrs[["aINRInitial"]])) %>%
     
@@ -115,7 +115,7 @@ prescribe_warfarin <- function(traj, inputs)
     start_warfarin(inputs) %>%
     set_attribute("aOrdered_test", 1) %>%
     #downstream events
-    adj_clock()
+    adj_clock(inputs)
 }
 
 

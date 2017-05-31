@@ -339,7 +339,7 @@ shinyServer(function(input, output) {
   base <- eventReactive(input$run,{
       inputs <- inputs_update()
       out <- exec.simulation(inputs)
-      out$sm <- out$sm %>% arrange(num) %>% select(Event,Count)
+      out$sm <- out$sm %>% arrange(num) %>% dplyr::select(Event,Count)
       return(out)
   })
   
@@ -364,12 +364,12 @@ shinyServer(function(input, output) {
     if(input$wTest=="Single") {
       ne <- base()$sm
       names(ne)[2] <- "None" 
-      full$sm <- merge(ne,add()$sm,by="Event") %>% arrange(num) %>% select(-num)
+      full$sm <- merge(ne,add()$sm,by="Event") %>% arrange(num) %>% dplyr::select(-num)
       
       nc <- base()$sum_costs
       nc$Strategy <- "None"
       full$sum_costs <- rbind(nc,add()$sum_costs) %>% mutate(ICER = (dCOST[1]-dCOST)/(dQALY[1]-dQALY))
-      full$sum_costs <- cbind(full$sum_costs$Strategy,full$sum_costs %>% select(-Strategy))
+      full$sum_costs <- cbind(full$sum_costs$Strategy,full$sum_costs %>% dplyr::select(-Strategy))
       full$sum_costs$dQALY <- sprintf("%.5f",full$sum_costs$dQALY)
       names(full$sum_costs) <- c("Strategy","QALY","Total Cost","Test Cost","Drug Cost","AE Cost","ICER to None")
 

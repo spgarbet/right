@@ -98,8 +98,8 @@ process_events <- function(traj, env, inputs)
     event <-      ne[['event']]
     event_time <- ne[['event_time']]
     
-    #cat(" Next up => ",event$name,"\n")
-    #cat("            waiting", event_time-now(env), '\n')
+    cat(" Next up => ",event$name,"\n")
+    cat("            waiting", event_time-now(env), '\n')
     
     # Wait the clock time for the nearest event, minus now()
     event_time - now(env)

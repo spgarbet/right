@@ -76,10 +76,10 @@ cost.qaly <- function(raw,inputs)
   type <- data.frame(resource=names(inputs$type),type=unlist(inputs$type),row.names=NULL)
   qaly1 <- arrivals %>% group_by(name) %>% 
     arrange(start_time,desc(end_time)) %>% dplyr::mutate(utility = ifelse(row_number()==1,1,NA)) %>% filter(disutility>0 | utility>0) %>% #cross out events that have no impact on utility
-    select(name,resource,start_time,end_time,activity_time,disutility) %>%
+    dplyr::select(name,resource,start_time,end_time,activity_time,disutility) %>%
     merge(type,by="resource",all.x=TRUE) %>% #attach type of events: temp vs. permanent disutility
     dplyr::mutate(us=disutility,ue=disutility*(-type)) %>%  #us/ue stand for disutility at start/end time: temp event will add back disutility at end time
-    select(name,start_time,end_time,us,ue,resource,type) %>% melt(id.vars=c("name","resource","us","ue","type")) %>% arrange(value) %>% #separate and spread start/end time
+    dplyr::select(name,start_time,end_time,us,ue,resource,type) %>% melt(id.vars=c("name","resource","us","ue","type")) %>% arrange(value) %>% #separate and spread start/end time
     dplyr::mutate(disutility=ifelse(variable=="start_time",us,ue)) %>% arrange(name,value,desc(variable)) %>% #match disutility with start/end time
     group_by(name) %>% mutate(time=lead(value)) %>% dplyr::mutate(dtime=ifelse(row_number()>1,time-lag(time),time)) %>% filter(!is.na(dtime)) %>% 
     filter(!(type==0 & dtime==0)) #For events that permanently reduce utility, this deletes double counts of the event and prevent double counting of disutility 
@@ -90,7 +90,7 @@ cost.qaly <- function(raw,inputs)
     dplyr::mutate(cum2=ifelse(type==0 | is.na(type),0,disutility)) %>% mutate(utility=temp_u-cumsum(cum2)) %>% #For temp events, deduct accumulative disutility from temp_u
     filter(utility>0) #do not count negative/zero utility in qaly computation
   
-  qaly.i <- qaly2 %>% select(name, value, time, utility) %>%
+  qaly.i <- qaly2 %>% dplyr::select(name, value, time, utility) %>%
     dplyr::mutate(qaly.d = discount_value(utility,A=value,B=time)) #discounted QALY for each period of time 
   
   QALY = qaly.i %>% group_by(name) %>% dplyr::summarise(dQALY = sum(qaly.d)/365.25)

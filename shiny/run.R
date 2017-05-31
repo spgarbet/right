@@ -392,7 +392,7 @@ exec.simulation <- function(inputs)
   sm <- DT[, .N, by = resource]
   #summary[summary$resource=="panel_test",]$resource <- "single_test"
   events <- sm %>% merge(form(inputs$whichDrug),by="resource",all.y=TRUE) %>%
-    mutate(Event=txt, Count=ifelse(is.na(N),0,N)) %>% select(Event,Count,num) 
+    mutate(Event=txt, Count=ifelse(is.na(N),0,N)) %>% dplyr::select(Event,Count,num) 
   
   #C&Q
   sum_costs <- cost.qaly(arrivals,inputs)

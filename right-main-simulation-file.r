@@ -21,7 +21,8 @@ pkg = list("simmer",
            "ggplot2",
            "reshape2",
            "tidyr",
-           "msm")
+           "msm",
+           "copula")
 invisible(lapply(pkg, require, character.only = TRUE))
 
 ####

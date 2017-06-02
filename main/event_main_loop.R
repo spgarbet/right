@@ -137,6 +137,34 @@ process_events <- function(traj, env, inputs)
   traj
 }
 
+load("copula_objects.RData")
+copulaDraw <- rMvdc(inputs$vN,myMvd)
+aDrawGlobal <- 0
+# Use the Copula from Yapping's work
+# to assign treatment in a correlated manner
+assign_correlated_treatment <- function(traj, inputs)
+{
+  traj %>%
+  set_attribute("aDrawNo", function(attrs)
+  {
+    cat("Drawing ",aDrawGlobal, "\n")
+    aDrawGlobal <<- aDrawGlobal + 1
+    aDrawGlobal
+  }) %>%
+  set_attribute("aTimeToStartWarfarin", function(attrs)
+  {
+    if(inputs$vDrugs$vWarfarin)    copulaDraw[attrs[["aDrawNo"]],1] else inputs$vHorizon*365+1
+  }) %>%
+  set_attribute("aTimeDAPTInitialized", function(attrs)
+  {
+    if(inputs$vDrugs$vClopidogrel) copulaDraw[attrs[["aDrawNo"]],2] else inputs$vHorizon*365+1
+  }) %>%
+  set_attribute("aStartStatin", function(attrs)
+  {
+    if(inputs$vDrugs$vSimvastatin) copulaDraw[attrs[["aDrawNo"]],3] else inputs$vHorizon*365+1
+  }) 
+}
+
   ##############################################
  ##
 ## MAIN LOOP
@@ -153,6 +181,7 @@ simulation <- function(env, inputs)
   trajectory("Patient")     %>%
     initialize_patient(inputs)     %>%
     assign_events(inputs)          %>%
+    assign_correlated_treatment(inputs)  %>%
     preemptive_strategy(inputs)    %>%
     branch( # Used branch, to prevent rollback from looking inside event loop function
       function() 1,

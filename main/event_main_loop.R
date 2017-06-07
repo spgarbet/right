@@ -140,14 +140,18 @@ process_events <- function(traj, env, inputs)
 load("copula_objects.RData")
 copulaDraw <- rMvdc(inputs$vN,myMvd)
 aDrawGlobal <- 0
+pb <- txtProgressBar(min = 0, max = inputs$vN, style = 3)
+
 # Use the Copula from Yapping's work
 # to assign treatment in a correlated manner
+
 assign_correlated_treatment <- function(traj, inputs)
 {
   traj %>%
   set_attribute("aDrawNo", function(attrs)
   {
-    cat("Drawing ",aDrawGlobal, "\n")
+    #cat("Drawing ",aDrawGlobal, "\n")
+    setTxtProgressBar(pb, aDrawGlobal)
     aDrawGlobal <<- aDrawGlobal + 1
     aDrawGlobal
   }) %>%

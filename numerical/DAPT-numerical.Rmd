@@ -1,6 +1,25 @@
 ---
 title: "DAPT Numerical Solution"
+author: "Shawn Garbett"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 references:
+- DOI: 10.1007/978-3-540-78273-5_1
+  id: webb2008
+  author:
+  - family: Webb
+    given: Glenn
+  title: Structured Population Models in Biology and Epidemiology
+  type: book
+  url: http://dx.doi.org/10.1007/978-3-540-78273-5_1
+  isbn: 978-3-540-78273-5
+  publisher: Springer Berlin Heidelberg
+  editor:
+  - family: Magal
+    given: Pierre
+  - family: Ruan
+    given: Shigui
+  issued: 
+    year: 2008
 - DOI: 10.7326/M13-1999
   author:
   - family: Kazi
@@ -30,7 +49,7 @@ references:
     month: 2
     year: 2014
   page: 221-32
-  title: Cost-effectiveness of genotype-guided and dual antiplatelet therapies in
+  title: Cost-effectiveness of genotype-guided and dual anti-platelet therapies in
     acute coronary syndrome.
   type: article-journal
   volume: 160
@@ -45,7 +64,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-Solution of the Dual Antiplatelet Therapy (DAPT) model in a fast format is required for delivery of AIM III of RIGHT grant. This report details the method of the solution in R. The code is then translated into Julia for quick model execution over a defined parameter space for probability sensitivity analysis.
+Solution of the Dual Anti-platelet Therapy (DAPT) model in a fast format is required for delivery of AIM III of the RIGHT grant. The DAPT model is an economic model for costs and quality of life under various drug treatments for DAPT. AIM III requires a probability sensitivity analysis for the model versus known parameters. This report details the method of the solution in R.
+
+The code will be translated into Julia for quick model execution over a defined parameter space for final probability sensitivity analysis.
+
+There are various drugs available with different rates of side effects, and differing severity of side effects. These side effects are further determined by genetic predispositions, and the DAPT model will be incorporated into a larger model that involves decision making about treatment based upon genomic information. Solution of costs for a population undergoing a specific treatment with the same genetic make up is required first before higher level composition is performed.
 
 ## Model requirements
 
@@ -80,32 +103,87 @@ This DAPT modeling effort is based primarily upon @kazi2014. Further refinement 
 * For each compartment there is a decrement in quality adjusted life years (QALY) for treatment over time.
     + Fatal compartments have zero QALY. 
     + QALY decrements can be temporary, and as such are applied as daily averages.
-    + QALY decrements from events can be permenant. 
+    + QALY decrements from events can be permanent. 
     + QALY is discounted by time in model as well.
 
 ## Specification
 
-This model is represented by an age-structured model, i.e. one that has the related dimensions of age of therapy ($a$) and time ($t$). While patients are beginning therapy at different times in the model, the aging of therapy proceeds along what is called a characteristic line where $a+t=c$. We will refer to the 1st primary treatment compartment as $f(t,a)$ and use 1 to represent 100% of the population and 0 to represent 0% of the population and track occupancy through the model. Some boundary conditions become obvious $f(t,a)=0$ for $t<0$ as well as $f(t,a)=0$ for $a>t$ which creates a triangle space. Since primary therapy cannot continue for past the first year we also have $f(t,a)=0$ for $a>1$. Further, the entry rate into the model along the $f(t,0)$ boundary is given by a Weibull distribution as mentioned above, i.e. $f(t, 0) = w(t\,|\,\lambda, k)$ where $w$ represent the Weibull probability density function with $\lambda$ is the scale and $k$ is the shape.
+This model is represented by an age-structured model, i.e. one that has the related dimensions of age of therapy ($a$) and time ($t$). While patients are beginning therapy at different times in the model, the aging of therapy proceeds along what is called a characteristic line where $a+t=c$. Since each patients progression is independent, partial differential equations are not required and one can solve along these characteristic lines, see @webb2008. 
 
-We will further represent the maintence compartment of primary therapy by $g(t,a)$.
+We will refer to the 1st primary treatment compartment as $f(t,a)$ and use 1 to represent 100% of the population and 0 to represent 0% of the population and track occupancy through the model. Some boundary conditions become obvious $f(t,a)=0$ for $t<0$ as well as $f(t,a)=0$ for $a>t$ which creates a triangle space. Since primary therapy cannot continue for past the first year we also have $f(t,a)=0$ for $a>1$. Further, the entry rate into the model along the $f(t,0)$ boundary is given by a Weibull distribution as mentioned above, i.e. $f(t, 0) = w(t\,|\,\lambda, k)$ where $w$ represent the Weibull probability density function with $\lambda$ is the scale and $k$ is the shape.
 
-Secular death is a function of time ($t$) alone and will be represented as $s(t)$. It is independent of any other model effects or phases and can be separated out. Inside the boundaries the solution can be achieved using seperability $f(t,a) = s(t) w(t-a) f(a)$, and likewise for $g(t,a)$. Thus two equations represent the cornerstone of the solution. From these we can now create a series of coupled first order delay differential equations's using compartments for each phase of PCI restarts of primary therapy, and CABG joining maintenance. With the solution of this in hand, the final stage is to turn it into a time ($t$) only model by integrating out the age dimension $f(t)= \int^{t_H}_{0} f(t,a) da$ where $t_H$ represents the time horizon of the model.
+We will further represent the maintenance compartment of primary therapy by $g(t,a)$.
+
+Secular death is a function of time ($t$) alone and will be represented as $s(t)$. It is independent of any other model effects or phases and can be separated out. Inside the boundaries the solution can be achieved using separability $f(t,a) = s(t) w(t-a) f(a)$, and likewise for $g(t,a)$. Thus two equations represent the cornerstone of the solution. From these we can now create a series of coupled first order delay differential equation's using compartments for each phase of PCI restarts of primary therapy, and CABG joining maintenance. With the solution of this in hand, the final stage is to turn it into a time ($t$) only model by integrating out the age dimension $f(t)= \int^{t_H}_{0} f(t,a) da = s(t) \int^{t_H}_{0} w(t-a) f(a) da$ where $t_H$ represents the time horizon of the model.
 
 From these time $t$ based solutions we can proceed forward to integrate costs and QALY for the final total cost and QALY given the risks and cost specification.
 
 TBD NEED DIAGRAM here.
 
-## Parameters
+## Parameter Key
 
-TBD NEED TABLE OF PARAMETERS
+Subscripts of 'p' denote primary treatment and 'm' maintenance treatment.
+
+Subscripts of 1, 2, or 3 denote age phase of treatment.
+
+|symbol| meaning                                               |
+|:----:|:------------------------------------------------------|
+| $\chi$                     | Cost per unit time: $\chi_{p1},\chi_{p2},\chi_{p3},\chi_{m1},\chi_{m2},\chi_{m3}$|
+| $\delta$                   | Discount rate                      |
+| $f(t,a), f(t), f(a)$       | 1st Primary treatment functions    |
+| $g(a)$                     | Maintenance treatment (no CABG/PCI)|
+| $i$                        | Risk phase due to age of therapy (1,2, or 3)   |
+| $j$                        | Risk phase 1 year ago              |
+| $k$                        | Weibull shape                      |
+| $\kappa$                   | CABG rates: $\kappa_{p1},\kappa_{p2},\kappa_{p3},\kappa_{m1},\kappa_{m2},\kappa_{m3}$|
+| $\lambda$                  | Weibull scale                      |
+| $m(a)$                     | Maintence treatment from CABG      |
+| $p_n(a)$                   | *n*th PCI primary treatment        |
+| $\phi$                     | fatality rates: $\phi_{p1},\phi_{p2},\phi_{p3},\phi_{m1},\phi_{m2},\phi_{m3}$|
+| $\pi$                      | PCI rates: $\pi_{p1},\pi_{p2},\pi_{p3},\pi_{m1},\pi_{m2},\pi_{m3}$|
+| $\psi$                      | QALY permanent loss per event: $\psi_{p1},\psi_{p2},\psi_{p3},\psi_{m1},\psi_{m2},\psi_{m3}$|
+| $\rho$                      | QALY penalty per unit time: $\rho_{p1},\rho_{p2},\rho_{p3},\rho_{m1},\rho_{m2},\rho_{m3}$|
+| $w(t\mid\lambda, k)$ | Weibull pdf for time to treatment  | 
+| $W(t\mid\lambda, k)$ | Weibull cdf for time to treatment  |
+| $\zeta(a)$           | Exposure to loss in initial treatment compartment for last year |
 
 ## Cornerstone Equations
 
-TBD SHOW EXPONENTIAL DEFINITION HERE
+$f(a)$ represents those in initial primary treatment. Since drop out rates are exponential, and determined by rates of CABG, PCI and fatality, a piece wise solution is possible.
 
-## ODE Definition
+$$f(a) = \begin{cases}
+            0, & a < 0  \\
+            e^{-(\phi_{p1}+\kappa_{p1}+\pi_{p1} )a}, & a \le \frac{30}{365} \\
+            e^{-(\phi_{p1}+\kappa_{p1}+\pi_{p1} )30/365}e^{-(\phi_{p2}+\kappa_{p2}+\pi_{p2} )a}, & \frac{30}{365} \lt a \le 1 \\
+            0, & a \gt 1 \\
+         \end{cases}
+$$
 
-# Solution
+Similarly $g(a)$ representing those in maintenance therapy who completed initial without incident is obtainable. Except loss from maintenance is only due to fatalities
+
+$$g(a) = \begin{cases}
+            0, & a \le 1  \\
+            f(1) e^{-\phi_{m3}a}, & a \gt 1 \\
+         \end{cases}
+$$
+$g(a)$ is defined in terms of the boundary of $f(a)$. The solution is defined relative to the equations. In the later coding a numerical solution it is sometimes useful to compute $f(a)$ outside of it's boundaries due to these sorts of relationships.
+
+## DDE Definition
+
+The most difficult part of the definition is now the PCI primary treatment compartments, $p_n(a)$. Using the subscript $i$ to denote current therapy phase and $j$ to denote therapy phase from a year ago. Each of these $p_n$ needs to add occupants based on upstream compartment and current rate of PCI. Further they need to remove those that occur in the current compartment. Losses from CABG and fatalities are removed based on current occupancy. Finally, the delay portion removes the portion who entered a year ago from the compartment adjusted by exposure to losses, $\zeta(a)$.
+
+$$\frac{d}{da}m = \kappa_{pi}(f(a)+p_1+p_2+p_3+p_4+p_5)+\pi_{pi} p_5$$
+$$\frac{d}{da} p_1 = \pi_{pi}(f(a) - p_1) - (\phi_{pi}+\kappa_{pi}) p_1 - \pi_{pj} f(a-1) \zeta(a)$$
+$$\frac{d}{da} p_2 = \pi_{pi}(p_1 - p_2) - (\phi_{pi}+\kappa_{pi}) p_2 - \pi_{pj} p_1(a-1) \zeta(a)$$
+$$\frac{d}{da} p_3 = \pi_{pi}(p_2 - p_3) - (\phi_{pi}+\kappa_{pi}) p_3 - \pi_{pj} p_2(a-1) \zeta(a)$$
+$$\frac{d}{da} p_4 = \pi_{pi}(p_3 - p_4) - (\phi_{pi}+\kappa_{pi}) p_4 - \pi_{pj} p_3(a-1) \zeta(a)$$
+$$\frac{d}{da} p_5 = \pi_{pi}(p_4 - p_5) - (\phi_{pi}+\kappa_{pi}) p_5 - \pi_{pj} p_4(a-1) \zeta(a)$$
+
+$$\text{primary}(a) = f(a) + p_1(a) + p_2(a) + p_3(a) + p_4(a) + p_5(a) $$
+$$\text{maint}(a) = g(a) + m(a) $$
+$$\frac{d}{da} \text{fatalities} = \phi_{pi}\text{primary(a)} + \phi_{mi}\text{maint(a)}$$
+
+# Working Solution in R
 
 A specification of relevant parameter follows. Vectors of 3 entries represent the 3 phases of risk. For demonstration these are set randomly.
 
@@ -146,7 +224,7 @@ params <- list(
 )
 ```
 
-Some derived rates are helpful. `f_loss` is representative of all losses, fatality, CABG and PCI from the initial primary treatment. `g_loss` is a continuation of `f_loss` but with only fatality losses in phase three. This provides convient computation of $g(a)$ as a continuation of $f(a)$ but is only evaluated inside $g(a)$'s boundaries, i.e. $a>=1$. 
+Some derived rates are helpful. `f_loss` is representative of all losses, fatality, CABG and PCI from the initial primary treatment. `g_loss` is a continuation of `f_loss` but with only fatality losses in phase three. This provides convent computation of $g(a)$ as a continuation of $f(a)$ but is only evaluated inside $g(a)$'s boundaries, i.e. $a>=1$. 
 
 ```{r, echo=TRUE}
 # Primary loss from f due to PCI, CABG and fatality
@@ -180,8 +258,8 @@ s <- function(t) exp(0.01272623*(1-exp(0.0940359*t))/0.0940359)
 lambda <- function(t, params) s(t) * (1 - W(t, params))
 ```
 
-The cornerstone equations is a piecewise exponential loss functions with a rate specified for
-each phase, pasted together.
+The cornerstone equations is a piece wise exponential loss functions with a rate specified for
+each phase.
 
 ```{r, echo=TRUE}
 # Loss in each phase via piecewise exponential
@@ -289,7 +367,11 @@ yinit <- c(    m=0,  cabg=0,
           )
 ages  <- seq(0, 10, by=1/365)
 system.time(out <- dede(yinit, ages, clopidogrel, params, atol=1e-9))
+```
 
+The final plots of where the population is all those receiving treatment plotted along age of therapy are of interest. Note this is a random set of parameters and does not reflect a specific primary treatment such as Clopidogrel.
+
+```{r, echo=TRUE}
 par(mfrow=c(2,2))
 plot(out[,1], 100*out[,"prime"], main='Primary Treatment', 
      typ='l', xlab='a', ylab='%pop', ylim=c(0,100))
@@ -302,7 +384,9 @@ plot(out[,1], out[,"pci_t"], main='PCI Restarts',
 par(mfrow=c(1,1))
 ```
 
-Validation of numerical accuracy. Given that the age solutions should account for 100\% of the population in that an individual is neither created or destroyed we can check the accuracy of this constraint.
+### Numerical Accuracy
+
+Any numerical method is subject to accumulating round off errors and as such it is important to validate that the solution's accuracy is provided within the necessary tolerance. In this model, the the age solutions should account for 100\% of the population in that an individual is neither created or destroyed. Using this property one can compute the total variation over time where fractions of the population are lost or gained. Current discrete event simulations of the DAPT model require 10,000,000 individuals to achieve 5 digits of accuracy with respect to true value. It is desirable to have around 8 digits of accuracy.
 
 ```{r, echo=TRUE}
 plot(out[,1], out[,"prime"] + out[,"maint"] + out[,"fatal"] - 1, 
@@ -310,9 +394,32 @@ plot(out[,1], out[,"prime"] + out[,"maint"] + out[,"fatal"] - 1,
      typ='l', xlab='a', ylab="Total Absolute Error")
 ```
 
-This shows acceptable total error in the numerical solution.
-
+This shows acceptable total error in the numerical solution. Note: This plot changes based on the random parameters above and bounces around between $\pm$ 0.5e-09 which is very close to desired.
 ## Time Transform
+
+Now the final transform to time based solution and elimination of the age variable can be done as mentioned via the earlier separation.
+
+```{r, echo=TRUE}
+sf_a <- splinefun(out[,1], out[,"prime"], method="fmm")
+f_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sf_a(a), lower=0, upper=t)$value)
+curve(100*f_t(x), from=0, to=10, ylab="%pop", xlab="t", main="Primary Treatment")
+```
+
+Note the shark fin shape. This is exactly the shape we see from simulation runs.
+
+```{r, echo=TRUE}
+sm_a <- splinefun(out[,1], out[,"maint"], method="fmm")
+m_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sm_a(a), lower=0, upper=t)$value)
+curve(100*m_t(x), from=0, to=10, ylab="%pop", xlab="t", main="Maintenance Treatment")
+```
+
+```{r, echo=TRUE}
+sd_a <- splinefun(out[,1], out[,"fatal"], method="fmm")
+d_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sd_a(a), lower=0, upper=t)$value)
+curve(100*d_t(x), from=0, to=10, ylab="%pop", xlab="t", main="Treatment Fatalities")
+```
+
+## Adjust for Secular Death
 
 TBD
 

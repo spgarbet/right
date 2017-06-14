@@ -86,13 +86,9 @@ exposed <- function(a, rates)
 }
 
 
-# Primary compartment
-f_a <- function(a, params) if(a < 0 || a > 0) 0 else 
-
 # Solve characteristic starting with 1 patient at t=0 only for boundary
 
 library(deSolve)
-
 
 clopidogrel <- function(a, y, params)
 {

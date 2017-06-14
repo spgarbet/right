@@ -110,9 +110,9 @@ This DAPT modeling effort is based primarily upon @kazi2014. Further refinement 
 
 This model is represented by an age-structured model, i.e. one that has the related dimensions of age of therapy ($a$) and time ($t$). While patients are beginning therapy at different times in the model, the aging of therapy proceeds along what is called a characteristic line where $a+t=c$. Since each patients progression is independent, partial differential equations are not required and one can solve along these characteristic lines, see @webb2008. 
 
-We will refer to the 1st primary treatment compartment as $f(t,a)$ and use 1 to represent 100% of the population and 0 to represent 0% of the population and track occupancy through the model. Some boundary conditions become obvious $f(t,a)=0$ for $t<0$ as well as $f(t,a)=0$ for $a>t$ which creates a triangle space. Since primary therapy cannot continue for past the first year we also have $f(t,a)=0$ for $a>1$. Further, the entry rate into the model along the $f(t,0)$ boundary is given by a Weibull distribution as mentioned above, i.e. $f(t, 0) = w(t\,|\,\lambda, k)$ where $w$ represent the Weibull probability density function with $\lambda$ is the scale and $k$ is the shape.
+We will refer to the 1st primary treatment compartment as $f(t,a)$ and use 1 to represent 100% of the population and 0 to represent 0% of the population and track occupancy through the model. Some boundary conditions become obvious $f(t,a)=0$ for $t<0$ as well as $f(t,a)=0$ for $a>t$ which creates a triangular space. Since primary therapy cannot continue past the first year we also have $f(t,a)=0$ for $a>1$. Further, the entry rate into the model along the $f(t,0)$ boundary is given by a Weibull distribution as mentioned above, i.e. $f(t, 0) = w(t\mid\lambda, k)$ where $w$ represent the Weibull probability density function where $\lambda$ is the scale and $k$ is the shape.
 
-We will further represent the maintenance compartment of primary therapy by $g(t,a)$.
+We will further represent the maintenance compartment of post primary therapy by $g(t,a)$. This compartment is those who completed primary therapy with no special events, i.e. PCI, CABG or treatment fatality.
 
 Secular death is a function of time ($t$) alone and will be represented as $s(t)$. It is independent of any other model effects or phases and can be separated out. Inside the boundaries the solution can be achieved using separability $f(t,a) = s(t) w(t-a) f(a)$, and likewise for $g(t,a)$. Thus two equations represent the cornerstone of the solution. From these we can now create a series of coupled first order delay differential equation's using compartments for each phase of PCI restarts of primary therapy, and CABG joining maintenance. With the solution of this in hand, the final stage is to turn it into a time ($t$) only model by integrating out the age dimension $f(t)= \int^{t_H}_{0} f(t,a) da = s(t) \int^{t_H}_{0} w(t-a) f(a) da$ where $t_H$ represents the time horizon of the model.
 
@@ -402,7 +402,7 @@ Now the final transform to time based solution and elimination of the age variab
 ```{r, echo=TRUE}
 sf_a <- splinefun(out[,1], out[,"prime"], method="fmm")
 f_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sf_a(a), lower=0, upper=t)$value)
-curve(100*f_t(x), from=0, to=10, ylab="%pop", xlab="t", main="Primary Treatment")
+curve(100*f_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Primary Treatment")
 ```
 
 Note the shark fin shape. This is exactly the shape we see from simulation runs.
@@ -410,13 +410,13 @@ Note the shark fin shape. This is exactly the shape we see from simulation runs.
 ```{r, echo=TRUE}
 sm_a <- splinefun(out[,1], out[,"maint"], method="fmm")
 m_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sm_a(a), lower=0, upper=t)$value)
-curve(100*m_t(x), from=0, to=10, ylab="%pop", xlab="t", main="Maintenance Treatment")
+curve(100*m_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Maintenance Treatment")
 ```
 
 ```{r, echo=TRUE}
 sd_a <- splinefun(out[,1], out[,"fatal"], method="fmm")
 d_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sd_a(a), lower=0, upper=t)$value)
-curve(100*d_t(x), from=0, to=10, ylab="%pop", xlab="t", main="Treatment Fatalities")
+curve(100*d_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Treatment Fatalities")
 ```
 
 ## Adjust for Secular Death

@@ -41,7 +41,6 @@ params$g_loss[3] <- params$phi_m[3]
 ###################################
 # Numerical Age Structured Solution.
 fence <- function(x, lb, ub) pmax(lb, pmin(x, ub))
-tolerance <- 1e-8
 
 # Weibull functions with boundaries built in
 # Only valid for t > 0

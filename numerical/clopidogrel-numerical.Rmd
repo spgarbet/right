@@ -62,8 +62,17 @@ params = list(
     RV.pr.CABG    = 0.25, # (15-35)
 
     # Simplified bleed risk, and fatal risk -- One drug only
-    Bleed.rate      = risk2rate(0.02+0.0230+0.0015, 1), # See model-simplification, Clopidogrel wildtype
-    BleedFatal.rate = risk2rate(0.0015, 1), # (0.001-0.003), Clopidogrel wildtype
+    Bleed.rate           = risk2rate(0.02+0.0230+0.0015, 1), # See model-simplification, Clopidogrel wildtype
+    BleedFatal.rate      = risk2rate(0.0015, 1), # (0.001-0.003), Clopidogrel wildtype
+    #     vRR.ST.Aspirin    = 1.29, # (1.12-1.48)
+    #     vRR.MI.Aspirin = 1.29, # (1.12-1.48)
+    #  vRR.IntBleed.Aspirin =  0.71, # (0.23-2.23)
+    #  vRR.TIMIMinor.Aspirin =  0.47, #(.39-.57)
+    #  vRR.FatalBleed.Aspirin =  1.35, #(0.62-0.95)
+    #  vRR.RiskCABGTIMImajor.Aspirin =  1.08, # (0.61-1.91)
+
+    #BleedMaint.rate      = risk2rate(),
+    #BleedMaintFatal.rate = risk2rate(),
 
     #? vRiskCABGTIMImajor = 0.022, # (0.013-0.031) 
 
@@ -102,6 +111,11 @@ F_drate <- Vectorize(vectorize.args="t",
            )
 
 curve(F_drate(x, 1), from=0, to=10, n=101, ylab="Death Rate", xlab="Time in Simulation", main="Integrated Rate of Secular Death for Last Year")
+
+death_scaling <- function(t) exp((drate_beta - drate_beta*exp(drate_alpha*t))/drate_alpha)
+  
+curve(death_scaling, from=0, to=10, n=101, ylab="Population", xlab="Time in Simulation", main="Secular Death Effect on Population Size")
+
 ```
 
 We need the rates of percutaneous coronary intervention (PCI) events broken into first 30 days, first year, and thereafter and the resulting exposure integration for computation use. PCI events can occur from myocardiac infarction, revascularization, and stent thrombosis. These individual rates are added together to create a single risk of PCI restart of therapy. PCI events cause an individual to restart his therapy.
@@ -431,3 +445,6 @@ pci <- Vectorize(function(t)
 
 curve(pci(x), from=0, to=10, n=301, xlab="t", ylab="1st PCI", main="PCI")
 ```
+
+Now using the constructed functions, let's calculate the QALY and cost impact on lives form bleed events.
+

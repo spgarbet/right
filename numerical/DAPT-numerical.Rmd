@@ -401,7 +401,7 @@ Now the final transform to time based solution and elimination of the age variab
 
 ```{r, echo=TRUE}
 sf_a <- splinefun(out[,1], out[,"prime"], method="fmm")
-f_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sf_a(a), lower=0, upper=t)$value)
+f_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sf_a(a), lower=0, upper=t)$value)
 curve(100*f_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Primary Treatment")
 ```
 
@@ -409,19 +409,30 @@ Note the shark fin shape. This is exactly the shape we see from simulation runs.
 
 ```{r, echo=TRUE}
 sm_a <- splinefun(out[,1], out[,"maint"], method="fmm")
-m_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sm_a(a), lower=0, upper=t)$value)
+m_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sm_a(a), lower=0, upper=t)$value)
 curve(100*m_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Maintenance Treatment")
 ```
 
 ```{r, echo=TRUE}
 sd_a <- splinefun(out[,1], out[,"fatal"], method="fmm")
-d_t <- Vectorize(function(t) integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sd_a(a), lower=0, upper=t)$value)
+d_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0, 0,w(t-a, params))*sd_a(a), lower=0, upper=t)$value)
 curve(100*d_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Treatment Fatalities")
 ```
 
-## Adjust for Secular Death
+And treatment naive individuals is easy to define.
 
-TBD
+```{r, echo=TRUE}
+n_t <- Vectorize(function(t) (1-W(t, params))*s(t))
+
+curve(100*n_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Untreated")
+```
+
+And for completeness, secular death
+
+```{r, echo=TRUE}
+sd_t <- Vectorize(function(t) 1-s(t))
+curve(100*sd_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Secular Deaths")
+```
 
 ## Cost / QALY integration
 

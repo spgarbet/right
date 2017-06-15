@@ -166,22 +166,23 @@ $$g(a) = \begin{cases}
             f(1) e^{-\phi_{m3}a}, & a \gt 1 \\
          \end{cases}
 $$
-$g(a)$ is defined in terms of the boundary of $f(a)$. The solution is defined relative to the equations. In the later coding a numerical solution it is sometimes useful to compute $f(a)$ outside of it's boundaries due to these sorts of relationships.
+$g(a)$ is defined in terms of the boundary of $f(a)$. The solution is defined relative to the equations. In the later coding a numerical solution it is sometimes useful to compute $f(a)$ outside of it's boundaries due to these relationships.
 
 ## DDE Definition
 
 The most difficult part of the definition is now the PCI primary treatment compartments, $p_n(a)$. Using the subscript $i$ to denote current therapy phase and $j$ to denote therapy phase from a year ago. Each of these $p_n$ needs to add occupants based on upstream compartment and current rate of PCI. Further they need to remove those that occur in the current compartment. Losses from CABG and fatalities are removed based on current occupancy. Finally, the delay portion removes the portion who entered a year ago from the compartment adjusted by exposure to losses, $\zeta(a)$.
 
-$$\frac{d}{da}m = \kappa_{pi}(f(a)+p_1+p_2+p_3+p_4+p_5)+\pi_{pi} p_5$$
-$$\frac{d}{da} p_1 = \pi_{pi}(f(a) - p_1) - (\phi_{pi}+\kappa_{pi}) p_1 - \pi_{pj} f(a-1) \zeta(a)$$
-$$\frac{d}{da} p_2 = \pi_{pi}(p_1 - p_2) - (\phi_{pi}+\kappa_{pi}) p_2 - \pi_{pj} p_1(a-1) \zeta(a)$$
-$$\frac{d}{da} p_3 = \pi_{pi}(p_2 - p_3) - (\phi_{pi}+\kappa_{pi}) p_3 - \pi_{pj} p_2(a-1) \zeta(a)$$
-$$\frac{d}{da} p_4 = \pi_{pi}(p_3 - p_4) - (\phi_{pi}+\kappa_{pi}) p_4 - \pi_{pj} p_3(a-1) \zeta(a)$$
-$$\frac{d}{da} p_5 = \pi_{pi}(p_4 - p_5) - (\phi_{pi}+\kappa_{pi}) p_5 - \pi_{pj} p_4(a-1) \zeta(a)$$
-
-$$\text{primary}(a) = f(a) + p_1(a) + p_2(a) + p_3(a) + p_4(a) + p_5(a) $$
-$$\text{maint}(a) = g(a) + m(a) $$
-$$\frac{d}{da} \text{fatalities} = \phi_{pi}\text{primary(a)} + \phi_{mi}\text{maint(a)}$$
+$$\begin{align*}
+\frac{d}{da} m   &= \kappa_{pi}(f(a)+p_1+p_2+p_3+p_4+p_5)+\pi_{pi} p_5 \\
+\frac{d}{da} p_1 &= \pi_{pi}(f(a) - p_1) - (\phi_{pi}+\kappa_{pi}) p_1 - \pi_{pj} f(a-1) \zeta(a) \\
+\frac{d}{da} p_2 &= \pi_{pi}(p_1 - p_2) - (\phi_{pi}+\kappa_{pi}) p_2 - \pi_{pj} p_1(a-1) \zeta(a) \\
+\frac{d}{da} p_3 &= \pi_{pi}(p_2 - p_3) - (\phi_{pi}+\kappa_{pi}) p_3 - \pi_{pj} p_2(a-1) \zeta(a) \\
+\frac{d}{da} p_4 &= \pi_{pi}(p_3 - p_4) - (\phi_{pi}+\kappa_{pi}) p_4 - \pi_{pj} p_3(a-1) \zeta(a) \\
+\frac{d}{da} p_5 &= \pi_{pi}(p_4 - p_5) - (\phi_{pi}+\kappa_{pi}) p_5 - \pi_{pj} p_4(a-1) \zeta(a) \\ \\
+\text{primary}(a) &= f(a) + p_1 + p_2 + p_3 + p_4 + p_5 \\
+\text{maint}(a) &= g(a) + m \\
+\frac{d}{da} \text{fatalities} &= \phi_{pi}\text{primary(a)} + \phi_{mi}\text{maint(a)} \\
+\end{align*}$$
 
 # Working Solution in R
 
@@ -395,7 +396,8 @@ plot(out[,1], out[,"prime"] + out[,"maint"] + out[,"fatal"] - 1,
 ```
 
 This shows acceptable total error in the numerical solution. Note: This plot changes based on the random parameters above and bounces around between $\pm$ 0.5e-09 which is very close to desired.
-## Time Transform
+
+## Time Domain Transform
 
 Now the final transform to time based solution and elimination of the age variable can be done as mentioned via the earlier separation.
 

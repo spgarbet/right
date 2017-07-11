@@ -17,7 +17,7 @@ shinyServer(function(input, output) {
             tabsetPanel(
               tabPanel("Strategy",
                        br(),
-                       selectInput("vDAPT.SecondLine", "DAPT: Alternative Drug",
+                       selectInput("vDAPT.SecondLine", "Dual antiplatelet therapy: Alternative Drug",
                                    c("Ticagrelor", "Prasugrel"), "None", FALSE)),
               tabPanel(
                 "Population",
@@ -32,7 +32,7 @@ shinyServer(function(input, output) {
               tabPanel(
                 "Risks",
                 br(),
-                h4("Stent Thrombosis:"),
+                h4("Stent Thrombosis (ST):"),
                 numericInput("vRiskST30",  "ST 30-day Baseline Risk (0.010-0.020)",  value=0.0150, min=0.010, max=0.020, step=0.005),
                 numericInput("vRiskST365",  "ST 1-year Baseline Risk (0.003-0.009)",  value=0.0060, min=0.003, max=0.009, step=0.001),
                 numericInput("vRiskSTgt365",  "ST post 1-year Baseline Risk (0.001-0.003)",  value=0.0022, min=0.001, max=0.003, step=0.0005),
@@ -41,23 +41,23 @@ shinyServer(function(input, output) {
                 numericInput("vRR.ST.Prasugrel",  "ST RR for Prasugrel users (0.36-0.64)",  value=0.48, min=0.36, max=0.64, step=0.05),
                 numericInput("vRR.ST.Aspirin",  "ST RR for Aspirin users (1.12-1.48)",  value=1.29, min=1.12, max=1.48, step=0.02),
                 numericInput("vSt.Case.Fatality", "ST Case Fatality (0.15-0.30)", value=0.20, min=0.15, max=0.3, step=0.05),
-                numericInput("vPrCABG.ST",  "ST CABG Probability",  value=0.10, min=0.05, max=0.30, step=0.05),
+                numericInput("vPrCABG.ST",  "Coronary Artery Bypass Grafting ST Probability",  value=0.10, min=0.05, max=0.30, step=0.05),
                 
                 br(),
-                h4("Myocardial Infarction:"),
+                h4("Myocardial Infarction (MI):"),
                 numericInput("vRiskMI",  "MI Baseline Risk (0.013-0.097)",  value=0.035, min=0.013, max=0.097, step=0.002),
                 numericInput("vRR.MI.LOF",  "MI RR for Clopidogrel users with LOF (1.05-2.07)",  value=1.48, min=1.05, max=2.07, step=0.02),
                 numericInput("vRR.MI.Ticagrelor", "MI RR for Ticagrelor users (0.75-0.95)", value=0.84, min=0.75, max=0.95, step=0.05),
                 numericInput("vRR.MI.Prasugrel",  "MI RR for Prasugrel users (0.67-0.85)",  value=0.76, min=0.67, max=0.85, step=0.02),
                 numericInput("vRR.MI.Aspirin",  "MI RR for Aspirin users (1.12-1.48)",  value=1.29, min=1.12, max=1.48, step=0.02),
-                numericInput("vPrCABG.MI", "MI CABG Probability (0.04-0.12)", value=0.08, min=0.04, max=0.12, step=0.04),
-                numericInput("vPrPCI.MI",  "MI PCI Probability (0.45-0.65)",  value=0.55, min=0.45, max=0.65, step=0.05),
+                numericInput("vPrCABG.MI", "Coronary Artery Bypass Grafting MI Probability (0.04-0.12)", value=0.08, min=0.04, max=0.12, step=0.04),
+                numericInput("vPrPCI.MI",  "Percutaneous  Coronary Intervention MI Probability (0.45-0.65)",  value=0.55, min=0.45, max=0.65, step=0.05),
                 
                 br(),
-                h4("Revascularization:"),
+                h4("Revascularization (RV):"),
                 numericInput("vRiskRV365",  "RV 1-year Baseline Risk (0.05-0.15)",  value=0.10, min=0.05, max=0.15, step=0.05),
                 numericInput("vRiskRVgt365",  "RV post 1-year Baseline Risk (0.02-0.04)",  value=0.03, min=0.02, max=0.04, step=0.005),
-                numericInput("vPrCABG.RV",  "RV CABG Probability  (0.15-0.35)",  value=0.25, min=0.15, max=0.35, step=0.05),
+                numericInput("vPrCABG.RV",  "Coronary Artery Bypass Grafting RV Probability  (0.15-0.35)",  value=0.25, min=0.15, max=0.35, step=0.05),
                 
                 br(),
                 h4("Bleeding Events:"),
@@ -82,7 +82,7 @@ shinyServer(function(input, output) {
                 numericInput("vRR.FatalBleed.Ticagrelor", "Bleed Ext Maj RR for Ticagrelor users (0.48-1.59)", value=0.87, min=0.48, max=1.59, step=0.01),
                 numericInput("vRR.FatalBleed.Prasugrel",  "Bleed Ext Maj RR for Prasugrel users (1.58-11.11)",  value=4.19, min=1.58, max=11.11, step=0.1),
                 numericInput("vRR.FatalBleed.Aspirin",  "Bleed Ext Maj RR for Aspirin users (0.62-0.95)",  value=1.35, min=0.62, max=0.95, step=0.02),
-                h5("CABG-related TIMI Major Bleeding:"),
+                h5("Coronary Artery Bypass Grafting-related TIMI Major Bleeding:"),
                 numericInput("vRiskCABGTIMImajor",  "CABG-related Bleed Baseline Risk (0.013-0.031)",  value=0.022, min=0.013, max=0.031, step=0.002),
                 numericInput("vRR.RiskCABGTIMImajor.Ticagrelor", "CABG-related Bleed RR for Ticagrelor users (0.85-1.36)", value=1.08, min=0.85, max=1.36, step=0.01),
                 numericInput("vRR.RiskCABGTIMImajor.Prasugrel",  "CABG-related Bleed RR for Prasugrel users (1.90-11.82)",  value=4.73, min=1.90, max=11.82, step=0.1),
@@ -115,8 +115,8 @@ shinyServer(function(input, output) {
                 br(),
                 h4("Phenotypic Prevalence:"),
                 br(),
-                sliderInput("vMedMetabolizer",  "Medium Metabolizer %",  value=0.249, min=0.15, max=1, step=0.01),
-                sliderInput("vPoorMetabolizer", "Poor Metabolizer %", value=0.021, min=0.1, max=1, step=0.01)
+                sliderInput("vMedMetabolizer",  "Medium Metabolizer",  value=0.249, min=0.15, max=1, step=0.01),
+                sliderInput("vPoorMetabolizer", "Poor Metabolizer", value=0.021, min=0.01, max=1, step=0.01)
                 
               ),
               tabPanel(
@@ -129,7 +129,7 @@ shinyServer(function(input, output) {
                 numericInput("vModMyoSimNoVar",  "Moderate Myopathy Baseline Risk",  value=0.00011, min=0.0001, max=0.2, step=0.0001),
                 numericInput("vModMyoSimMedVar",  "Moderate Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
                 numericInput("vModMyoSimPoorVar", "Moderate Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
-                numericInput("vSevMyoSimNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.00001, max=0.001, step=0.00001),
+                numericInput("vSevMyoSimNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.00001, max=0.000065, step=0.00001),
                 numericInput("vSevMyoSimMedVar",  "Severe Myopathy RR for Medium Metabolizer",  value=2.55, min=1, max=10, step=0.1),
                 numericInput("vSevMyoSimPoorVar", "Severe Myopathy RR for Poor Metabolizer", value=9.46, min=1, max=10, step=0.1),
                 br(),
@@ -141,14 +141,14 @@ shinyServer(function(input, output) {
                 numericInput("vModMyoAltNoVar",  "Moderate Myopathy Baseline Risk",  value=0.00011, min=0.0001, max=0.2, step=0.0001),
                 numericInput("vModMyoAltMedVar",  "Moderate Myopathy RR for Medium Metabolizer",  value=1.08, min=1, max=10, step=0.1),
                 numericInput("vModMyoAltPoorVar", "Moderate Myopathy RR for Poor Metabolizer", value=4.05, min=1, max=10, step=0.1),
-                numericInput("vSevMyoAltNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.00001, max=0.001, step=0.00001),
+                numericInput("vSevMyoAltNoVar",  "Severe Myopathy Baseline Risk",  value=0.000034, min=0.000016, max=0.000065, step=0.00001),
                 numericInput("vSevMyoAltMedVar",  "Severe Myopathy RR for Medium Metabolizer",  value=1.08, min=1, max=10, step=0.1),
                 numericInput("vSevMyoAltPoorVar", "Severe Myopathy RR for Poor Metabolizer", value=4.05, min=1, max=10, step=0.1),
                 br(),
                 
                 h4("Other Risks:"),
                 sliderInput("vProbRahbdoDeath",  "Case Fatality of Severe Myopathy",  value=0.1, min=0, max=1, step=0.01),
-                sliderInput("vProbcvdDeath",  "Case Fatality of CVD",  value=0.117, min=0, max=1, step=0.01)
+                sliderInput("vProbcvdDeath",  "Case Fatality of Cardiovascular Disease Event",  value=0.117, min=0.1, max=0.13, step=0.01)
                 
               ),
               
@@ -167,9 +167,9 @@ shinyServer(function(input, output) {
               tabPanel(
                 "Population",
                 br(),
-                h4("AF Prevalence:"),
+                h4("Atrial fibrillation (AF) Prevalence:"),
                 br(),
-                sliderInput("vpct_afib",  "AF %",  value=0.09, min=0, max=1, step=0.01)
+                sliderInput("vpct_afib",  "AF",  value=0.09, min=0, max=1, step=0.01)
                 
               ),
               tabPanel(
@@ -194,14 +194,14 @@ shinyServer(function(input, output) {
                 br(),
                 
                 h4("Stroke Events:"),
-                numericInput("vAF_Risk_Stroke_1.5",  "Risk among INR < 1.5 & AF Patients",  value=0.077, min=0.01, max=0.2, step=0.01),
-                numericInput("vAF_Risk_Stroke_1.5to2",  "Risk among INR 1.5~2 & AF Patients",  value=0.019, min=0.01, max=1, step=0.001),
-                numericInput("vAF_Risk_Stroke_Over2", "Risk among INR > 2 & AF Patients", value=0.006, min=0.001, max=0.1, step=0.001),
+                numericInput("vAF_Risk_Stroke_1.5",  "Risk among INR < 1.5 & AF Patients",  value=0.077, min=0.057, max=0.104, step=0.01),
+                numericInput("vAF_Risk_Stroke_1.5to2",  "Risk among INR 1.5~2 & AF Patients",  value=0.019, min=0.014, max=0.024, step=0.001),
+                numericInput("vAF_Risk_Stroke_Over2", "Risk among INR > 2 & AF Patients", value=0.006, min=0.005, max=0.008, step=0.001),
                 numericInput("vNonAF_Risk_Stroke_3",  "Risk among INR < 3 & Non-AF Patients",  value=0.00001, min=0.00001, max=0.1, step=0.01),
                 numericInput("vNonAF_Risk_Stroke_Over3",  "Risk among INR > 3 & Non-AF Patients",  value=0.006, min=0.001, max=0.1, step=0.001),
                 br(),                
                 
-                h4("DTVPE events, only among Non-AF patients:"),
+                h4("DVT/PE events, only among Non-AF patients:"),
                 numericInput("vNonAF_Risk_DVTPE_2",  "Risk among INR < 1.5 & AF Patients",  value=0.077, min=0.01, max=0.2, step=0.01),
                 numericInput("vNonAF_Risk_DVTPE_Over2",  "Risk among INR 1.5~2 & AF Patients",  value=0.019, min=0.01, max=1, step=0.001)
  

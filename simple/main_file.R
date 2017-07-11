@@ -17,41 +17,51 @@ epsilon <- 0.000000000001
 inputs <- list(
   vAge = 40,
   vGender = 1,
+  vGene = 0.2,
+  
   vRiskA = 0.1,
-  vDurationA = 5,
-  vRR = 0.5,
-  vFatalA = 0.05,
+  vDurationA = 10,
+
+  vRiskB = 0.02,
+  vDurationB = 1,
+  vRR_B = 0.7,
+  vFatalB = 0.05,
   
-  vRiskB = 0.5,
-  vDurationB = 5,
-  
-  vStrategy = "Treat", # "Standard" or "Treat"
+  vPreemptive = "None", # "None" or "Panel"
+  vReactive = "None", # "None" or "Single" or "Panel"
   vHorizon  = 10,
   vN = 100,
   
+  vProbabilityOrder = 0.5,
+  vProbabilityRead = 0.5,
+  
   disutilities = list(
-    A_survive = 0.25,
-    A_death = 1,
-    B = 0.1,
+    A = 0.05,
+    B_Survive = 0.1,
+    B_Death  = 1,
     secular_death = 1
   ),
   
   durations = list(
-    B = 365
+    A = 365
   ),
   
   type = list(
-    A_survive = 0,
-    A_death = 0,
-    B = 1,
+    A = 1,
+    A_c = 0,
+    B_Survive = 0,
+    B_Death = 0,
     secular_death = 0
   ),
   
   costs = list(
-    A_survive = 10000,
-    A_death = 10000,
-    B = 25000/365, #daily cost
-    treat=2000
+    A_c = 10000, #separate event to capture A cost
+    B_Survive = 25000, 
+    B_Death = 15000,
+    rx= 0.5,
+    alt=5,
+    single_test=100,
+    panel_test=250
   )
 )
 
@@ -69,47 +79,92 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aAgeInitial", function() inputs$vAge) %>%
     set_attribute("aAge", function(attrs) attrs[['aAgeInitial']]) %>%
     set_attribute("aGender", function() inputs$vGender) %>%
-    #set_attribute("aRR_A", function()  rbeta(n=1,shape1=inputs$vRR*100,shape2=(1-inputs$vRR)*100) ) %>%
-    set_attribute("aRR_A",function() inputs$vRR) %>% 
-    set_attribute("aRR_B", epsilon) %>%
-    set_attribute("aTreat", function() ifelse(inputs$vStrategy=="Treat",1,2)) %>%
+    set_attribute("aGene", function() sample(1:2,1,prob=c(inputs$vGene,1-inputs$vGene))) %>% #1 - targeted, 2 - not
+    set_attribute("aGenotyped", 0) %>% # 0 - not, 1 - yes
     set_attribute("eventA",0) %>%  # Event A 0=not experienced, 1=experienced
     set_attribute("eventB",0) %>%  # Event B 0=not experienced, 1=experienced
-    branch(
-      function(attrs) attrs[['aTreat']],
-      continue = c(TRUE, TRUE),
-      trajectory("Treat") %>% mark("treat"),
-      trajectory("Standard") %>% timeout(0)
-    )
+    set_attribute("aTreat",0) %>% # On Treatment 0 - N, 1 - Y
+    set_attribute("aDrug",1) %>% # 1 - usual drug, 2 - alt 
+    set_attribute("aOrdered_test", 0)  %>%    # Did a physician order a test this time 0 - no, 1 - yes
+    set_attribute("aControlOrder", 0) %>% #control ordering test 0 - no, 1 - yes
+    set_attribute("aControlRead", 0) #control reading test 0 - no, 1 - yes
+}
 
+#preemptive strategy
+preemptive_strategy <- function(traj, inputs)
+{
+  #traj <- predict_draw(traj, inputs) # Always execute predict random draw to keep seeded random number
+  # states the same
+  
+  # Note this doesn't have to use branch, because it's a global that every trajectory gets
+  if        (inputs$vPreemptive == "None"     )
+  {
+    traj # Do nothing
+  } else if (inputs$vPreemptive == "Panel"    )
+  {
+    traj %>% panel_test(inputs) 
+  } else stop("Unhandled Preemptive Strategy")
 }
 
 
 ########
-#events
+# Define Panel Test attributes, functions
+all_genotyped <- function(attrs)
+{
+  attrs[['aGenotyped']]     == 1 #
+    #attrs[['aGenotyped_CYP2C19']] == 1 &&  # Clopidogrel
+    #attrs[['aGenotyped_Warfarin']] == 1    # Warfarin  
+}
 
+any_genotyped <- function(attrs)
+{
+  attrs[['aGenotyped']]     == 1 
+    #attrs[['aGenotyped_CYP2C19']] == 1 ||
+    #attrs[['aGenotyped_Warfarin']] == 1 
+}
+
+panel_test <- function(traj, inputs)
+{
+  traj %>% 
+    set_attribute('aGenotyped', 1)  %>%
+    #set_attribute('aGenotyped_CVD',     1)  %>%
+    #set_attribute('aGenotyped_Warfarin', 1) %>%
+    mark("panel_test")
+}
 
 ####
 ## Secular Death
 source('./event_secular_death.R')
 source('./events_simple.R')
-terminate_simulation <- function(traj, inputs)
-{
-  traj %>%
-    branch(
-      function() 1, 
-      continue=FALSE,
-      trajectory() %>% release("time_in_model") 
-    )
-}
+
 
 ####
 ## Cleanup 
 cleanup_on_termination <- function(traj)
 {
   traj %>% 
-    #print_attrs() %>%
-    release("time_in_model") 
+    release("time_in_model") %>%
+    branch(
+        function(attrs) attrs[["aTreat"]]+1,
+        continue=rep(TRUE,2),
+        trajectory() %>% timeout(0),
+        trajectory() %>% 
+          branch(
+            function(attrs) attrs[["aDrug"]],
+            continue=rep(TRUE,2),
+            trajectory() %>% release("rx"),
+            trajectory() %>% release("alt")
+      )) 
+}
+
+terminate_simulation <- function(traj, inputs)
+{
+  traj %>%
+    branch(
+      function() 1, 
+      continue=FALSE,
+      trajectory() %>% cleanup_on_termination()
+    )
 }
 
 
@@ -142,12 +197,17 @@ event_registry <- list(
 #### Counters
 counters <- c(
   "time_in_model", 
-  "A_death",
   "A",
-  "A_survive",
+  "A_c", #separate event to capture A cost
   "B",
+  "B_Survive",
+  "B_Death",
   "treat",
-  "secular_death"
+  "secular_death",
+  "rx",
+  "alt",
+  "single_test",
+  "panel_test"
 )
 
 source('./event_main_loop_simple.R')
@@ -157,7 +217,7 @@ source('./event_main_loop_simple.R')
 # Start the clock!
 exec.simulation <- function(inputs)
 {
- # set.seed(12345)
+  set.seed(12345)
   env  <<- simmer("Simple")
   traj <- simulation(env, inputs)
   env %>% create_counters(counters)

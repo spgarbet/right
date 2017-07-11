@@ -3,8 +3,8 @@
 "vPREDICTspec","specificity of PREDICT",0.93
 "vProbabilityRead","Probability of physician using available test result at time of prescription",1
 "vProbabilityReactive","Probability of physician ordering test for patient not yet genotyped at time of prescription",1
-"vScale","Weibull scale for time to statin",80722.66
-"vShape","Weibull shape for time to statin",0.52
+"vScale","Weibull scale for time to statin",13989.02
+"vShape","Weibull shape for time to statin",0.54
 "vMedMetabolizer","Prevalence of medium metabolizers",0.249
 "vPoorMetabolizer","Prevalence of poor metabolizers",0.021
 "vProbSimvastatinAlt","Probability of prescribing alternate",1
@@ -33,3 +33,4 @@
 "vSevMyoAltMedVar","Alternate user: relative risk of severe myopathy for medium metabolizer",1.08
 "vSevMyoAltPoorVar","Alternate user: relative risk of severe myopathy for poor metabolizer",4.05
 "vProbRahbdoDeath","Severe myopathy case fatality",0.1
+"vProbcvdDeath","CVD case fatality",0.117

@@ -1,40 +1,44 @@
 "param","descrip","value"
 "panel_test","Cost of panel test",250
 "single_test","Cost of panel test",100
-"mild_myopathy","Daily cost of mild myopathy (/1d)",129
+"mild_myopathy","Cost of mild myopathy",129
 "mod_myopathy","Daily cost of moderate myopathy (/30d)",75.1666666666667
 "sev_myopathy","Daily cost of severe myopathy (/30d)",427.033333333333
+"rahbdo_death","Cost of severe myopathy death",12811
 "cvd","Daily cost of cvd (/30d)",678.233333333333
+"cvd_death","Cost of cvd death",20347
 "simvastatin","Daily cost of Simvastatin",0.402739726027397
 "alt_simvastatin","Daily cost of alternate to Simvastatin",0.474246575342466
-"aspirin","Daily cost of Aspirin",0.13061939142466
-"clopidogrel","Daily cost of Clopidogrel",0.979645435684948
-"ticagrelor","Daily cost of Ticagrelor",7.18406652835629
-"prasugrel","Daily cost of Prasugrel",8.52291529045905
-"bleed_ext_maj_nonfatal","Daily cost of non-fatal extracranial bleed (/14d)",708.143700652263
-"bleed_int_maj_nonfatal","Daily cost of non-fatal intracranial bleed",20317.8463361058
-"bleed_min_nonfatal","Daily cost of non-fatal minor bleed (/2d)",38.6959947095555
-"bleed_fatal","Daily cost of fatal bleed",17555.2462074743
-"st_fatal","Daily cost of fatal Stent Thrombosis",24040.4989917086
-"mi_cabg","Daily cost of MI CABG",66341.5889045847
-"mi_med_manage","Daily cost of MI med manage",16849.9014937811
-"mi_pci","Daily cost of MI PCI",27273.328929469
-"revasc_cabg","Daily cost of revascularization CABG (/14d)",3537.91951630221
-"revasc_pci","Daily cost of revascularization PCI (/7d)",2892.7530222297
-"cabg_bleed","Daily cost of CABG-related bleed (/7d)",4977.99830675909
-"warfarin","Daily cost of warfarin",0.712430842794786
-"MajorBleed_ICH","Daily cost of non-fatal intracranial bleed",20317.8463361058
-"MajorBleed_GI","Daily cost of non-fatal gastrointestinal bleed (/14d)",162.901041019611
-"MajorBleed_Other","Daily cost of other non-fatal major bleed (/14d)",430.624143657512
-"MajorBleed_ICH_Fatal","Daily cost of fatal intracranial bleed",17555.2462074743
-"MajorBleed_GI_Fatal","Daily cost of fatal gastrointestinal bleed",17555.2462074743
-"MajorBleed_Other_Fatal","Daily cost of other fatal major bleed",17555.2462074743
-"MinorBleed","Daily cost of non-fatal minor bleed (/2d)",38.6959947095555
-"Stroke_MajorDeficit","Daily cost of stroke major deficit",19449.6630354143
-"Stroke_MinorDeficit","Daily cost of stroke minor deficit",13996.8578439842
-"Stroke_Fatal","Daily cost of fatal stroke",9388.43371482413
-"DVT","Daily cost of deep vein thrombosis",6248.22645251303
-"PE","Daily cost of pulmonary embolism",10711.0102658434
-"DVTPE_Fatal","Daily cost of fatal DVTPE",5759.49238446026
-"out_of_range","Daily cost of INR test for those out of therapeutic range (/3d)",8.72978638354174
-"in_range","Daily cost of INR test for those in therapeutic range (/7d)",3.74133702151789
+"aspirin","Daily cost of Aspirin",0.130625223000959
+"clopidogrel","Daily cost of Clopidogrel",0.97968917250719
+"ticagrelor","Daily cost of Ticagrelor",7.18438726505272
+"prasugrel","Daily cost of Prasugrel",8.52329580081255
+"bleed_ext_maj_nonfatal","Daily cost of non-fatal extracranial bleed (/14d)",708.175316126626
+"bleed_int_maj_nonfatal","Cost of non-fatal intracranial bleed",20318.7534377991
+"bleed_min_nonfatal","Daily cost of non-fatal minor bleed (/2d)",38.697722314034
+"bleed_fatal","Cost of fatal bleed",17556.0299713288
+"st_fatal","Cost of fatal Stent Thrombosis",24041.5722933264
+"st_cabg","Cost of fatal CABG",66344.5507621869
+"st_pci","Cost of ST PCI",27274.5465626002
+"mi_cabg","Daily cost of MI CABG",66344.5507621869
+"mi_med_manage","Cost of MI medical management",16850.6537671237
+"mi_pci","Cost of MI PCI",27274.5465626002
+"revasc_cabg","Daily cost of revascularization CABG (/14d)",3538.07746871168
+"revasc_pci","Daily cost of revascularization PCI (/7d)",2892.88217081766
+"cabg_bleed","Daily cost of CABG-related bleed (/7d)",4978.22055229725
+"warfarin","Daily cost of warfarin",0.712462649671024
+"MajorBleed_ICH","Cost of non-fatal intracranial bleed",20318.7534377991
+"MajorBleed_GI","Daily cost of non-fatal gastrointestinal bleed (/14d)",162.908313828338
+"MajorBleed_Other","Daily cost of other non-fatal major bleed (/14d)",430.643369114946
+"MajorBleed_ICH_Fatal","Cost of fatal intracranial bleed",17556.0299713288
+"MajorBleed_GI_Fatal","Cost of fatal gastrointestinal bleed",17556.0299713288
+"MajorBleed_Other_Fatal","Cost of other fatal major bleed",17556.0299713288
+"MinorBleed","Daily cost of non-fatal minor bleed (/2d)",38.697722314034
+"Stroke_MajorDeficit","Cost of stroke major deficit",19450.5313765752
+"Stroke_MinorDeficit","Cost of stroke minor deficit",13997.482741586
+"Stroke_Fatal","Cost of fatal stroke",9388.85286673517
+"DVT","Cost of deep vein thrombosis",6248.50540810219
+"PE","Cost of pulmonary embolism",10711.4884649295
+"DVTPE_Fatal","Cost of fatal DVTPE",5759.74952024168
+"out_of_range","Daily cost of INR test for those out of therapeutic range (/3d)",8.73017612977171
+"in_range","Daily cost of INR test for those in therapeutic range (/7d)",3.74150405561645

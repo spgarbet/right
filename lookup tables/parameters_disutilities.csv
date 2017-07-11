@@ -1,1 +1,36 @@
-param,descrip,valuemild_myopathy,Temporary disutility of mild myopathy (1d),0.01mod_myopathy,Temporary disutility of moderate myopathy (30d),0.05sev_myopathy,Temporary disutility of severe myopathy (30d),0.53rahbdo_death,Permanent disutility of severe myopathy death,1cvd,Temporary disutility of cvd (30d),0.2445cvd_death,Permanent disutility of CVD death,1bleed_ext_maj_nonfatal,Temporary disutility of non-fatal extracranial bleed (14d),0.2bleed_int_maj_nonfatal,Permanent disutility of non-fatal intracranial bleed,0.61bleed_min_nonfatal,Temporary disutility of non-fatal minor bleed (2d),0.2bleed_fatal,Permanent disutility of fatal bleed,1st_fatal,Permanent disutility of fatal Stent Thrombosis,1mi_cabg,Permanent disutility of MI CABG,0.12mi_med_manage,Permanent disutility of MI medical management,0.12mi_pci,Permanent disutility of MI PCI,0.12revasc_cabg,Temporary disutility of revascularization CABG (14d),0.5revasc_pci,Temporary disutility of revascularization PCI (7d),0.5cabg_bleed,Temporary disutility of CABG-related bleed (7d),0.5MajorBleed_ICH,Permanent disutility of non-fatal intracranial bleed,0.61MajorBleed_GI,Temporary disutility of non-fatal gastrointestinal bleed (14d),0.1511MajorBleed_Other,Temporary disutility of other non-fatal major bleed (14d),0.1511MajorBleed_ICH_Fatal,Permanent disutility of fatal intracranial bleed,1MajorBleed_GI_Fatal,Permanent disutility of fatal gastrointestinal bleed,1MajorBleed_Other_Fatal,Permanent disutility of other fatal major bleed,1MinorBleed,Temporary disutility of non-fatal minor bleed (2d),0.2Stroke_MajorDeficit,Permanent disutility of stroke major deficit,0.64Stroke_MinorDeficit,Permanent disutility of stroke minor deficit,0.24Stroke_Fatal,Permanent disutility of fatal stroke,1DVT,Permanent disutility of deep vein thrombosis,0.79PE,Permanent disutility of pulmonary embolism,0.79DVTPE_Fatal,Permanent disutility of fatal DVTPE,1out_of_range,Temporary disutility of INR test for those out of therapeutic range (/3d),0.004in_range,Temporary disutility of INR test for those in therapeutic range (/7d),0.001714286secular_death,Permanent disutility of secular death,1
+"param","descrip","value"
+"mild_myopathy","Temporary disutility of mild myopathy (1d)",0.01
+"mod_myopathy","Temporary disutility of moderate myopathy (30d)",0.05
+"sev_myopathy","Temporary disutility of severe myopathy (30d)",0.53
+"cvd","Temporary disutility of cvd (30d)",0.2445
+"cvd_death","Permanent disutility of CVD death",1
+"rahbdo_death","Permanent disutility of severe myopathy death",1
+"bleed_ext_maj_nonfatal","Temporary disutility of non-fatal extracranial bleed (14d)",0.2
+"bleed_int_maj_nonfatal","Permanent disutility of non-fatal intracranial bleed",0.61
+"bleed_min_nonfatal","Temporary disutility of non-fatal minor bleed (2d)",0.2
+"bleed_fatal","Permanent disutility of fatal bleed",1
+"st_fatal","Permanent disutility of fatal Stent Thrombosis",1
+"st_cabg","Permanent disutility of ST CABG",0.12
+"st_pci","Permanent disutility of ST PCI",0.12
+"mi_cabg","Permanent disutility of MI CABG",0.12
+"mi_med_manage","Permanent disutility of MI medical management",0.12
+"mi_pci","Permanent disutility of MI PCI",0.12
+"revasc_cabg","Temporary disutility of revascularization CABG (14d)",0.5
+"revasc_pci","Temporary disutility of revascularization PCI (7d)",0.5
+"cabg_bleed","Temporary disutility of CABG-related bleed (7d)",0.5
+"MajorBleed_ICH","Permanent disutility of non-fatal intracranial bleed",0.61
+"MajorBleed_GI","Temporary disutility of non-fatal gastrointestinal bleed (14d)",0.1511
+"MajorBleed_Other","Temporary disutility of other non-fatal major bleed (14d)",0.1511
+"MajorBleed_ICH_Fatal","Permanent disutility of fatal intracranial bleed",1
+"MajorBleed_GI_Fatal","Permanent disutility of fatal gastrointestinal bleed",1
+"MajorBleed_Other_Fatal","Permanent disutility of other fatal major bleed",1
+"MinorBleed","Temporary disutility of non-fatal minor bleed (2d)",0.2
+"Stroke_MajorDeficit","Permanent disutility of stroke major deficit",0.64
+"Stroke_MinorDeficit","Permanent disutility of stroke minor deficit",0.24
+"Stroke_Fatal","Permanent disutility of fatal stroke",1
+"DVT","Permanent disutility of deep vein thrombosis",0.79
+"PE","Permanent disutility of pulmonary embolism",0.79
+"DVTPE_Fatal","Permanent disutility of fatal DVTPE",1
+"out_of_range","Temporary disutility of INR test for those out of therapeutic range (/3d)",0.004
+"in_range","Temporary disutility of INR test for those in therapeutic range (/7d)",0.00171428571428571
+"secular_death","Permanent disutility of secular death",1

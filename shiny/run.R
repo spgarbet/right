@@ -425,18 +425,18 @@ form_Clopidogrel <- data.frame(
           "&nbsp;&nbsp;&nbsp;Prasugrel",
           "&nbsp;&nbsp;&nbsp;Aspirin           	",
           "&nbsp;&nbsp;&nbsp;DAPT Switch       	",
-          "<b>ST Event</b>",
+          "<b>Stent Thrombosis (ST)</b>",
           "&nbsp;&nbsp;&nbsp;ST Fatal          	",
           "&nbsp;&nbsp;&nbsp;ST PCI            	",
           "&nbsp;&nbsp;&nbsp;ST CABG          	",
-          "<b>MI Event</b>",
+          "<b>Myocardial Infarction (MI)</b>",
           "&nbsp;&nbsp;&nbsp;MI CABG      	",
           "&nbsp;&nbsp;&nbsp;MI PCI    	",
           "&nbsp;&nbsp;&nbsp;MI Med Manage     	",
-          "<b>Revasc Event</b>",
+          "<b>Revascularization Event</b>",
           "&nbsp;&nbsp;&nbsp;Revasc CABG   	",
           "&nbsp;&nbsp;&nbsp;Revasc PCI    	",
-          "<b>Bleed Event</b>",
+          "<b>Bleed Event (Clopidogrel) </b>",
           "&nbsp;&nbsp;&nbsp;Bleed Ext Maj NonFatal  	",
           "&nbsp;&nbsp;&nbsp;Bleed Int Maj NonFatal  	",
           "&nbsp;&nbsp;&nbsp;Bleed Min NonFatal  	",
@@ -476,10 +476,10 @@ form_Simvastatin <- data.frame(
           "&nbsp;&nbsp;&nbsp;Alternate Statin  	",
           "Switch to Alt     	",
           "Halt Statin       	",
-          "<b>CVD Events</b>",
+          "<b>CVD Event</b>",
           "&nbsp;&nbsp;&nbsp;CVD               	",
           "&nbsp;&nbsp;&nbsp;CVD Death         	",
-          "<b>Myopathy Events</b>",
+          "<b>Myopathy Event</b>",
           "&nbsp;&nbsp;&nbsp;Mild Myopathy     	",
           "&nbsp;&nbsp;&nbsp;Moderate Myopathy 	",
           "&nbsp;&nbsp;&nbsp;Severe Myopathy   	",
@@ -507,22 +507,22 @@ form_Warfarin <- data.frame(
     "<b>Warfarin</b>    	",
     "	  Initial In Range  	",
     "	  In Range by 90d 	",
-    "<b>Major Bleed Events</b>",
+    "<b>Major Bleed (Warfarin)</b>",
     "&nbsp;&nbsp;&nbsp;Bleed GI Non Fatal               	",
     "&nbsp;&nbsp;&nbsp;Bleed GI Fatal",
     "&nbsp;&nbsp;&nbsp;Bleed ICH Non Fatal               	",
     "&nbsp;&nbsp;&nbsp;Bleed ICH Fatal",
     "&nbsp;&nbsp;&nbsp;Bleed Maj Other Non Fatal               	",
     "&nbsp;&nbsp;&nbsp;Bleed Other Fatal",
-    "<b>Minor Bleed</b>",
-    "<b>Stroke Events</b>",
+    "<b>Minor Bleed (Warfarin)</b>",
+    "<b>Stroke Event </b>",
     "&nbsp;&nbsp;&nbsp;Stroke Fatal     	",
     "&nbsp;&nbsp;&nbsp;Stroke Major Deficit   	",
     "&nbsp;&nbsp;&nbsp;Stroke Minor Deficit	",
-    "<b>DVTPE Event</b>",
+    "<b>DVT/PE Event</b>",
     "	  PE Non Fatal                	",
     "	  DVT Non Fatal               	",
-    "	  DVTPE Fatal       	"),
+    "	  DVT/PE Fatal       	"),
   
   resource = c(
     "	warfarin	",
@@ -591,9 +591,24 @@ trans_strategy <- function(x) {
 
 
 
-
-
-
+glossary <- data.frame(
+  Abbreviation = c(
+    "DAPT",
+    "ST",
+    "PCI",
+    "CABG",
+    "MI",
+    "CVD"
+  ),
+  Name = c(
+    "Dual antiplatelet therapy",
+    "Stent thrombosis",
+    "Percutaneous coronary intervention",
+    "Coronary artery bypass grafting",
+    "Myocardial infarction",
+    "Cardiovascular disease event"
+  )
+)
 
 
 

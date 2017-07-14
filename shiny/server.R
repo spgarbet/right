@@ -403,4 +403,8 @@ shinyServer(function(input, output) {
     save_dt()$sum_costs
   }, rownames = FALSE, digits=1, bordered=FALSE)
   
+  output$gloss <- renderDataTable({
+    glossary
+  })
+  
 })

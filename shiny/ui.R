@@ -18,13 +18,15 @@ shinyUI(fluidPage(
     "#image2 img {max-width: 100%; width: 100%; height: auto}"
   )),
   
-  titlePanel("Pharmacogenomic Test Simulator"),
+  titlePanel("Cost-effectiveness of Genotype-tailored Therapy"),
   p("A discrete event simulation model for evaluation of clinical benefit and costs-effectiveness of utilizing pharmacogenomic testing in treatment"),
   
   #input panel
   sidebarLayout(
     sidebarPanel(
       width=6,
+      p("Please select which drug model(s) to run and adjust general settings & model-specific parameters. Click the Run button to execute."),
+      
       actionButton("run","Run"),
       actionButton("saveButton","Save"),
       h3("General Settings"),
@@ -59,6 +61,7 @@ shinyUI(fluidPage(
         tabPanel(
           "Simulation Results",
           h3("Event Counts"),
+          h4("Check the glossary tab for abbreviation of event names"),
           dataTableOutput("events"),
           br(),
           
@@ -79,6 +82,10 @@ shinyUI(fluidPage(
           br(),
           h3("Warfarin"),
           img(src="warfarin_diagram.png", width="100%")
+        ),
+        tabPanel(
+          "Glossary",
+          dataTableOutput("gloss")
         )
         
       ))),

@@ -189,6 +189,7 @@ $$\begin{align*}
 A specification of relevant parameter follows. Vectors of 3 entries represent the 3 phases of risk. For demonstration these are set randomly.
 
 ```{r, echo=TRUE}
+set.seed(15)
 params <- list(
 # Costs / QALY discounting rate
   discount = 0.03,
@@ -438,7 +439,45 @@ curve(100*sd_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Secular D
 
 ## Cost / QALY integration
 
-TBD
+The costs depend directly upon risks of events, and these vary by the age category so while the sums above were informative, the useful ones are split between the three risk phases based on age of therapy. Let's begin by breaking the primary treatment into occupancy by it's three phases.
+
+```{r, echo=TRUE}
+f1_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0 | a > t, 0, w(t-a, params))*sf_a(a), lower=0, upper=30/365)$value)
+f2_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0 | a > t, 0, w(t-a, params))*sf_a(a), lower=30/365, upper=1)$value)
+f3_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0 | a >= t, 0, w(t-a, params))*sf_a(a), lower=1, upper=10)$value)
+
+m1_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0 | a >= t, 0, w(t-a, params))*sm_a(a), lower=0, upper=30/365)$value)
+m2_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0 | a >= t, 0, w(t-a, params))*sm_a(a), lower=30/365, upper=1)$value)
+m3_t <- Vectorize(function(t) s(t)*integrate(function(a) ifelse(t-a <= 0 | a >= t, 0, w(t-a, params))*sm_a(a), lower=1, upper=10)$value)
+
+par(mfrow=c(2,3))
+curve(100*f1_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Prime <= 30d", ylim=c(0, 4))
+curve(100*f2_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="30d < Prime <= 1y",   ylim=c(0, 4))
+curve(100*f3_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Prime > 1 y",   ylim=c(0, 4))
+
+curve(100*m1_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Maint <= 30d")
+curve(100*m2_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="30d < Maint <= 1y")
+curve(100*m3_t(x), from=0, to=10, ylab="%pop", xlab="t (years)", main="Maint > 1 y")
+```
+
+And the exposure in each category is the integral of these over the entire time. This only leaves consideration of permanent disutility to worry about.
+
+```{r, echo=TRUE}
+occupancy <- c(integrate(function(x) f1_t(x), lower=0, upper=10)$value,
+               integrate(function(x) f2_t(x), lower=0, upper=10)$value,
+               integrate(function(x) f3_t(x), lower=1, upper=10, subdivisions=2000)$value,
+               integrate(function(x) m1_t(x), lower=0, upper=10)$value,
+               integrate(function(x) m2_t(x), lower=0, upper=10)$value,
+               integrate(function(x) m3_t(x), lower=1, upper=10, subdivisions=2000)$value)
+
+cost <- c(params$chi_p, params$chi_m) * occupancy
+cost
+
+tmp_qaly_loss <- c(params$rho_p, params$rho_m) * occupancy
+tmp_qaly_loss
+```
+
+Permanent disutility is difficult now since this involves tracking events integrated to the end of time. 
 
 ## Parameter Transform
 

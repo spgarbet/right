@@ -1,4 +1,18 @@
-setwd("/Users/zilu/Desktop/right-simulation")
+pkg = list("simmer",
+           "data.table",
+           "plyr",
+           "dplyr",
+           "tidyr",
+           "reshape2",
+           "ggplot2",
+           "downloader",
+           "msm",
+           "quantmod")
+invisible(lapply(pkg, require, character.only = TRUE))
+rm=list(ls())
+setwd("/Users/zilu/Box Sync/IGNITE")
+#setwd("/Users/ziluzhou1/Box Sync/IGNITE")
+#setwd("/Users/zilu/Desktop/right-simulation/IGNITE")
 source("./run_IGNITE.r")
 
 ###Single Drug 
@@ -10,10 +24,40 @@ inputs$vDrugs = list(vSimvastatin = F,
 inputs$clopidogrel$vDAPTScale <- epsilon
 #inputs$simvastatin$vScale <- epsilon
 inputs$clopidogrel$vRRRepeat.DAPT <- 0 #only for low-weibull runs, to fix retrigger clopidogrel prescription
+inputs$vN <- 100
+inputs$vHorizon <- 1
 
 
+####
+## 
+# Define Simulation Environment.
+#
+# NOTE: This must be done at a global level for the simmer now() function to be available
+#       inside trajectories. Without this at a global level, the simulation won't work.
+####
+env  <- simmer("RIGHT-v1.1")
+
+exec.simulation <- function(inputs)
+{
+  set.seed(12345)
+  env  <<- simmer("RIGHT-v1.1")
+  traj <- simulation(env, inputs)
+  env %>% create_counters(counters)
+  
+  env %>%
+    add_generator("patient", traj, at(rep(0, inputs$vN)), mon=2) %>%
+    run(365*inputs$vHorizon+1) %>% # Simulate just past horizon
+    wrap()
+  
+  get_mon_arrivals(env, per_resource = T)
+}
+
+
+
+
+attributes <- NULL
 results <- NULL
-for(Istrategy in 0:4) {
+for(Istrategy in 0) {
   if(Istrategy==0) 
   {
     inputs$vPreemptive = "None"
@@ -35,18 +79,39 @@ for(Istrategy in 0:4) {
     inputs$vReactive = "Single"
     inputs$vSwitch = "None"
     inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
+  } else if(Istrategy==4){    
+    inputs$vPreemptive = "None"
+    inputs$vReactive = "None"
+    inputs$vSwitch = "Genotype"
+    inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
+  } else if(Istrategy==5){
+    inputs$vPreemptive = "None"
+    inputs$vReactive = "Single"
+    inputs$vSwitch = "None"
+    inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
+    inputs$clopidogrel$vProbabilityDAPTSwitch <- 1
   } else {    
     inputs$vPreemptive = "None"
     inputs$vReactive = "None"
     inputs$vSwitch = "Genotype"
     inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
-    }
+    inputs$clopidogrel$vProbabilityDAPTSwitch <- 1
+  }
+  
   cat("Running ", Istrategy, "\n")
   run <- exec.simulation(inputs)
   run$strategy <- Istrategy
   
+  at <- arrange(get_mon_attributes(env),name,key,time)
+  at$strategy <- Istrategy
+  
   if(is.null(results)) { results <- run } else  {results <- rbind(results, run)}
+  if(is.null(attributes)) { attributes <- at } else  {attributes <- rbind(attributes, at)}
 }
+
+DT <- data.table(results)
+DT[, .N, by = list(resource, strategy)]
+summ <- DT[, .N, by = list(resource, strategy)]
 
 source("./costs_ICER.R")
 inputs$vN <- 500 #change according to combined count

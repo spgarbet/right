@@ -10,49 +10,6 @@
 
 ####
 ## 
-# Set Directories and Load Packages
-##
-####
-
-rm(list=ls())
-#setwd("~/Dropbox/Projects/right-simulation/")
-pkg = list("simmer",
-           "ggplot2",
-           "reshape2",
-           "plyr", #need to load this before "dplyr"
-           "tidyr",
-           "dplyr",
-           "msm",
-           "data.table",
-           "deSolve")
-invisible(lapply(pkg, require, character.only = TRUE))
-
-####
-## 
-# Define Simulation Environment.
-#
-# NOTE: This must be done at a global level for the simmer now() function to be available
-#       inside trajectories. Without this at a global level, the simulation won't work.
-####
-env  <- simmer("RIGHT-v1.1")
-
-exec.simulation <- function(inputs)
-{
-  set.seed(12345)
-  env  <<- simmer("RIGHT-v1.1")
-  traj <- simulation(env, inputs)
-  env %>% create_counters(counters)
-  
-  env %>%
-    add_generator("patient", traj, at(rep(0, inputs$vN)), mon=2) %>%
-    run(365*inputs$vHorizon+1) %>% # Simulate just past horizon
-    wrap()
-  
-  get_mon_arrivals(env, per_resource = T)
-}
-
-####
-## 
 # Define Simulation Scenario
 ##
 ####
@@ -90,10 +47,10 @@ panel_test <- function(traj, inputs)
 #####
 ## Clopidogrel
 source("./clopidogrel/counters.R")
-source("./clopidogrel/initial-patient-attributes_IGNITE.R")
+source("./clopidogrel/initial-patient-attributes.R")
 source("./clopidogrel/cleanup.R")
 source("./clopidogrel/PGx-attributes.r")
-source("./clopidogrel/dapt-events_IGNITE.r")
+source("./clopidogrel/dapt-events.r")
 
 ####
 ## Simvastatin
@@ -326,6 +283,11 @@ event_registry <- list(
        attr          = "aDAPT30d",
        time_to_event = dapt_30d,
        func          = dapt_30d_strategy,
+       reactive      = FALSE),
+  list(name          = "DAPT Stroke",
+       attr          = "aDAPTStroke",
+       time_to_event = days_to_stroke,
+       func          = dapt_stroke_event,
        reactive      = FALSE),  
   
   #### Warfarin Events

@@ -1,3 +1,16 @@
+clo_clock <- function(traj)
+{
+  traj %>%
+    set_attribute("aST",function(attrs) now(env) + time_to_ST(attrs,inputs)) %>% 
+    set_attribute("aMI",function(attrs) now(env) + time_to_MI(attrs,inputs)) %>% 
+    set_attribute("aRV",function(attrs) now(env) + time_to_RV(attrs,inputs)) %>% 
+    set_attribute("aExtBleed",function(attrs) now(env) + time_to_ExtBleed(attrs,inputs)) %>% 
+    set_attribute("aIntBleed",function(attrs) now(env) + time_to_IntBleed(attrs,inputs)) %>% 
+    set_attribute("aTIMIMinor",function(attrs) now(env) + time_to_TIMIMinor(attrs,inputs)) %>%
+    set_attribute("aFatalBleed",function(attrs) now(env) + time_to_FatalBleed(attrs,inputs)) %>% 
+    set_attribute("aDAPTStroke",function(attrs) now(env) + days_to_stroke(attrs,inputs)) %>%
+    set_attribute("aSecularDeathTime",function(attrs) now(env) + days_till_death(attrs,inputs)) 
+}  
 
 ####
 ## Assign Time to DAPT
@@ -111,6 +124,8 @@ assign_DAPT_medication <- function(traj,inputs)
      )
   }
 
+
+
 dapt <- function(traj, inputs)
 {
   traj %>%
@@ -137,27 +152,8 @@ dapt <- function(traj, inputs)
         
         # End of Therapy
         set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) %>%
+        clo_clock()
         
-        # Stent Thrombosis
-        set_attribute("aST",function(attrs) now(env) + time_to_ST(attrs,inputs)) %>%
-        
-        # Myocardial Infarction (Non-Fatal)
-        set_attribute("aMI",function(attrs) now(env) + time_to_MI(attrs,inputs)) %>%
-        
-        # Revascularizaiton
-        set_attribute("aRV",function(attrs) now(env) + time_to_RV(attrs,inputs)) %>%
-        
-        # Extracranial (TIMI major and nonfatal)
-        set_attribute("aExtBleed",function(attrs) now(env) + time_to_ExtBleed(attrs,inputs)) %>%
-      
-        # Intracranial (TIMI major and nonfatal)
-        set_attribute("aIntBleed",function(attrs) now(env) + time_to_IntBleed(attrs,inputs)) %>%
-      
-        # TIMI minor
-        set_attribute("aTIMIMinor",function(attrs) now(env) + time_to_TIMIMinor(attrs,inputs)) %>%
-        
-        # Fatal Bleed
-        set_attribute("aFatalBleed",function(attrs) now(env) + time_to_FatalBleed(attrs,inputs))
       ,
       trajectory() %>% set_attribute("aRRDAPT",epsilon)
     ) 
@@ -177,11 +173,10 @@ dapt_30d <- function(attrs,inputs) {
     return(inputs$vHorizon*365 +1)}
 }
 
-dapt_30d_strategy <- function(traj,inputs)
-{
+how2switch <- function(traj,inputs) {
   #switch all to clopidogrel at 30d
   if(inputs$vSwitch == "All") 
-    {
+  {
     traj %>%
       branch(
         function(attrs) ifelse(attrs[['aDAPT.Rx']] %in% c(1:3),attrs[['aDAPT.Rx']],4),
@@ -191,29 +186,38 @@ dapt_30d_strategy <- function(traj,inputs)
         trajectory() %>% release("prasugrel") %>% seize("clopidogrel") %>% set_attribute("aDAPT.Rx",1),
         trajectory() %>% timeout(0)
       )
-    } else {
-  #genotype at 30d
-  traj %>% 
-    set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test") %>%
-    branch(
-      function(attrs) {
-        if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1)
+  } else {
+    #genotype at 30d
+    traj %>% 
+      set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test") %>%
+      branch(
+        function(attrs) {
+          if(attrs[['aGenotyped_CYP2C19']]==1 & attrs[['aCYP2C19']] == 1)
           {return(sample(c(1,2),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
-      } else {return(1)} 
-      },
-      continue=rep(TRUE,2),
-      trajectory("LOF & Non-LOF switch to clopidogrel") %>%
-        branch(
-          function(attrs) ifelse(attrs[['aDAPT.Rx']] %in% c(1:3),attrs[['aDAPT.Rx']],4),
-          continue=rep(TRUE,4),
-          trajectory() %>% timeout(0),
-          trajectory() %>% release("ticagrelor") %>% seize("clopidogrel") %>% set_attribute("aDAPT.Rx",1),
-          trajectory() %>% release("prasugrel") %>% seize("clopidogrel") %>% set_attribute("aDAPT.Rx",1),
-          trajectory() %>% timeout(0)
-        ),
-      trajectory("LOF stay alt") %>% timeout(0)
-    )} %>%
-    set_attribute("aSwitch30d",2)
+          } else {return(1)} 
+        },
+        continue=rep(TRUE,2),
+        trajectory("LOF & Non-LOF switch to clopidogrel") %>%
+          branch(
+            function(attrs) ifelse(attrs[['aDAPT.Rx']] %in% c(1:3),attrs[['aDAPT.Rx']],4),
+            continue=rep(TRUE,4),
+            trajectory() %>% timeout(0),
+            trajectory() %>% release("ticagrelor") %>% seize("clopidogrel") %>% set_attribute("aDAPT.Rx",1),
+            trajectory() %>% release("prasugrel") %>% seize("clopidogrel") %>% set_attribute("aDAPT.Rx",1),
+            trajectory() %>% timeout(0)
+          ),
+        trajectory("LOF stay alt") %>% timeout(0)
+      )}
+}
+
+dapt_30d_strategy <- function(traj,inputs)
+{
+ traj %>%
+    how2switch(inputs) %>% 
+    set_attribute("aSwitch30d",2) %>%
+    #downstream 
+    clo_clock()
+    
 }
 
 
@@ -260,26 +264,41 @@ dapt_end <- function(traj,inputs)
 # CABG, and, as a simplifying assumption, the others underwent a repeat PCI with a drug-eluting stent.
 
 
-time_to_ST <- function(attrs,inputs) 
+time_to_ST <- function(attrs,inputs) #assume alt is always Ticagrelor 
 {
   if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
-    # Relative Risk
-    rr = attrs[["aRR.DAPT.ST"]]
-    # Need to add in loss of function and gain of function RRs here too.
-    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.ST.LOF
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.ST.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.ST.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.ST.Aspirin
-      
-    # Baseline Risk
-    rates = c(inputs$clopidogrel$vRiskST30,inputs$clopidogrel$vRiskST365,inputs$clopidogrel$vRiskSTgt365)
-    days = c(30,365,365*4)
+    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
+      rates = c(inputs$clopidogrel$vRiskST30.LOF,inputs$clopidogrel$vRiskST365.LOF)
+      rr = inputs$clopidogrel$vRR.ST.LOF
+    } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
+      rates = c(inputs$clopidogrel$vRiskST30.Alt.LOF,inputs$clopidogrel$vRiskST365.Alt.LOF)
+      rr = inputs$clopidogrel$vRR.ST.Alt.LOF
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2)) { #Non-LOF
+      rates = c(inputs$clopidogrel$vRiskST30,inputs$clopidogrel$vRiskST365)
+      rr = inputs$clopidogrel$vRR.ST
+    } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
+      rates = c(inputs$clopidogrel$vRiskST30.Aspirin,inputs$clopidogrel$vRiskST365.Aspirin)
+      rr = inputs$clopidogrel$vRR.ST.Aspirin
+    } else stop("Unhandled ST t2e")
+     
+    days = c(30,335)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
     
-    timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    ageOfTherapy <- now(env)
+    times  <- c(0,30,365) - ageOfTherapy
+    
+    if(ageOfTherapy >=30) #redraw will drop the 30-day window
+    {
+      rates2 <- rates2[2:3]
+      times  <- times[2:3]
+    } 
+    times[1] <- 0
+    
+    timeST = rpexp(1, rate=rates2, t=times)
     return(timeST)
     
   }
@@ -295,9 +314,20 @@ ST_event = function(traj, inputs)
         trajectory()  %>%  mark("st_event") %>% 
           # Case Fatatliy
           branch(
-           function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vSt.Case.Fatality,1-inputs$clopidogrel$vSt.Case.Fatality)),
+           function(attrs) 
+             if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
+                   pro <- inputs$clopidogrel$vSt.Case.Fatality.LOF
+                   return(sample(1:2,1,prob=c(pro,1-pro)))
+                 } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
+                   pro <- inputs$clopidogrel$vSt.Case.Fatality.Alt.LOF
+                   return(sample(1:2,1,prob=c(pro,1-pro)))
+                 } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2 )) { #Non-LOF)
+                   pro <- inputs$clopidogrel$vSt.Case.Fatality 
+                   return(sample(1:2,1,prob=c(pro,1-pro)))
+                 } else {stop("Unhandled fatal st")}
+               ,
            continue=c(FALSE,TRUE),
-           trajectory() %>% mark("st_fatal") %>% cleanup_on_termination(),
+           trajectory() %>% mark("cardio_death") %>% cleanup_on_termination(),
            trajectory() %>% 
              branch(
                function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
@@ -336,22 +366,38 @@ time_to_MI = function(attrs, inputs)
   if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.MI"]]
-    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.MI.LOF
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.MI.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.MI.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.MI.Aspirin
+    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
+      rates = c(inputs$clopidogrel$vRiskMI30.LOF,inputs$clopidogrel$vRiskMI365.LOF)
+      rr = inputs$clopidogrel$vRR.MI.LOF
+    } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
+      rates = c(inputs$clopidogrel$vRiskMI30.Alt.LOF,inputs$clopidogrel$vRiskMI365.Alt.LOF)
+      rr = inputs$clopidogrel$vRR.MI.Alt.LOF
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1| attrs[['aDAPT.Rx']]==2)) { #Non-LOF 
+      rates = c(inputs$clopidogrel$vRiskMI30,inputs$clopidogrel$vRiskMI365)
+      rr = inputs$clopidogrel$vRR.MI
+    } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
+      rates = rep(inputs$clopidogrel$vRiskMI.Aspirin,2)
+      rr = rep(inputs$clopidogrel$vRR.MI.Aspirin,2)
+    } else stop("Unhandled MI t2e")
     
-    # Baseline Risk
-    rates = rep(inputs$clopidogrel$vRiskMI, 4)
-    days = c(365,365*2,365*3,365*4)
+    days = c(30,335)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
     
-    timeST = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
-  
-    return(timeST)
+    ageOfTherapy <- now(env)
+    times  <- c(0,30,365) - ageOfTherapy
+    
+    if(ageOfTherapy >=30) #redraw will drop the 30-day window
+    {
+      rates2 <- rates2[2:3]
+      times  <- times[2:3]
+    } 
+    times[1] <- 0
+    
+    timeMI = rpexp(1, rate=rates2, t=times)
+    return(timeMI)
     
   }
 }
@@ -367,11 +413,24 @@ MI_event = function(traj, inputs)
       continue = c(TRUE, TRUE),
       trajectory() %>% mark("mi_event") %>% 
         branch(
-          function(attrs)
-            sample(
-              1:3,
-              1,
-              prob = c(
+          function(attrs) 
+            if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
+              pro <- inputs$clopidogrel$vSt.Case.Fatality.LOF
+              return(sample(1:2,1,prob=c(pro,1-pro)))
+            } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
+              pro <- inputs$clopidogrel$vSt.Case.Fatality.Alt.LOF
+              return(sample(1:2,1,prob=c(pro,1-pro)))
+            } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2 )) { #Non-LOF)
+              pro <- inputs$clopidogrel$vSt.Case.Fatality 
+              return(sample(1:2,1,prob=c(pro,1-pro)))
+            } else {stop("Unhandled fatal st")}
+          ,
+          continue=c(FALSE,TRUE),
+          trajectory() %>% mark("cardio_death") %>% cleanup_on_termination(),
+          trajectory() %>% 
+            branch(
+              function(attrs)
+                sample(1:3,1,prob = c(
                 inputs$clopidogrel$vPrCABG.MI,
                 inputs$clopidogrel$vPrPCI.MI,
                 1 - inputs$clopidogrel$vPrCABG.MI - inputs$clopidogrel$vPrPCI.MI
@@ -395,7 +454,7 @@ MI_event = function(traj, inputs)
           #* TO DO: Add in Brief 7 Day Utility Decrement
           
           trajectory() %>%  mark("mi_med_manage")
-        ),
+        )),
       trajectory() %>% timeout(0)
     )
 }
@@ -420,15 +479,20 @@ time_to_RV = function(attrs, inputs)
     # Relative Risk
     rr = attrs[["aRR.DAPT.RV"]]
 
-    # Baseline Risk
-    rates = c(inputs$clopidogrel$vRiskRV365,rep( inputs$clopidogrel$vRiskRVgt365,3))
-    days = c(365,365*2,365*3,365*4)
+    # Baseline Risk #adjustment for IGNITE
+    rates = c(inputs$clopidogrel$vRiskRV365,inputs$clopidogrel$vRiskRVgt365)
+    days = c(365,365*3)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
     
-    timeRV = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    ageOfTherapy <- now(env)
+    times  <- c(0,365,365*4) - ageOfTherapy
     
+    times[1] <- 0
+    
+    timeRV = rpexp(1, rate=rates2, t=times)
     return(timeRV)
     
   }
@@ -500,9 +564,14 @@ time_to_ExtBleed = function(attrs, inputs)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
     
-    timeExtBleed = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
-
+    ageOfTherapy <- now(env)
+    times  <- c(0,365) - ageOfTherapy
+    
+    times[1] <- 0
+    
+    timeExtBleed = rpexp(1, rate=rates2, t=times)
     return(timeExtBleed)
     
   }
@@ -540,9 +609,14 @@ time_to_IntBleed = function(attrs, inputs)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
     
-    timeIntBleed = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    ageOfTherapy <- now(env)
+    times  <- c(0,365) - ageOfTherapy
     
+    times[1] <- 0
+    
+    timeIntBleed = rpexp(1, rate=rates2, t=times)
     return(timeIntBleed)
     
   }
@@ -579,9 +653,14 @@ time_to_TIMIMinor = function(attrs, inputs)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
     
-    timeTIMIMinor = rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    ageOfTherapy <- now(env)
+    times  <- c(0,365) - ageOfTherapy
     
+    times[1] <- 0
+    
+    timeTIMIMinor = rpexp(1, rate=rates2, t=times)
     return(timeTIMIMinor)
     
   }
@@ -619,9 +698,14 @@ time_to_FatalBleed = function(attrs, inputs)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
     
-    timeFatalBleed =  rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
+    ageOfTherapy <- now(env)
+    times  <- c(0,365) - ageOfTherapy
     
+    times[1] <- 0
+    
+    timeFatalBleed = rpexp(1, rate=rates2, t=times)
     return(timeFatalBleed)
     
   }
@@ -656,7 +740,7 @@ time_to_CABGBleed = function(attrs, inputs)
     rates = inputs$clopidogrel$vRiskCABGTIMImajor
     days = c(365)
     
-    # Convert To Probability 
+    # Convert To Probability ##no need to adjust, redraw each time following CABG event
     rates2 = (- (log ( 1 - rates)*rr) / days)
     
     timeCABGBleed =  rpexp(1, rate=c(rates2,epsilon), t=c(0,days))
@@ -674,4 +758,53 @@ CABGBleed_event = function(traj, inputs)
     mark("bleed_event") %>% mark("cabg_bleed") 
 }
 
+
+###############
+#Added stroke events
+##
+days_to_stroke <- function(attrs, inputs)
+{ 
+  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  {
+    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
+      rates = c(inputs$clopidogrel$vRiskStroke30.LOF,inputs$clopidogrel$vRiskStroke365.LOF)
+      rr = inputs$clopidogrel$vRR.Stroke.LOF
+    } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
+      rates = c(inputs$clopidogrel$vRiskStroke30.Alt.LOF,inputs$clopidogrel$vRiskStroke365.Alt.LOF)
+      rr = inputs$clopidogrel$vRR.Stroke.Alt.LOF
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2 )) { #Non-LOF
+      rates = c(inputs$clopidogrel$vRiskStroke30,inputs$clopidogrel$vRiskStroke365)
+      rr = inputs$clopidogrel$vRR.Stroke
+    } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
+      rates = c(epsilon,epsilon)
+      rr = c(1,1)
+    } else stop("Unhandled ST t2e")    
+ 
+    days = c(30,335)
+    
+    # Convert To Probability 
+    rates2 = (- (log ( 1 - rates)*rr) / days)
+    rates2 <- c(rates2, epsilon)
+    
+    ageOfTherapy <- now(env)
+    times  <- c(0,30,365) - ageOfTherapy
+    
+    if(ageOfTherapy >=30) #redraw will drop the 30-day window
+    {
+      rates2 <- rates2[2:3]
+      times  <- times[2:3]
+    } 
+    times[1] <- 0
+    
+    timeStroke = rpexp(1, rate=rates2, t=times)
+    return(timeStroke)
+    
+  }
+}
+
+dapt_stroke_event <- function(traj, inputs)
+{
+  traj %>%
+    mark("dapt_stroke") 
+}
 

@@ -103,7 +103,7 @@ days_till_B <- function(attrs,inputs)
   
   t2e <- rexp(1, rate)
   
-  if(t2e > days || attrs[["eventA"]] != 1 || attrs[["eventB"]] != 0)
+  if(attrs[["eventA"]] != 1 || attrs[["eventB"]] != 0)
     t2e <- 365*inputs$vHorizon + 1
 
   return(t2e)

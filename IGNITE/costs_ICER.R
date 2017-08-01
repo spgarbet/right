@@ -35,11 +35,12 @@ discount = function(value,ar=annual_discount_rate,A) value / (1+ar)^(A/365.25)
 
 cost_cat <- data.frame(resource=c("panel_test","single_test",
                                   "clopidogrel","ticagrelor","prasugrel","aspirin","warfarin","simvastatin","alt_simvastatin",
-                                  "revasc_event","revasc_pci","revasc_cabg","bleed_ext_maj_nonfatal","bleed_int_maj_nonfatal","bleed_min_nonfatal","bleed_fatal",
-                                  "st_fatal","st_pci","st_cabg","mi_cabg","mi_pci","mi_med_manage","mild_myopathy","mod_myopathy","sev_myopathy","rahbdo_death",
+                                  "revasc_pci","revasc_cabg","bleed_ext_maj_nonfatal","bleed_int_maj_nonfatal","bleed_min_nonfatal","bleed_fatal",
+                                  "st_pci","st_cabg","mi_cabg","mi_pci","mi_med_manage","mild_myopathy","mod_myopathy","sev_myopathy","rahbdo_death",
                                   "cvd","cvd_death","out_of_range","in_range","MajorBleed_ICH","MajorBleed_ICH_Fatal","MajorBleed_GI","MajorBleed_GI_Fatal","MajorBleed_Other",
-                                  "MajorBleed_Other_Fatal","MinorBleed","Stroke_MinorDeficit","Stroke_MajorDeficit","Stroke_Fatal","DVTPE_Fatal","DVT","PE", "cabg_bleed","dapt_stroke"),
-                       cat=c(rep(1,2),rep(2,7),rep(3,36))
+                                  "MajorBleed_Other_Fatal","MinorBleed","Stroke_MinorDeficit","Stroke_MajorDeficit","Stroke_Fatal","DVTPE_Fatal","DVT","PE", "cabg_bleed",
+                                  "dapt_stroke","cardio_death"),
+                       cat=c(rep(1,2),rep(2,7),rep(3,35))
 )
 
 cost.qaly <- function(raw,inputs) 

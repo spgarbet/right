@@ -26,20 +26,10 @@ inputs:
 3.add strategy element "Switch"
 4.register 30-day event
 5.set drug switch prob to 1 
-different setup of risks for LOF-clopidogrel, LOF-alt, NonLOF
 
 dapt-events:
 2.revise assign_DAPT_medication
 4.add 30-day event
-add stroke event, branch cardio death
-revise redraw process: times - age of therapy, applicable to all adverse events except for CABG bleed (rare)
 
 initial-patient-attributes:
 4.add switch to shut down 30d event once triggered
-add LOF attribute
-
-counters:
-add LOF and IGNITE events
-
-event_secular_death:
-replace gompertz secular death with IGNITE inputs, modeled as an adverse event not relying on age/gender but LOF/drug.

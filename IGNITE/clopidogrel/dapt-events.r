@@ -274,9 +274,12 @@ time_to_ST <- function(attrs,inputs) #assume alt is always Ticagrelor
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskST30.Alt.LOF,inputs$clopidogrel$vRiskST365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.ST.Alt.LOF
-    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2)) { #Non-LOF
-      rates = c(inputs$clopidogrel$vRiskST30,inputs$clopidogrel$vRiskST365)
-      rr = inputs$clopidogrel$vRR.ST
+    } else if (attrs[['aCYP2C19']] != 1 & attrs[['aDAPT.Rx']]==1) { #Non-LOF Clo
+      rates = c(inputs$clopidogrel$vRiskST30.Non,inputs$clopidogrel$vRiskST365.Non)
+      rr = inputs$clopidogrel$vRR.ST.Non
+    } else if (attrs[['aCYP2C19']] != 1 & attrs[['aDAPT.Rx']]==2) { #Non-LOF Alt
+            rates = c(inputs$clopidogrel$vRiskST30.Alt.Non,inputs$clopidogrel$vRiskST365.Alt.Non)
+            rr = inputs$clopidogrel$vRR.ST.Alt.Non
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = c(inputs$clopidogrel$vRiskST30.Aspirin,inputs$clopidogrel$vRiskST365.Aspirin)
       rr = inputs$clopidogrel$vRR.ST.Aspirin
@@ -321,9 +324,12 @@ ST_event = function(traj, inputs)
                  } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
                    pro <- inputs$clopidogrel$vSt.Case.Fatality.Alt.LOF
                    return(sample(1:2,1,prob=c(pro,1-pro)))
-                 } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2 )) { #Non-LOF)
-                   pro <- inputs$clopidogrel$vSt.Case.Fatality 
+                 } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF,Clo
+                   pro <- inputs$clopidogrel$vSt.Case.Fatality.Non 
                    return(sample(1:2,1,prob=c(pro,1-pro)))
+                 } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2 )) { #Non-LOF,Alt
+                         pro <- inputs$clopidogrel$vSt.Case.Fatality.Alt.Non 
+                         return(sample(1:2,1,prob=c(pro,1-pro)))
                  } else {stop("Unhandled fatal st")}
                ,
            continue=c(FALSE,TRUE),
@@ -372,9 +378,12 @@ time_to_MI = function(attrs, inputs)
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskMI30.Alt.LOF,inputs$clopidogrel$vRiskMI365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.MI.Alt.LOF
-    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1| attrs[['aDAPT.Rx']]==2)) { #Non-LOF 
-      rates = c(inputs$clopidogrel$vRiskMI30,inputs$clopidogrel$vRiskMI365)
-      rr = inputs$clopidogrel$vRR.MI
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo 
+      rates = c(inputs$clopidogrel$vRiskMI30.Non,inputs$clopidogrel$vRiskMI365.Non)
+      rr = inputs$clopidogrel$vRR.MI.Non
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2)) { #Non-LOF, Alt 
+            rates = c(inputs$clopidogrel$vRiskMI30.Alt.Non,inputs$clopidogrel$vRiskMI365.Alt.Non)
+            rr = inputs$clopidogrel$vRR.MI.Alt.Non
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = rep(inputs$clopidogrel$vRiskMI.Aspirin,2)
       rr = rep(inputs$clopidogrel$vRR.MI.Aspirin,2)
@@ -420,8 +429,11 @@ MI_event = function(traj, inputs)
             } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
               pro <- inputs$clopidogrel$vSt.Case.Fatality.Alt.LOF
               return(sample(1:2,1,prob=c(pro,1-pro)))
-            } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2 )) { #Non-LOF)
-              pro <- inputs$clopidogrel$vSt.Case.Fatality 
+            } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo)
+              pro <- inputs$clopidogrel$vSt.Case.Fatality.Non 
+              return(sample(1:2,1,prob=c(pro,1-pro)))
+            } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2 )) { #Non-LOF, Alt)
+              pro <- inputs$clopidogrel$vSt.Case.Fatality.Alt.Non 
               return(sample(1:2,1,prob=c(pro,1-pro)))
             } else {stop("Unhandled fatal st")}
           ,
@@ -772,9 +784,12 @@ days_to_stroke <- function(attrs, inputs)
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskStroke30.Alt.LOF,inputs$clopidogrel$vRiskStroke365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.Stroke.Alt.LOF
-    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2 )) { #Non-LOF
-      rates = c(inputs$clopidogrel$vRiskStroke30,inputs$clopidogrel$vRiskStroke365)
-      rr = inputs$clopidogrel$vRR.Stroke
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo
+      rates = c(inputs$clopidogrel$vRiskStroke30.Non,inputs$clopidogrel$vRiskStroke365.Non)
+      rr = inputs$clopidogrel$vRR.Stroke.Non
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2 )) { #Non-LOF, Alt
+      rates = c(inputs$clopidogrel$vRiskStroke30.Alt.Non,inputs$clopidogrel$vRiskStroke365.Alt.Non)
+      rr = inputs$clopidogrel$vRR.Stroke.Alt.Non      
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = c(epsilon,epsilon)
       rr = c(1,1)

@@ -22,9 +22,12 @@ days_till_death <- function(attrs, inputs)
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskDeath30.Alt.LOF,inputs$clopidogrel$vRiskDeath365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.Death.Alt.LOF
-    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1 | attrs[['aDAPT.Rx']]==2 )) { #Non-LOF
-      rates = c(inputs$clopidogrel$vRiskDeath30,inputs$clopidogrel$vRiskDeath365)
-      rr = inputs$clopidogrel$vRR.Death
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo
+      rates = c(inputs$clopidogrel$vRiskDeath30.Non,inputs$clopidogrel$vRiskDeath365.Non)
+      rr = inputs$clopidogrel$vRR.Death.Non
+    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2 )) { #Non-LOF, Alt
+      rates = c(inputs$clopidogrel$vRiskDeath30.Alt.Non,inputs$clopidogrel$vRiskDeath365.Alt.Non)
+      rr = inputs$clopidogrel$vRR.Death.Alt.Non
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = c(epsilon,epsilon)
       rr = c(1,1)

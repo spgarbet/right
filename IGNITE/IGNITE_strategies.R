@@ -10,9 +10,7 @@ pkg = list("simmer",
            "quantmod")
 invisible(lapply(pkg, require, character.only = TRUE))
 rm=list(ls())
-setwd("/Users/zilu/Box Sync/IGNITE")
-#setwd("/Users/ziluzhou1/Box Sync/IGNITE")
-#setwd("/Users/zilu/Desktop/right-simulation/IGNITE")
+setwd("~/Desktop/right-simulation/IGNITE")
 source("./run_IGNITE.r")
 
 ###Single Drug 
@@ -57,56 +55,46 @@ exec.simulation <- function(inputs)
 
 attributes <- NULL
 results <- NULL
-for(Istrategy in 0) {
-  if(Istrategy==0) 
-  {
-    inputs$vPreemptive = "None"
-    inputs$vReactive = "None"
-    inputs$vSwitch = "None"
-    inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
-  } else if(Istrategy==1) {
-    inputs$vPreemptive = "None"
-    inputs$vReactive = "None"
-    inputs$vSwitch = "None"
-    inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
-  } else if(Istrategy==2){
-    inputs$vPreemptive = "None"
-    inputs$vReactive = "None"
-    inputs$vSwitch = "All"
-    inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
-  } else if(Istrategy==3){
-    inputs$vPreemptive = "None"
-    inputs$vReactive = "Single"
-    inputs$vSwitch = "None"
-    inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
-  } else if(Istrategy==4){    
-    inputs$vPreemptive = "None"
-    inputs$vReactive = "None"
-    inputs$vSwitch = "Genotype"
-    inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
-  } else if(Istrategy==5){
-    inputs$vPreemptive = "None"
-    inputs$vReactive = "Single"
-    inputs$vSwitch = "None"
-    inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
-    inputs$clopidogrel$vProbabilityDAPTSwitch <- 1
-  } else {    
-    inputs$vPreemptive = "None"
-    inputs$vReactive = "None"
-    inputs$vSwitch = "Genotype"
-    inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
-    inputs$clopidogrel$vProbabilityDAPTSwitch <- 1
-  }
+for(Istrategy in 0:4) {
+        if(Istrategy==0) 
+        {
+                inputs$vPreemptive = "None"
+                inputs$vReactive = "None"
+                inputs$vSwitch = "None"
+                inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
+        } else if(Istrategy==1) {
+                inputs$vPreemptive = "None"
+                inputs$vReactive = "None"
+                inputs$vSwitch = "None"
+                inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
+        } else if(Istrategy==2){
+                inputs$vPreemptive = "None"
+                inputs$vReactive = "None"
+                inputs$vSwitch = "All"
+                inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
+        } else if(Istrategy==3){
+                inputs$vPreemptive = "None"
+                inputs$vReactive = "Single"
+                inputs$vSwitch = "None"
+                inputs$clopidogrel$vDAPT.Start = "Clopidogrel"
+                inputs$clopidogrel$vProbabilityDAPTSwitch <- 1
+        } else {    
+                inputs$vPreemptive = "None"
+                inputs$vReactive = "None"
+                inputs$vSwitch = "Genotype"
+                inputs$clopidogrel$vDAPT.Start = "Ticagrelor"
+                inputs$clopidogrel$vProbabilityDAPTSwitch <- 1
+        }
   
   cat("Running ", Istrategy, "\n")
   run <- exec.simulation(inputs)
   run$strategy <- Istrategy
   
-  at <- arrange(get_mon_attributes(env),name,key,time)
-  at$strategy <- Istrategy
+  # at <- arrange(get_mon_attributes(env),name,key,time)
+  # at$strategy <- Istrategy
   
   if(is.null(results)) { results <- run } else  {results <- rbind(results, run)}
-  if(is.null(attributes)) { attributes <- at } else  {attributes <- rbind(attributes, at)}
+  # if(is.null(attributes)) { attributes <- at } else  {attributes <- rbind(attributes, at)}
 }
 
 DT <- data.table(results)

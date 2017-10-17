@@ -53,20 +53,25 @@ clopidogrel = list(
   # Stent Thrombosis: Event Rates and Relative Risks
   # The Stent Thrombosis Risks are drawn from a piecewise exponential with the following
   # durations and rates. 
-  #Non-LOF
-  vRiskST30    = 0.0075, #IGNITE input - May 
-  vRiskST365   = 0.028, #IGNITE input - May 
-  vRR.ST = c(1,1),
+  #Clopidogrel,Non-LOF
+  vRiskST30.Non    = 0.0892, #IGNITE input
+  vRiskST365.Non   = 0.0301, #IGNITE input
+  vRR.ST.Non = c(1,1),
+  
+  #Alt, Non-LOF
+  vRiskST30.Alt.Non    = 0.0799, #IGNITE input
+  vRiskST365.Alt.Non   = 0.0156, #IGNITE input
+  vRR.ST.Alt.Non = c(1,1), 
   
   #Clopidogrel, LOF
   vRiskST30.LOF    = 0.0218, #IGNITE input 0.0150, # (0.010-0.020)
   vRiskST365.LOF   = 0.07, #IGNITE input 0.0060, # (0.003-0.009)
-  vRR.ST.LOF = c(1,1), #1.72 is vRR.ST.LOF
+  vRR.ST.LOF = c(1,1), 
   
   #Alt, LOF
-  vRiskST30.Alt.LOF    = epsilon, #IGNITE input - May 
-  vRiskST365.Alt.LOF   = 0.024, #IGNITE input - May 
-  vRR.ST.Alt.LOF = c(1,1), #0.75 is vRR.ST.Ticagrelor
+  vRiskST30.Alt.LOF    = epsilon, #IGNITE input  
+  vRiskST365.Alt.LOF   = 0.024, #IGNITE input  
+  vRR.ST.Alt.LOF = c(1,1), 
   
   #vRR.ST.Ticagrelor = 0.75, # (0.59-0.95) 
   #vRR.ST.Prasugrel  = 0.48, # (0.36-0.64)
@@ -77,10 +82,10 @@ clopidogrel = list(
   vRR.ST.Aspirin = c(1.29,1.29),
   #vRR.ST.Aspirin    = 1.29, # (1.12-1.48)
   
-  vSt.Case.Fatality = 5/11, #IGNITE input inferred - May 
-  vSt.Case.Fatality.LOF = 0.5, #IGNITE input inferred - May 
-  vSt.Case.Fatality.Alt.LOF = 19/31, #IGNITE input inferred - May 
-  
+  vSt.Case.Fatality.Non = 5.97/9.57, #IGNITE input inferred
+  vSt.Case.Fatality.Alt.Non = 1.56/7.93, #IGNITE input inferred  
+  vSt.Case.Fatality.LOF = 5/11, #IGNITE input inferred  
+  vSt.Case.Fatality.Alt.LOF = 3/6, #IGNITE input inferred  
   
   vPrCABG.ST = 0.10,  # WHAT IS SOURCE?  CAN'T FIND IN ANNALS PAPER...
   
@@ -90,19 +95,24 @@ clopidogrel = list(
   
   # Myocardial Infarction: Event Rates and Relative Risks
   #subtract ST from MI in IGNITE spreadsheet
-  #Non-LOF
-  vRiskMI30 = 0.0212-0.0075, #IGNITE input - May 
-  vRiskMI365 = 0.087-0.028, #IGNITE input - May 
-  vRR.MI = c(1,1),
+  #Clopidogrel,Non-LOF
+  vRiskMI30.Non = 0.0957-0.0301, #IGNITE input  
+  vRiskMI365.Non = 0.0957-0.0301, #IGNITE input  
+  vRR.MI.Non = c(1,1),
+  
+  #Alt,Non-LOF
+  vRiskMI30.Alt.Non = 0.0793-0.0156, #IGNITE input  
+  vRiskMI365.Alt.Non = 0.0793-0.0156, #IGNITE input  
+  vRR.MI.Alt.Non = c(1,1),
   
  #Clopidogrel, LOF
-  vRiskMI30.LOF = 0.0436-0.0218, #IGNITE input - May 
-  vRiskMI365.LOF = 0.268-0.07, #IGNITE input - May 
+  vRiskMI30.LOF = 0.0436-0.0218, #IGNITE input  
+  vRiskMI365.LOF = 0.268-0.07, #IGNITE input  
   vRR.MI.LOF = c(1,1), #4.34 is vRR.MI.LOF
   
   #Alt, LOF
-  vRiskMI30.Alt.LOF = 0.0086-0, #IGNITE input - May 
-  vRiskMI365.Alt.LOF = 0.048-0.024, #IGNITE input - May 
+  vRiskMI30.Alt.LOF = 0.0086-0, #IGNITE input  
+  vRiskMI365.Alt.LOF = 0.048-0.024, #IGNITE input  
   vRR.MI.Alt.LOF = c(1,1), #0.84 is vRR.MI.Ticagrelor
   
   #vRiskMI = 0.035, #(0.013-0.097)
@@ -116,35 +126,45 @@ clopidogrel = list(
   #vRR.MI.LOF = 4.34, #IGNITE input-Jan
   
   # Stroke - IGNITE added event
-  #Non-LOF
-  vRiskStroke30 = 0.0075, #IGNITE input - May 
-  vRiskStroke365 = 0.03, #IGNITE input - May 
-  vRR.Stroke = c(1,1),
+  #Clopidogrel,Non-LOF
+  vRiskStroke30.Non = 0.0335, #IGNITE input  
+  vRiskStroke365.Non = 0.0335, #IGNITE input  
+  vRR.Stroke.Non = c(1,1),
+  
+  #Alt, Non-LOF
+  vRiskStroke30.Alt.Non = 0.0156, #IGNITE input  
+  vRiskStroke365.Alt.Non = 0.0156, #IGNITE input  
+  vRR.Stroke.Alt.Non = c(1,1),
   
   #Clopidogrel, LOF
-  vRiskStroke30.LOF = 0.0145, #IGNITE input - May 
-  vRiskStroke365.LOF = 0.048, #IGNITE input - May 
+  vRiskStroke30.LOF = 0.0145, #IGNITE input  
+  vRiskStroke365.LOF = 0.048, #IGNITE input  
   vRR.Stroke.LOF = c(1,1),
   
   #Alt, LOF
-  vRiskStroke30.Alt.LOF = epsilon, #IGNITE input - May 
-  vRiskStroke365.Alt.LOF = 0.008, #IGNITE input - May 
+  vRiskStroke30.Alt.LOF = epsilon, #IGNITE input  
+  vRiskStroke365.Alt.LOF = 0.008, #IGNITE input  
   vRR.Stroke.Alt.LOF = c(1,1),
   
  # Non-cardio death - IGNITE defined event
- #Non-LOF
- vRiskDeath30 = 0.02-0.0187, #IGNITE input - May 
- vRiskDeath365 = 0.074-0.053, #IGNITE input - May 
- vRR.Death = c(1,1),
- 
+ #Clopidogrel, Non-LOF
+ vRiskDeath30.Non = 0.0862-0.0597, #IGNITE input  
+ vRiskDeath365.Non = 0.0862-0.0597, #IGNITE input  
+ vRR.Death.Non = c(1,1),
+
+ #Alt, Non-LOF
+ vRiskDeath30.Alt.Non = 0.0156-0.0156, #IGNITE input  
+ vRiskDeath365.Alt.Non = 0.0156-0.0156, #IGNITE input  
+ vRR.Death.Alt.Non = c(1,1), 
+  
  #Clopidogrel, LOF
- vRiskDeath30.LOF = epsilon, #IGNITE input - May 
- vRiskDeath365.LOF = 0.14-0.122, #IGNITE input - May 
+ vRiskDeath30.LOF = epsilon, #IGNITE input  
+ vRiskDeath365.LOF = 0.14-0.122, #IGNITE input  
  vRR.Death.LOF = c(1,1),
  
  #Alt, LOF
- vRiskDeath30.Alt.LOF = epsilon, #IGNITE input - May 
- vRiskDeath365.Alt.LOF = 0.04-0.025, #IGNITE input - May 
+ vRiskDeath30.Alt.LOF = epsilon, #IGNITE input  
+ vRiskDeath365.Alt.LOF = 0.04-0.025, #IGNITE input  
  vRR.Death.Alt.LOF = c(1,1),
  
   

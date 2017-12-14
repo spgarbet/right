@@ -19,21 +19,26 @@ days_till_death <- function(attrs, inputs)
     if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
       rates = c(inputs$clopidogrel$vRiskDeath30.LOF,inputs$clopidogrel$vRiskDeath365.LOF)
       rr = inputs$clopidogrel$vRR.Death.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskDeath30.Alt.LOF,inputs$clopidogrel$vRiskDeath365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.Death.Alt.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo
       rates = c(inputs$clopidogrel$vRiskDeath30.Non,inputs$clopidogrel$vRiskDeath365.Non)
       rr = inputs$clopidogrel$vRR.Death.Non
+      days = c(365,365)
     } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2 )) { #Non-LOF, Alt
       rates = c(inputs$clopidogrel$vRiskDeath30.Alt.Non,inputs$clopidogrel$vRiskDeath365.Alt.Non)
       rr = inputs$clopidogrel$vRR.Death.Alt.Non
+      days = c(365,365)
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = c(epsilon,epsilon)
       rr = c(1,1)
+      days = c(30,335)
     } else stop("Unhandled ST t2e")    
     
-    days = c(30,335)
+    #days = c(30,335)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)

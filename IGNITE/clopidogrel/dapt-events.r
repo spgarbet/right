@@ -271,21 +271,26 @@ time_to_ST <- function(attrs,inputs) #assume alt is always Ticagrelor
     if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
       rates = c(inputs$clopidogrel$vRiskST30.LOF,inputs$clopidogrel$vRiskST365.LOF)
       rr = inputs$clopidogrel$vRR.ST.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskST30.Alt.LOF,inputs$clopidogrel$vRiskST365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.ST.Alt.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] != 1 & attrs[['aDAPT.Rx']]==1) { #Non-LOF Clo
       rates = c(inputs$clopidogrel$vRiskST30.Non,inputs$clopidogrel$vRiskST365.Non)
       rr = inputs$clopidogrel$vRR.ST.Non
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] != 1 & attrs[['aDAPT.Rx']]==2) { #Non-LOF Alt
             rates = c(inputs$clopidogrel$vRiskST30.Alt.Non,inputs$clopidogrel$vRiskST365.Alt.Non)
             rr = inputs$clopidogrel$vRR.ST.Alt.Non
+            days = c(30,365)
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = c(inputs$clopidogrel$vRiskST30.Aspirin,inputs$clopidogrel$vRiskST365.Aspirin)
       rr = inputs$clopidogrel$vRR.ST.Aspirin
+      days = c(30,335)
     } else stop("Unhandled ST t2e")
      
-    days = c(30,335)
+    #days = c(30,335)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
@@ -375,21 +380,26 @@ time_to_MI = function(attrs, inputs)
     if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
       rates = c(inputs$clopidogrel$vRiskMI30.LOF,inputs$clopidogrel$vRiskMI365.LOF)
       rr = inputs$clopidogrel$vRR.MI.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskMI30.Alt.LOF,inputs$clopidogrel$vRiskMI365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.MI.Alt.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo 
       rates = c(inputs$clopidogrel$vRiskMI30.Non,inputs$clopidogrel$vRiskMI365.Non)
       rr = inputs$clopidogrel$vRR.MI.Non
+      days = c(365,365)
     } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2)) { #Non-LOF, Alt 
             rates = c(inputs$clopidogrel$vRiskMI30.Alt.Non,inputs$clopidogrel$vRiskMI365.Alt.Non)
             rr = inputs$clopidogrel$vRR.MI.Alt.Non
+            days = c(365,365)
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = rep(inputs$clopidogrel$vRiskMI.Aspirin,2)
       rr = rep(inputs$clopidogrel$vRR.MI.Aspirin,2)
+      days = c(30,335)
     } else stop("Unhandled MI t2e")
     
-    days = c(30,335)
+    #days = c(30,335)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)
@@ -781,21 +791,26 @@ days_to_stroke <- function(attrs, inputs)
     if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
       rates = c(inputs$clopidogrel$vRiskStroke30.LOF,inputs$clopidogrel$vRiskStroke365.LOF)
       rr = inputs$clopidogrel$vRR.Stroke.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
       rates = c(inputs$clopidogrel$vRiskStroke30.Alt.LOF,inputs$clopidogrel$vRiskStroke365.Alt.LOF)
       rr = inputs$clopidogrel$vRR.Stroke.Alt.LOF
+      days = c(30,365)
     } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo
       rates = c(inputs$clopidogrel$vRiskStroke30.Non,inputs$clopidogrel$vRiskStroke365.Non)
       rr = inputs$clopidogrel$vRR.Stroke.Non
+      days = c(365,365)
     } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2 )) { #Non-LOF, Alt
       rates = c(inputs$clopidogrel$vRiskStroke30.Alt.Non,inputs$clopidogrel$vRiskStroke365.Alt.Non)
-      rr = inputs$clopidogrel$vRR.Stroke.Alt.Non      
+      rr = inputs$clopidogrel$vRR.Stroke.Alt.Non
+      days = c(365,365)
     } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
       rates = c(epsilon,epsilon)
       rr = c(1,1)
+      days = c(30,335)
     } else stop("Unhandled ST t2e")    
  
-    days = c(30,335)
+    #days = c(30,335)
     
     # Convert To Probability 
     rates2 = (- (log ( 1 - rates)*rr) / days)

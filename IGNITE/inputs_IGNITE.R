@@ -153,8 +153,8 @@ clopidogrel = list(
  vRR.Death.Non = c(1,1),
 
  #Alt, Non-LOF
- vRiskDeath30.Alt.Non = 0.0156-0.0156, #IGNITE input  
- vRiskDeath365.Alt.Non = 0.0156-0.0156, #IGNITE input  
+ vRiskDeath30.Alt.Non = epsilon, #IGNITE input: all deaths are CV deaths  
+ vRiskDeath365.Alt.Non = epsilon, #IGNITE input: all deaths are CV deaths  
  vRR.Death.Alt.Non = c(1,1), 
   
  #Clopidogrel, LOF

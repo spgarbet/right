@@ -8,57 +8,17 @@ source('./main/age-gompertz.R')
 # NOTE: The variable in must be named attrs
 days_till_death <- function(attrs, inputs)
 {
-  #age       <- attrs[['aAge']]
-  #death_age <- ageAtDeath(age, attrs[['aGender']])
-  
-  #return(365*(death_age-age))
-  
-  
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
-  {
-    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) { #LOF Clopidogrel
-      rates = c(inputs$clopidogrel$vRiskDeath30.LOF,inputs$clopidogrel$vRiskDeath365.LOF)
-      rr = inputs$clopidogrel$vRR.Death.LOF
-      days = c(30,365)
-    } else if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==2) { #LOF Alt
-      rates = c(inputs$clopidogrel$vRiskDeath30.Alt.LOF,inputs$clopidogrel$vRiskDeath365.Alt.LOF)
-      rr = inputs$clopidogrel$vRR.Death.Alt.LOF
-      days = c(30,365)
-    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==1)) { #Non-LOF, Clo
-      rates = c(inputs$clopidogrel$vRiskDeath30.Non,inputs$clopidogrel$vRiskDeath365.Non)
-      rr = inputs$clopidogrel$vRR.Death.Non
-      days = c(365,365)
-    } else if (attrs[['aCYP2C19']] != 1 & (attrs[['aDAPT.Rx']]==2 )) { #Non-LOF, Alt
-      rates = c(inputs$clopidogrel$vRiskDeath30.Alt.Non,inputs$clopidogrel$vRiskDeath365.Alt.Non)
-      rr = inputs$clopidogrel$vRR.Death.Alt.Non
-      days = c(365,365)
-    } else if (attrs[['aDAPT.Rx']]==4) { #Aspirin
-      rates = c(epsilon,epsilon)
-      rr = c(1,1)
-      days = c(30,335)
-    } else stop("Unhandled ST t2e")    
-    
-    #days = c(30,335)
-    
-    # Convert To Probability 
+      rates = inputs$clopidogrel$vRiskDeath
+      rr = 1
+      days = 365
+
+    # Convert To instantaneous 
     rates2 = (- (log ( 1 - rates)*rr) / days)
-    rates2 <- c(rates2, epsilon)
     
-    ageOfTherapy <- now(env)
-    times  <- c(0,30,365) - ageOfTherapy
-    
-    if(ageOfTherapy >=30) #redraw will drop the 30-day window
-    {
-      rates2 <- rates2[2:3]
-      times  <- times[2:3]
-    } 
-    times[1] <- 0
+    times  <- c(0,365) - ageOfTherapy
     
     timeDeath = rpexp(1, rate=rates2, t=times)
     return(timeDeath)
-    
-  }
-  
   
   
 }

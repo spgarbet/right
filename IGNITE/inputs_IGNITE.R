@@ -31,8 +31,8 @@ clopidogrel = list(
   vDAPT.SecondLine = "Ticagrelor",
   
   # Population-Level Allele Frequency Distribution
-  vCYP2C19.Poor    = 0.03+0.285, #IGNITE input - Jan
-  vCYP2C19.Rapid   = 0.257, #IGNITE input - Jan
+  vCYP2C19.Poor    = 0.32, #IGNITE input - Jan
+  vCYP2C19.Rapid   = 0.26, #IGNITE input - Jan
   vCYP2C19.Unknown = 0.038, #IGNITE input - Jan
   
   # Indication Paramters (Weibull) source: VUMC data -- files is ./reference/WCS_KM_Distribution_Generation.pdf
@@ -54,23 +54,23 @@ clopidogrel = list(
   # The Stent Thrombosis Risks are drawn from a piecewise exponential with the following
   # durations and rates. 
   #Clopidogrel,Non-LOF
-  vRiskST30.Non    = 0.0892, #IGNITE input
-  vRiskST365.Non   = 0.0301, #IGNITE input
+  vRiskST30.Non    = 0.0074, #IGNITE input
+  vRiskST365.Non   = 0.0135, #IGNITE input
   vRR.ST.Non = c(1,1),
   
   #Alt, Non-LOF
-  vRiskST30.Alt.Non    = 0.0799, #IGNITE input
-  vRiskST365.Alt.Non   = 0.0156, #IGNITE input
+  vRiskST30.Alt.Non    = 0.0067, #IGNITE input
+  vRiskST365.Alt.Non   = epsilon, #IGNITE input
   vRR.ST.Alt.Non = c(1,1), 
   
   #Clopidogrel, LOF
-  vRiskST30.LOF    = 0.0218, #IGNITE input 0.0150, # (0.010-0.020)
-  vRiskST365.LOF   = 0.07, #IGNITE input 0.0060, # (0.003-0.009)
+  vRiskST30.LOF    = 0.021, #IGNITE input 0.0150, # (0.010-0.020)
+  vRiskST365.LOF   = epsilon, #IGNITE input 0.0060, # (0.003-0.009)
   vRR.ST.LOF = c(1,1), 
   
   #Alt, LOF
   vRiskST30.Alt.LOF    = epsilon, #IGNITE input  
-  vRiskST365.Alt.LOF   = 0.024, #IGNITE input  
+  vRiskST365.Alt.LOF   = 0.0244, #IGNITE input  
   vRR.ST.Alt.LOF = c(1,1), 
   
   #vRR.ST.Ticagrelor = 0.75, # (0.59-0.95) 
@@ -82,12 +82,12 @@ clopidogrel = list(
   vRR.ST.Aspirin = c(1.29,1.29),
   #vRR.ST.Aspirin    = 1.29, # (1.12-1.48)
   
-  vSt.Case.Fatality.Non = 5.97/9.57, #IGNITE input inferred
-  vSt.Case.Fatality.Alt.Non = 1.56/7.93, #IGNITE input inferred  
-  vSt.Case.Fatality.LOF = 5/11, #IGNITE input inferred  
-  vSt.Case.Fatality.Alt.LOF = 3/6, #IGNITE input inferred  
+  vSt.Case.Fatality.Non = 0.15, #IGNITE input inferred
+  vSt.Case.Fatality.Alt.Non = epsilon, #IGNITE input inferred  
+  vSt.Case.Fatality.LOF = 0.18, #IGNITE input inferred  
+  vSt.Case.Fatality.Alt.LOF = epsilon, #IGNITE input inferred  
   
-  vPrCABG.ST = 0.10,  # WHAT IS SOURCE?  CAN'T FIND IN ANNALS PAPER...
+  vPrCABG.ST = 0.08,  # WHAT IS SOURCE?  CAN'T FIND IN ANNALS PAPER...
   
   # Relative Risk of ST for patients with loss of function allele who are treated with 
   # Clopidogrel.
@@ -96,23 +96,23 @@ clopidogrel = list(
   # Myocardial Infarction: Event Rates and Relative Risks
   #subtract ST from MI in IGNITE spreadsheet
   #Clopidogrel,Non-LOF
-  vRiskMI30.Non = 0.0957-0.0301, #IGNITE input  
-  vRiskMI365.Non = 0.0957-0.0301, #IGNITE input  
+  vRiskMI30.Non = 0.0225, #IGNITE input  
+  vRiskMI365.Non = 0.0379, #IGNITE input  
   vRR.MI.Non = c(1,1),
   
   #Alt,Non-LOF
-  vRiskMI30.Alt.Non = 0.0793-0.0156, #IGNITE input  
-  vRiskMI365.Alt.Non = 0.0793-0.0156, #IGNITE input  
+  vRiskMI30.Alt.Non = 0.0133, #IGNITE input  
+  vRiskMI365.Alt.Non = 0.0484, #IGNITE input  
   vRR.MI.Alt.Non = c(1,1),
   
  #Clopidogrel, LOF
-  vRiskMI30.LOF = 0.0436-0.0218, #IGNITE input  
-  vRiskMI365.LOF = 0.268-0.07, #IGNITE input  
+  vRiskMI30.LOF = 0.0427, #IGNITE input  
+  vRiskMI365.LOF = 0.1262, #IGNITE input  
   vRR.MI.LOF = c(1,1), #4.34 is vRR.MI.LOF
   
   #Alt, LOF
-  vRiskMI30.Alt.LOF = 0.0086-0, #IGNITE input  
-  vRiskMI365.Alt.LOF = 0.048-0.024, #IGNITE input  
+  vRiskMI30.Alt.LOF = 0.0085, #IGNITE input  
+  vRiskMI365.Alt.LOF = 0.0327, #IGNITE input  
   vRR.MI.Alt.LOF = c(1,1), #0.84 is vRR.MI.Ticagrelor
   
   #vRiskMI = 0.035, #(0.013-0.097)
@@ -127,18 +127,18 @@ clopidogrel = list(
   
   # Stroke - IGNITE added event
   #Clopidogrel,Non-LOF
-  vRiskStroke30.Non = 0.0335, #IGNITE input  
-  vRiskStroke365.Non = 0.0335, #IGNITE input  
+  vRiskStroke30.Non = 0.009, #IGNITE input  
+  vRiskStroke365.Non = 0.0068, #IGNITE input  
   vRR.Stroke.Non = c(1,1),
   
   #Alt, Non-LOF
-  vRiskStroke30.Alt.Non = 0.0156, #IGNITE input  
-  vRiskStroke365.Alt.Non = 0.0156, #IGNITE input  
+  vRiskStroke30.Alt.Non = epsilon, #IGNITE input  
+  vRiskStroke365.Alt.Non = epsilon, #IGNITE input  
   vRR.Stroke.Alt.Non = c(1,1),
   
   #Clopidogrel, LOF
-  vRiskStroke30.LOF = 0.0145, #IGNITE input  
-  vRiskStroke365.LOF = 0.048, #IGNITE input  
+  vRiskStroke30.LOF = 0.0067, #IGNITE input  
+  vRiskStroke365.LOF = epsilon, #IGNITE input  
   vRR.Stroke.LOF = c(1,1),
   
   #Alt, LOF
@@ -147,26 +147,7 @@ clopidogrel = list(
   vRR.Stroke.Alt.LOF = c(1,1),
   
  # Non-cardio death - IGNITE defined event
- #Clopidogrel, Non-LOF
- vRiskDeath30.Non = 0.0862-0.0597, #IGNITE input  
- vRiskDeath365.Non = 0.0862-0.0597, #IGNITE input  
- vRR.Death.Non = c(1,1),
-
- #Alt, Non-LOF
- vRiskDeath30.Alt.Non = epsilon, #IGNITE input: all deaths are CV deaths  
- vRiskDeath365.Alt.Non = epsilon, #IGNITE input: all deaths are CV deaths  
- vRR.Death.Alt.Non = c(1,1), 
-  
- #Clopidogrel, LOF
- vRiskDeath30.LOF = epsilon, #IGNITE input  
- vRiskDeath365.LOF = 0.14-0.122, #IGNITE input  
- vRR.Death.LOF = c(1,1),
- 
- #Alt, LOF
- vRiskDeath30.Alt.LOF = epsilon, #IGNITE input  
- vRiskDeath365.Alt.LOF = 0.04-0.025, #IGNITE input  
- vRR.Death.Alt.LOF = c(1,1),
- 
+  vRiskDeath=0.0175,
   
   # Revascularization
   vRiskRV365 = 0.10, # (0.05-0.15)
@@ -388,9 +369,9 @@ costs = list(
   simvastatin     =   realdol(147/365,year=2012),
   alt_simvastatin = realdol(173.1/365,year=2012),
   
-  aspirin         = realdol(4/30,year=2011),
-  clopidogrel     = realdol(30/30,year=2011),
-  ticagrelor      = realdol(220/30,year=2011),
+  aspirin         = realdol(2/30,year=2017),
+  clopidogrel     = realdol(10/30,year=2017),
+  ticagrelor      = realdol(360/30,year=2017),
   prasugrel       = realdol(261/30,year=2011),
   bleed_ext_maj_nonfatal = realdol(10120/14,2011),
   bleed_int_maj_nonfatal = realdol(20740,2011),

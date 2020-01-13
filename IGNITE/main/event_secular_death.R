@@ -5,8 +5,7 @@ source('./main/age-gompertz.R')
 # Given attributes of a patient (trajectory), it returns in days 
 # how long till the patient would die a secular death.
 #
-# NOTE: The variable in must be named attrs
-days_till_death <- function(attrs, inputs)
+days_till_death <- function(inputs)
 {
       rates = inputs$clopidogrel$vRiskDeath
       rr = 1

@@ -12,17 +12,29 @@ inst_rate <- function(percent, timeframe)
 ###################################
 # Main model parameters
 params <- c(
-  r_a  = inst_rate(0.1, 5),  # Rate of healthy having event A
-  r_b  = inst_rate(0.5, 5),  # Rate of post-A  having event B
-  r_ad = 0.05,               # Rate of death as direct result of A
+
+  # Risks
+  r_g   = 0.2,                # Prevalence of targeted gene variant
+  r_a   = inst_rate(0.1, 10), # Rate of healthy having event A over 10 years
+  r_ad  = 0,                  # Rate of death as a result of being in state A
+  r_b   = inst_rate(0.02, 1), # Rate of post-A  having event B over 1 years
+  rr_b  = 0.5,                # Relative Risk for Event B with better treatment informed by genotyping
+  r_bd  = 0.05,               # Rate of death as direct result of B
   
-  c_a  = 10000,              # Cost of event A
-  c_b  = 25000,              # Cost of event B for a year
-  c_t  = 0,                  # Cost of therapy
-  d_a  = 0.25,               # Permanent disutility for a
-  d_b  = 0.1,                # 1-year disutility for b 
-  
-  disc_rate = 1e-12          # For computing discount
+  # Costs
+  c_a   = 10000,              # Cost of event A
+  c_bs  = 25000,              # Cost for event B survival
+  c_bd  = 25000,              # Cost for event B death
+  c_tx  = 0.5,                # Daily cost of standard treatment
+  c_alt = 5,                  # Daily cost of alternate treatment
+  c_t   = 100,                # Cost of test
+
+  # Disutility
+  d_a   = 0.05,               # Disutility for event A
+  d_at  = 1*365,              # Time in days for disutility of event A
+  d_b   = 0.1,                # (Permanent?) Disutility for event B
+
+  disc_rate = 0.03            # For computing discount
 )
 
 
@@ -90,7 +102,7 @@ Simple <- function(t, y, params)
     r_d <- f_40yr_drate(t)
     if(is.infinite(r_d)) r_d <- 1e16 # A really large number
 
-    # Event B stops at time 5 years after event A (delay equation)
+    # Event B possibility stops at time 5 years after event A (delay equation)
     dd_b <- if (t < 5 || t> 10) 0 else (1-r_ad)*r_a*lagvalue(t-5, 2)*F_40yr_drate_5yr(t)
 
     # Event A stops at time t=5 years
@@ -131,7 +143,7 @@ costs <- function(solution, params)
   with(as.list(params), {
     # Compute Discounted Cost
     cost <- c_a*sum(diff(solution[,'a'])*solution[2:n,'disc']) + # Cost * Number of events in bucket a
-            c_b*sum(diff(solution[,'b'])*solution[2:n,'disc']) + # Cost * Number of events in bucket b
+            ((1-r_bd)*c_bs + r_bd*c_bd)*sum(diff(solution[,'b'])*solution[2:n,'disc']) + # Cost * Number of events in bucket b
             c_t*solution[1, 'h']  # Therapy Cost * Initial healthy individuals
     
     # Step size of simulation

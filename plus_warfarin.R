@@ -48,16 +48,16 @@ source('./main/event_secular_death.R')
 
 
 # Define Panel Test attributes, functions
-all_genotyped <- function(attrs)
+all_genotyped <- function()
 {
-   attrs[['aGenotyped_CVD']]     == 1 &&  # Simvastatin
-   attrs[['aGenotyped_CYP2C19']] == 1     # Clopidogrel
+   get_attribute(env, 'aGenotyped_CVD')     == 1 &&  # Simvastatin
+   get_attribute(env, 'aGenotyped_CYP2C19') == 1     # Clopidogrel
 }
 
-any_genotyped <- function(attrs)
+any_genotyped <- function()
 {
-   attrs[['aGenotyped_CVD']]     == 1 ||
-   attrs[['aGenotyped_CYP2C19']] == 1
+   get_attribute(env, 'aGenotyped_CVD')     == 1 ||
+   get_attribute(env, 'aGenotyped_CYP2C19') == 1
 }
 
 panel_test <- function(traj, inputs)
@@ -94,9 +94,9 @@ initialize_patient <- function(traj, inputs)
 {
   traj %>%
     seize("time_in_model")       %>%
-    set_attribute("aGender",    function(attrs) sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
-    set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
-    set_attribute("aAgeInitial",function(attrs) attrs[['aAge']])  %>%
+    set_attribute("aGender",    function() sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
+    set_attribute("aAge",       function() runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
+    set_attribute("aAgeInitial",function() get_attribute(env, 'aAge'))  %>%
     assign_clopidogrel_attributes(inputs) %>%
     assign_simvastatin_attributes(inputs)
 }
@@ -127,7 +127,7 @@ preemptive_strategy <- function(traj, inputs)
     traj %>%
       predict_test(inputs) %>%
       branch(
-        function(attrs) ifelse(any_genotyped(attrs),1,2),
+        function() ifelse(any_genotyped(),1,2),
         continue=rep(TRUE,2),
         trajectory() %>% timeout(0), # Nothing genotyped, do nothing
         trajectory() %>% panel_test(inputs) # Something was genotyped via PREDICT, do panel
@@ -136,7 +136,7 @@ preemptive_strategy <- function(traj, inputs)
   {
     traj %>%
       branch(
-        function(attrs) if(attrs[['aAge']] >= 50) 1 else 2,
+        function() if(get_attribute(env, 'aAge') >= 50) 1 else 2,
         continue = c(TRUE, TRUE),
         trajectory() %>% panel_test(inputs) , # Do nothing
         trajectory() %>% timeout(0)
@@ -148,7 +148,7 @@ preemptive_strategy <- function(traj, inputs)
 cleanup_on_termination <- function(traj)
 {
   traj %>% 
-    #print_attrs() %>%
+    #print_() %>%
     release("time_in_model") %>%
     cleanup_clopidogrel() %>%
     cleanup_aspirin() %>% 
@@ -177,7 +177,7 @@ event_registry <- list(
        reactive      = FALSE),
   list(name          = "Terminate at 10 years",
        attr          = "aTerminate",
-       time_to_event = function(attrs,inputs) 365.0*inputs$vHorizon,
+       time_to_event = function(inputs) 365.0*inputs$vHorizon,
        func          = terminate_simulation,
        reactive      = FALSE),
   

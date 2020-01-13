@@ -11,7 +11,7 @@ library(parallel)
 
 source("./inputs.R")
 
-source("./right-main-simulation-parallel.R")
+source("./right-main-simulation-file.r")
 vNN = 200
 inputs$vNIter = 8
 inputs$vN = ceiling(vNN/inputs$vNIter)
@@ -21,9 +21,10 @@ inputs$vPreemptive = "None"
 # Run the Simulation
 source('./main/event_main_loop.R')
 s = 12345
-    ptm <- proc.time()
-sim.run = exec.simulation(s=s)
-    (timer2 = proc.time() - ptm)
+ptm <- proc.time()
+env <- simmer()
+sim.run = simulation()
+(timer2 = proc.time() - ptm)
 env= sim.run
 arrivals <- get_mon_arrivals(env, per_resource = T) %>%  mutate(name = paste0(name,"_",replication))
 

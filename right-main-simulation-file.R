@@ -74,8 +74,8 @@ panel_test <- function(traj, inputs)
 source("./clopidogrel/counters.R")
 source("./clopidogrel/initial-patient-attributes.R")
 source("./clopidogrel/cleanup.R")
-source("./clopidogrel/PGx-attributes.r")
-source("./clopidogrel/dapt-events.r")
+source("./clopidogrel/PGx-attributes.R")
+source("./clopidogrel/dapt-events.R")
 
 ####
 ## Simvastatin
@@ -114,13 +114,13 @@ initialize_patient <- function(traj, inputs)
     set_attribute("aAge",       function() study_pop$age.mh[get_attribute(env, 'aNo')]) %>% 
     
     # NHANES version
-    #set_attribute("aNo", function(attrs) sample(1:nrow(NHANES_pop), 1, prob=1/NHANES_pop$wt)) %>%
-    #set_attribute("aGender",    function(attrs) NHANES_pop$gender[get_attribute(env, 'aNo')]) %>% 
-    #set_attribute("aAge",       function(attrs) NHANES_pop$age[get_attribute(env, 'aNo')]) %>% 
+    #set_attribute("aNo", function() sample(1:nrow(NHANES_pop), 1, prob=1/NHANES_pop$wt)) %>%
+    #set_attribute("aGender",    function() NHANES_pop$gender[get_attribute(env, 'aNo')]) %>% 
+    #set_attribute("aAge",       function() NHANES_pop$age[get_attribute(env, 'aNo')]) %>% 
     
     # Oldest version
-    #set_attribute("aGender",    function(attrs) sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
-    #set_attribute("aAge",       function(attrs) runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
+    #set_attribute("aGender",    function() sample(1:2,1,prob=c(1-inputs$vPctFemale,inputs$vPctFemale))) %>% 
+    #set_attribute("aAge",       function() runif(1,inputs$vLowerAge,inputs$vUpperAge)) %>%
     
     set_attribute("aAgeInitial",function() get_attribute(env, 'aAge'))  %>%
     assign_clopidogrel_attributes(inputs) %>%
@@ -188,7 +188,7 @@ preemptive_strategy <- function(traj, inputs)
 cleanup_on_termination <- function(traj)
 {
   traj %>% 
-    #print_attrs() %>%
+    #print_() %>%
     release("time_in_model") %>%
     cleanup_clopidogrel() %>%
     cleanup_aspirin() %>% 
@@ -394,8 +394,8 @@ arrivals %>% count(resource)
 ##
 ####
 # 
-# source("./costs.R")
-# x <- costs(env, inputs)
+source("./costs.R")
+x <- costs(env, inputs)
 # 
 # # Look for reduced quality lives
 # x[x$QALY < 8.62,]

@@ -77,7 +77,7 @@ initialize_patient <- function(traj, inputs)
     seize("time_in_model") %>%
     #set_attribute("aID", function() { tmp <- id; id <<- id + 1; tmp }) %>%
     set_attribute("aAgeInitial", function() inputs$vAge) %>%
-    set_attribute("aAge", function(attrs) attrs[['aAgeInitial']]) %>%
+    set_attribute("aAge", function() get_attribute(env, 'aAgeInitial')) %>%
     set_attribute("aGender", function() inputs$vGender) %>%
     set_attribute("aGene", function() sample(1:2,1,prob=c(inputs$vGene,1-inputs$vGene))) %>% #1 - targeted, 2 - not
     set_attribute("aGenotyped", 0) %>% # 0 - not, 1 - yes
@@ -109,18 +109,18 @@ preemptive_strategy <- function(traj, inputs)
 
 ########
 # Define Panel Test attributes, functions
-all_genotyped <- function(attrs)
+all_genotyped <- function()
 {
-  attrs[['aGenotyped']]     == 1 #
-    #attrs[['aGenotyped_CYP2C19']] == 1 &&  # Clopidogrel
-    #attrs[['aGenotyped_Warfarin']] == 1    # Warfarin  
+  get_attribute(env, 'aGenotyped')     == 1 #
+    #get_attribute(env, 'aGenotyped_CYP2C19') == 1 &&  # Clopidogrel
+    #get_attribute(env, 'aGenotyped_Warfarin') == 1    # Warfarin  
 }
 
-any_genotyped <- function(attrs)
+any_genotyped <- function()
 {
-  attrs[['aGenotyped']]     == 1 
-    #attrs[['aGenotyped_CYP2C19']] == 1 ||
-    #attrs[['aGenotyped_Warfarin']] == 1 
+  get_attribute(env, 'aGenotyped')     == 1 
+    #get_attribute(env, 'aGenotyped_CYP2C19') == 1 ||
+    #get_attribute(env, 'aGenotyped_Warfarin') == 1 
 }
 
 panel_test <- function(traj, inputs)
@@ -145,12 +145,12 @@ cleanup_on_termination <- function(traj)
   traj %>% 
     release("time_in_model") %>%
     branch(
-        function(attrs) attrs[["aTreat"]]+1,
+        function() get_attribute(env, "aTreat")+1,
         continue=rep(TRUE,2),
         trajectory() %>% timeout(0),
         trajectory() %>% 
           branch(
-            function(attrs) attrs[["aDrug"]],
+            function() get_attribute(env, "aDrug"),
             continue=rep(TRUE,2),
             trajectory() %>% release("rx"),
             trajectory() %>% release("alt")
@@ -189,7 +189,7 @@ event_registry <- list(
        reactive      = FALSE),
   list(name          = "Terminate at time horizonb",
        attr          = "aTerminate",
-       time_to_event = function(attrs,inputs) 365.0*inputs$vHorizon,
+       time_to_event = function(inputs) 365.0*inputs$vHorizon,
        func          = terminate_simulation,
        reactive      = FALSE)
 )

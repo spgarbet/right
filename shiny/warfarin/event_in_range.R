@@ -1,11 +1,11 @@
 
-days_till_in_range <- function(attrs, inputs)
+days_till_in_range <- function(inputs)
 {
-  switch = attrs[["sWarfarinEvents"]]
-  cat = attrs[["aInRange"]]
-  PGx =  attrs[["aGenotyped_Warfarin"]]
-  ava =  attrs[["aWTestAvail"]]
-  use = attrs[["aReadWarfarinTest"]]
+  switch = get_attribute(env, "sWarfarinEvents")
+  cat = get_attribute(env, "aInRange")
+  PGx =  get_attribute(env, "aGenotyped_Warfarin")
+  ava =  get_attribute(env, "aWTestAvail")
+  use = get_attribute(env, "aReadWarfarinTest")
   
   if (switch==1 & cat==2) #must be on warfarin and currently out of range
   {

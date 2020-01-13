@@ -6,12 +6,12 @@ t2e_rexp <- function(risk,rr,time) #used in bleed, stroke, DVTPE
 }
 
 ###major bleed
-days_till_major_bleed.inner <- function(attrs, inputs)
+days_till_major_bleed.inner <- function(inputs)
 { 
-  switch = attrs[["sWarfarinEvents"]]
+  switch = get_attribute(env, "sWarfarinEvents")
   if(switch==1) {
-    x = attrs[["aINR"]]
-    if(attrs[["aWarfarinIndication"]]==1) #AF
+    x = get_attribute(env, "aINR")
+    if(get_attribute(env, "aWarfarinIndication")==1) #AF
     { 
       if(x<3)                return(t2e_rexp(inputs$warfarin$vAF_Risk_Major_Bleed_3,inputs$warfarin$vRRMajorBleed_AF,inputs$warfarin$vTimeDurBleed))
       else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vAF_Risk_Major_Bleed_3to4,inputs$warfarin$vRRMajorBleed_AF,inputs$warfarin$vTimeDurBleed))
@@ -26,9 +26,9 @@ days_till_major_bleed.inner <- function(attrs, inputs)
   }
   else {return(inputs$vHorizon*365+1)}
 }
-days_till_major_bleed <- function(attrs, inputs)
+days_till_major_bleed <- function(inputs)
 {
-  x <- days_till_major_bleed.inner(attrs, inputs)
+  x <- days_till_major_bleed.inner(inputs)
   
   cat("Computed days till bleed ", x, "\n")
   
@@ -61,12 +61,12 @@ major_bleed_event <- function(traj, inputs)
 
 
 ###minor bleed
-days_till_minor_bleed <- function(attrs, inputs)
+days_till_minor_bleed <- function(inputs)
 { 
-  switch = attrs[["sWarfarinEvents"]]
+  switch = get_attribute(env, "sWarfarinEvents")
   if(switch==1) {
-    x = attrs[["aINR"]]
-    if(attrs[["aWarfarinIndication"]]==1) #AF
+    x = get_attribute(env, "aINR")
+    if(get_attribute(env, "aWarfarinIndication")==1) #AF
     { 
       if(x<3)                return(t2e_rexp(inputs$warfarin$vAF_Risk_Minor_Bleed_3,inputs$warfarin$vRRMinorBleed_AF,inputs$warfarin$vTimeDurBleed))
       else if(x>=3 & x<=4)   return(t2e_rexp(inputs$warfarin$vAF_Risk_Minor_Bleed_3to4,inputs$warfarin$vRRMinorBleed_AF,inputs$warfarin$vTimeDurBleed))

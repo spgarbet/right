@@ -1,12 +1,12 @@
 
 ####
 ## Assign Time to DAPT
-days_till_dapt <- function(attrs, inputs) 
+days_till_dapt <- function(inputs) 
 {
   if (inputs$vDrugs$vClopidogrel)
   {
     aRandUnif = runif(n=1,min=0,max=1) 
-    aLPEvent = attrs[['aRRDAPT']]
+    aLPEvent = get_attribute(env, 'aRRDAPT')
     inputs$clopidogrel$vDAPTScale * (-log(aRandUnif)*exp(-log(aLPEvent)))^(1/inputs$clopidogrel$vDAPTShape)
   } else 
   {
@@ -29,12 +29,12 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
   {
     traj %>%
       branch(
-        function(attrs) attrs[['aGenotyped_CYP2C19']],
+        function() get_attribute(env, 'aGenotyped_CYP2C19'),
         continue=c(TRUE, TRUE),
         trajectory("have test results") %>%  timeout(0),
         trajectory("not have") %>% 
           branch(
-            function(attrs) attrs[['aControlClo1']],
+            function() get_attribute(env, 'aControlClo1'),
             continue=c(TRUE,TRUE),
             trajectory() %>% timeout(0),
             trajectory() %>% set_attribute("aGenotyped_CYP2C19", 1) %>% mark("single_test") %>% set_attribute("aOrdered_test", 2)
@@ -44,11 +44,11 @@ clopidogrel_reactive_strategy <- function(traj, inputs)
   {
     traj %>%
       branch(
-        function(attrs) all_genotyped(attrs)+1,
+        function() all_genotyped()+1,
         continue=c(TRUE, TRUE),
         trajectory("not panel tested") %>% 
           branch(
-            function(attrs) attrs[['aControlClo1']],
+            function() get_attribute(env, 'aControlClo1'),
             continue=c(TRUE,TRUE),
             trajectory() %>% timeout(0),
             trajectory() %>% panel_test() %>% set_attribute("aOrdered_test", 2)
@@ -71,12 +71,12 @@ assign_DAPT_medication <- function(traj,inputs)
                     stop("Invalid Logic in assigning DAPT medication")
                   }) %>%
     branch(
-      function(attrs) {
+      function() {
         # The genotyped patients are switched with some probability.  
-        if(attrs[['aGenotyped_CYP2C19']]==1 && attrs[['aCYP2C19']] == 1 && 
-          (attrs[['aOrdered_test']] == 2 || attrs[['aControlClo2']]==2)) {
-          return(sample(c(1,attrs[['aDAPT.SecondLine']]),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
-        } else if (attrs[['aDAPT.Rx.Hx']]!=0) {return(attrs[['aDAPT.Rx.Hx']])} 
+        if(get_attribute(env, 'aGenotyped_CYP2C19')==1 && get_attribute(env, 'aCYP2C19') == 1 && 
+          (get_attribute(env, 'aOrdered_test') == 2 || get_attribute(env, 'aControlClo2')==2)) {
+          return(sample(c(1,get_attribute(env, 'aDAPT.SecondLine')),1,prob=c(1-inputs$clopidogrel$vProbabilityDAPTSwitch,inputs$clopidogrel$vProbabilityDAPTSwitch)))
+        } else if (get_attribute(env, 'aDAPT.Rx.Hx')!=0) {return(get_attribute(env, 'aDAPT.Rx.Hx'))} 
         return(1) # Default is to Clopidogrel, hence return 1 if no Hx of alternative drug, or if not switched.  
       },
       continue=rep(TRUE,3),
@@ -94,11 +94,11 @@ assign_DAPT_medication <- function(traj,inputs)
     ) %>%
     
     # Set DAPT Rx History to Whatever Drug You Were Put On
-    set_attribute("aDAPT.Rx.Hx",function(attrs) attrs[['aDAPT.Rx']]) %>%
+    set_attribute("aDAPT.Rx.Hx",function() get_attribute(env, 'aDAPT.Rx')) %>%
     
     #Initiate Aspirin if Not Already Started
      branch(
-       function(attrs) ifelse(attrs[['aAspirin']]==2 & attrs[["aDAPT.Rx"]] %in% c(1,2,3) ,1,2),
+       function() ifelse(get_attribute(env, 'aAspirin')==2 & get_attribute(env, "aDAPT.Rx") %in% c(1,2,3) ,1,2),
       continue=c(TRUE,TRUE),
       trajectory() %>% seize("aspirin") %>% set_attribute("aAspirin",1),
       trajectory() %>% timeout(0)
@@ -111,12 +111,12 @@ dapt <- function(traj, inputs)
     set_attribute("aControlClo1", function() sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityReactive,  inputs$clopidogrel$vProbabilityReactive))) %>%
     set_attribute("aControlClo2", function() sample(1:2,1,prob=c(1- inputs$clopidogrel$vProbabilityRead,  inputs$clopidogrel$vProbabilityRead))) %>%
     branch( 
-      function(attrs) ifelse(attrs[['aNumDAPT']] < inputs$clopidogrel$vMaxDAPT,1,2),
+      function() ifelse(get_attribute(env, 'aNumDAPT') < inputs$clopidogrel$vMaxDAPT,1,2),
       continue = c(TRUE,TRUE),
       trajectory() %>%  
         mark("dapt_start")  %>% 
         set_attribute("aRRDAPT", inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
-        set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
+        set_attribute("aNumDAPT",function() get_attribute(env, 'aNumDAPT')+1) %>%
         set_attribute("aOnDAPT",1) %>%
         set_attribute("aDAPTRxHx", 1) %>% 
         assign_DAPT_medication(inputs) %>%
@@ -129,28 +129,28 @@ dapt <- function(traj, inputs)
         ####
         
         # End of Therapy
-        set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) %>%
+        set_attribute("aDAPTEnded",function() now(env) + dapt_end_time(inputs)) %>%
         
         # Stent Thrombosis
-        set_attribute("aST",function(attrs) now(env) + time_to_ST(attrs,inputs)) %>%
+        set_attribute("aST",function() now(env) + time_to_ST(inputs)) %>%
         
         # Myocardial Infarction (Non-Fatal)
-        set_attribute("aMI",function(attrs) now(env) + time_to_MI(attrs,inputs)) %>%
+        set_attribute("aMI",function() now(env) + time_to_MI(inputs)) %>%
         
         # Revascularizaiton
-        set_attribute("aRV",function(attrs) now(env) + time_to_RV(attrs,inputs)) %>%
+        set_attribute("aRV",function() now(env) + time_to_RV(inputs)) %>%
         
         # Extracranial (TIMI major and nonfatal)
-        set_attribute("aExtBleed",function(attrs) now(env) + time_to_ExtBleed(attrs,inputs)) %>%
+        set_attribute("aExtBleed",function() now(env) + time_to_ExtBleed(inputs)) %>%
       
         # Intracranial (TIMI major and nonfatal)
-        set_attribute("aIntBleed",function(attrs) now(env) + time_to_IntBleed(attrs,inputs)) %>%
+        set_attribute("aIntBleed",function() now(env) + time_to_IntBleed(inputs)) %>%
       
         # TIMI minor
-        set_attribute("aTIMIMinor",function(attrs) now(env) + time_to_TIMIMinor(attrs,inputs)) %>%
+        set_attribute("aTIMIMinor",function() now(env) + time_to_TIMIMinor(inputs)) %>%
         
         # Fatal Bleed
-        set_attribute("aFatalBleed",function(attrs) now(env) + time_to_FatalBleed(attrs,inputs))
+        set_attribute("aFatalBleed",function() now(env) + time_to_FatalBleed(inputs))
       ,
       trajectory() %>% set_attribute("aRRDAPT",epsilon)
     ) 
@@ -161,8 +161,8 @@ dapt <- function(traj, inputs)
 # DAPT Treatment Course Ends
 ##
 ####
-dapt_end_time <- function(attrs,inputs) {
-   if (attrs[["aOnDAPT"]]==1)
+dapt_end_time <- function(inputs) {
+   if (get_attribute(env, "aOnDAPT")==1)
    {
      return( inputs$clopidogrel$vDAPT.Tx.Duration )
    } else
@@ -173,7 +173,7 @@ dapt_end <- function(traj,inputs)
 {
   traj %>%
     branch(
-      function(attrs) ifelse(attrs[['aDAPT.Rx']] %in% c(1:3),attrs[['aDAPT.Rx']],4),
+      function() ifelse(get_attribute(env, 'aDAPT.Rx') %in% c(1:3),get_attribute(env, 'aDAPT.Rx'),4),
       continue=rep(TRUE,4),
       trajectory() %>% release("clopidogrel") ,
       trajectory() %>% release("ticagrelor") ,
@@ -198,17 +198,17 @@ dapt_end <- function(traj,inputs)
 # CABG, and, as a simplifying assumption, the others underwent a repeat PCI with a drug-eluting stent.
 
 
-time_to_ST <- function(attrs,inputs) 
+time_to_ST <- function(inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.ST"]]
+    rr = get_attribute(env, "aRR.DAPT.ST")
     # Need to add in loss of function and gain of function RRs here too.
-    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.ST.LOF
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.ST.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.ST.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.ST.Aspirin
+    if (get_attribute(env, 'aCYP2C19') == 1 & get_attribute(env, 'aDAPT.Rx')==1) rr = inputs$clopidogrel$vRR.ST.LOF
+    if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.ST.Ticagrelor 
+    if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.ST.Prasugrel
+    if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.ST.Aspirin
       
     # Baseline Risk
     rates = c(inputs$clopidogrel$vRiskST30,inputs$clopidogrel$vRiskST365,inputs$clopidogrel$vRiskSTgt365)
@@ -227,27 +227,27 @@ ST_event = function(traj, inputs)
 {
   traj %>% 
     branch(
-      function(attrs)
-        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      function()
+        ifelse(get_attribute(env, "aOnDAPT") == 1, 1, 2),
         continue = c(TRUE, TRUE),
         trajectory()  %>%  mark("st_event") %>% 
           # Case Fatatliy
           branch(
-           function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vSt.Case.Fatality,1-inputs$clopidogrel$vSt.Case.Fatality)),
+           function() sample(1:2,1,prob=c(inputs$clopidogrel$vSt.Case.Fatality,1-inputs$clopidogrel$vSt.Case.Fatality)),
            continue=c(FALSE,TRUE),
            trajectory() %>% mark("st_fatal") %>% cleanup_on_termination(),
            trajectory() %>% 
              branch(
-               function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
+               function() sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.ST,1-inputs$clopidogrel$vPrCABG.ST)),
                continue= c(TRUE,TRUE),
                # Discontinue DAPT Therapy if CABG, Continue With Aspirin
                trajectory() %>% mark("st_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4) %>%
-                 set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)),
+                 set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function() now(env) + time_to_CABGBleed(inputs)),
                # Reset Tx Duration to 1 year if PCI
                trajectory() %>%  mark("st_pci") %>% 
                  set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
-                 set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
-                 set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs,inputs)) 
+                 set_attribute("aNumDAPT",function() get_attribute(env, 'aNumDAPT')+1) %>%
+                 set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function() now(env) + dapt_end_time(inputs)) 
                
                #* TO DO: Add in Brief 7 Day Utility Decrement
              )
@@ -269,16 +269,16 @@ ST_event = function(traj, inputs)
 #hospitalization for the nonfatal MI (17,72). Patients who had one or more nonfatal MIs experienced 
 #a 30% increase in long-term cardiovascular mortality and recurrent MI (72).
 
-time_to_MI = function(attrs, inputs) 
+time_to_MI = function(inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.MI"]]
-    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.MI.LOF
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.MI.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.MI.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.MI.Aspirin
+    rr = get_attribute(env, "aRR.DAPT.MI")
+    if (get_attribute(env, 'aCYP2C19') == 1 & get_attribute(env, 'aDAPT.Rx')==1) rr = inputs$clopidogrel$vRR.MI.LOF
+    if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.MI.Ticagrelor 
+    if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.MI.Prasugrel
+    if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.MI.Aspirin
     
     # Baseline Risk
     rates = inputs$clopidogrel$vRiskMI
@@ -300,12 +300,12 @@ MI_event = function(traj, inputs)
 {
   traj %>% 
     branch(
-      function(attrs)
-        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      function()
+        ifelse(get_attribute(env, "aOnDAPT") == 1, 1, 2),
       continue = c(TRUE, TRUE),
       trajectory() %>% mark("mi_event") %>% 
         branch(
-          function(attrs)
+          function()
             sample(
               1:3,
               1,
@@ -319,17 +319,17 @@ MI_event = function(traj, inputs)
           
           # CABG
           trajectory() %>% mark("mi_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT", 2) %>% set_attribute("aDAPT.Rx", 4) %>%
-            set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)),
+            set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function() now(env) + time_to_CABGBleed(inputs)),
           #* TO DO: Add in Brief 14 Day Utility Decrement
           #* TO DO: Confirm DAPT Therapy shut off with CABG.
           
           # Repeat PCI
           trajectory() %>% mark("mi_pci") %>% 
             set_attribute("aRRDAPT", inputs$clopidogrel$vRRRepeat.DAPT)  %>%
-            set_attribute("aNumDAPT", function(attrs)
-              attrs[['aNumDAPT']] + 1) %>%
-            set_attribute("aOnDAPT", 1) %>% set_attribute("aDAPTEnded", function(attrs)
-              now(env) + dapt_end_time(attrs,inputs)) ,
+            set_attribute("aNumDAPT", function()
+              get_attribute(env, 'aNumDAPT') + 1) %>%
+            set_attribute("aOnDAPT", 1) %>% set_attribute("aDAPTEnded", function()
+              now(env) + dapt_end_time(inputs)) ,
           #* TO DO: Add in Brief 7 Day Utility Decrement
           
           trajectory() %>%  mark("mi_med_manage")
@@ -351,12 +351,12 @@ MI_event = function(traj, inputs)
 # related to stent thrombosis and MI separately, we subtracted these from the total observed revascularizations 
 # to avoid double counting.
 
-time_to_RV = function(attrs, inputs) 
+time_to_RV = function(inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.RV"]]
+    rr = get_attribute(env, "aRR.DAPT.RV")
 
     # Baseline Risk
     rates = c(inputs$clopidogrel$vRiskRV365,inputs$clopidogrel$vRiskRVgt365)
@@ -378,26 +378,26 @@ RV_event = function(traj, inputs)
 {
   traj %>% 
     branch(
-      function(attrs)
-        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      function()
+        ifelse(get_attribute(env, "aOnDAPT") == 1, 1, 2),
       continue = c(TRUE, TRUE),
     trajectory() %>% mark("revasc_event") %>% 
     branch(
-      function(attrs) sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.RV,
+      function() sample(1:2,1,prob=c(inputs$clopidogrel$vPrCABG.RV,
                                           1-inputs$clopidogrel$vPrCABG.RV)),
       continue= c(TRUE,TRUE),
       
       # CABG
       trajectory() %>% mark("revasc_cabg") %>% cleanup_clopidogrel() %>% set_attribute("aOnDAPT",2) %>% set_attribute("aDAPT.Rx",4) %>%
-        set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)),
+        set_attribute("sCABG", 1) %>% set_attribute("aCABGBleed",function() now(env) + time_to_CABGBleed(inputs)),
       #* TO DO: Add in Brief 14 Day Utility Decrement
       #* TO DO: Confirm DAPT Therapy shut off with CABG. 
       
       # Repeat PCI
       trajectory() %>%  mark("revasc_pci") %>% 
         set_attribute("aRRDAPT",inputs$clopidogrel$vRRRepeat.DAPT)  %>% 
-        set_attribute("aNumDAPT",function(attrs) attrs[['aNumDAPT']]+1) %>%
-        set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function(attrs) now(env) + dapt_end_time(attrs, inputs))  
+        set_attribute("aNumDAPT",function() get_attribute(env, 'aNumDAPT')+1) %>%
+        set_attribute("aOnDAPT",1) %>% set_attribute("aDAPTEnded",function() now(env) + dapt_end_time(inputs))  
       #* TO DO: Add in Brief 7 Day Utility Decrement
 
     ),
@@ -421,16 +421,16 @@ RV_event = function(traj, inputs)
 # these were associated with increased costs and decreased quality-adjusted life years (QALYs), but 
 # did not increase perioperative mortality.
 
-time_to_ExtBleed = function(attrs, inputs) 
+time_to_ExtBleed = function(inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.ExtBleed"]]
-    if (attrs[['aCYP2C19']] == 1 & attrs[['aDAPT.Rx']]==1) rr = inputs$clopidogrel$vRR.Bleed.LOF
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.ExtBleed.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.ExtBleed.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.ExtBleed.Aspirin
+    rr = get_attribute(env, "aRR.DAPT.ExtBleed")
+    if (get_attribute(env, 'aCYP2C19') == 1 & get_attribute(env, 'aDAPT.Rx')==1) rr = inputs$clopidogrel$vRR.Bleed.LOF
+    if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.ExtBleed.Ticagrelor 
+    if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.ExtBleed.Prasugrel
+    if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.ExtBleed.Aspirin
     
     # Baseline Risk
     rates = inputs$clopidogrel$vRiskExtBleed
@@ -450,8 +450,8 @@ ExtBleed_event = function(traj, inputs)
 {
   traj %>% 
     branch(
-      function(attrs)
-        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      function()
+        ifelse(get_attribute(env, "aOnDAPT") == 1, 1, 2),
         continue=c(TRUE,TRUE),
       trajectory() %>% mark("bleed_event") %>% mark("bleed_ext_maj_nonfatal"),
       trajectory() %>% timeout(0)
@@ -462,15 +462,15 @@ ExtBleed_event = function(traj, inputs)
 ##
 # Intracranial (TIMI Major and Non-Fatal)
 ##
-time_to_IntBleed = function(attrs, inputs) 
+time_to_IntBleed = function(inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.IntBleed"]]
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.IntBleed.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.IntBleed.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.IntBleed.Aspirin
+    rr = get_attribute(env, "aRR.DAPT.IntBleed")
+    if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.IntBleed.Ticagrelor 
+    if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.IntBleed.Prasugrel
+    if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.IntBleed.Aspirin
     
     # Baseline Risk
     rates = inputs$clopidogrel$vRiskIntBleed
@@ -490,8 +490,8 @@ IntBleed_event = function(traj, inputs)
 {
   traj %>% 
     branch(
-      function(attrs)
-        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      function()
+        ifelse(get_attribute(env, "aOnDAPT") == 1, 1, 2),
       continue=c(TRUE,TRUE),
     trajectory() %>% mark("bleed_event") %>% mark("bleed_int_maj_nonfatal"),
     trajectory() %>% timeout(0)
@@ -501,15 +501,15 @@ IntBleed_event = function(traj, inputs)
 ##
 # TIMI Minor Bleed
 ##
-time_to_TIMIMinor = function(attrs, inputs) 
+time_to_TIMIMinor = function(inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.TIMIMinor"]]
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.TIMIMinor.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.TIMIMinor.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.TIMIMinor.Aspirin
+    rr = get_attribute(env, "aRR.DAPT.TIMIMinor")
+    if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.TIMIMinor.Ticagrelor 
+    if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.TIMIMinor.Prasugrel
+    if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.TIMIMinor.Aspirin
     
     # Baseline Risk
     rates = inputs$clopidogrel$vRiskTIMIMinor
@@ -529,8 +529,8 @@ TIMIMinor_event = function(traj, inputs)
 {
   traj %>%  
     branch(
-      function(attrs)
-        ifelse(attrs[["aOnDAPT"]] == 1, 1, 2),
+      function()
+        ifelse(get_attribute(env, "aOnDAPT") == 1, 1, 2),
       continue=c(TRUE,TRUE),
     trajectory() %>% mark("bleed_event") %>% mark("bleed_min_nonfatal"),
   trajectory() %>% timeout(0)
@@ -541,15 +541,15 @@ TIMIMinor_event = function(traj, inputs)
 ##
 # Fatal Bleed
 ##
-time_to_FatalBleed = function(attrs, inputs) 
+time_to_FatalBleed = function(inputs) 
 {
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
-    rr = attrs[["aRR.DAPT.FatalBleed"]]
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.FatalBleed.Ticagrelor 
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.FatalBleed.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.FatalBleed.Aspirin
+    rr = get_attribute(env, "aRR.DAPT.FatalBleed")
+    if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.FatalBleed.Ticagrelor 
+    if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.FatalBleed.Prasugrel
+    if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.FatalBleed.Aspirin
     
     # Baseline Risk
     rates = inputs$clopidogrel$vRiskFatalBleed
@@ -580,15 +580,15 @@ FatalBleed_event = function(traj, inputs)
 ######
 # Added CABG-related TIMI major bleeding
 ##
-time_to_CABGBleed = function(attrs, inputs) 
+time_to_CABGBleed = function(inputs) 
 {
-  if (attrs[["sCABG"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "sCABG")!=1) return(inputs$vHorizon*365+1) else
   {
     # Relative Risk
     rr = 1
-    if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Ticagrelor
-    if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Prasugrel
-    if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Aspirin
+    if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Ticagrelor
+    if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Prasugrel
+    if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.RiskCABGTIMImajor.Aspirin
     
     # Baseline Risk
     rates = inputs$clopidogrel$vRiskCABGTIMImajor
@@ -608,7 +608,7 @@ CABGBleed_event = function(traj, inputs)
 {
   traj %>% 
     set_attribute("sCABG", 2) %>% #switch off until next CABG
-    set_attribute("aCABGBleed",function(attrs) now(env) + time_to_CABGBleed(attrs,inputs)) %>% 
+    set_attribute("aCABGBleed",function() now(env) + time_to_CABGBleed(inputs)) %>% 
     mark("bleed_event") %>% mark("cabg_bleed") 
 }
 
@@ -616,17 +616,17 @@ CABGBleed_event = function(traj, inputs)
 ###############
 #Added stroke events
 ##
-days_to_stroke <- function(attrs, inputs)
+days_to_stroke <- function(inputs)
 { 
-  if (attrs[["aOnDAPT"]]!=1) return(inputs$vHorizon*365+1) else
+  if (get_attribute(env, "aOnDAPT")!=1) return(inputs$vHorizon*365+1) else
   {
     
     rr = 1
     # Relative Risk
-    #rr = attrs[["aRR.DAPT.Stroke"]]
-    #if (attrs[['aDAPT.Rx']]==2) rr = inputs$clopidogrel$vRR.Stroke.Ticagrelor 
-    #if (attrs[['aDAPT.Rx']]==3) rr = inputs$clopidogrel$vRR.Stroke.Prasugrel
-    #if (attrs[['aDAPT.Rx']]==4) rr = inputs$clopidogrel$vRR.Stroke.Aspirin
+    #rr = get_attribute(env, "aRR.DAPT.Stroke")
+    #if (get_attribute(env, 'aDAPT.Rx')==2) rr = inputs$clopidogrel$vRR.Stroke.Ticagrelor 
+    #if (get_attribute(env, 'aDAPT.Rx')==3) rr = inputs$clopidogrel$vRR.Stroke.Prasugrel
+    #if (get_attribute(env, 'aDAPT.Rx')==4) rr = inputs$clopidogrel$vRR.Stroke.Aspirin
     
     # Baseline Risk
     rates = inputs$clopidogrel$vRiskStroke

@@ -1,5 +1,10 @@
-RIGHT - Pharmacogenomics Simulation
+RIGHT - Rational Integration of Genomic Healthcare Testing
 ===================================
+
+Simulation code used for publications on the [RIGHT](https://rightsim.org) project.
+
+1/14/2020: Updated for current version of simmer
+
 
 Creating Events Checklist
 -------------------------

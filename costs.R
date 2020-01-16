@@ -35,9 +35,9 @@ compile_statistics <- function(env, inputs,replicates= FALSE)
   arrivals$activity_time <- arrivals$end_time - arrivals$start_time
   
   # Computes discounted rate of time
-  arrivals$discounted_time <- discounted_cost(arrivals$start_time, end_time, 365)
+  arrivals$discounted_time <- discounted_cost(arrivals$start_time, arrivals$end_time, 365)
   
-  arrivals %>% filter(name==pt)
+  #arrivals %>% dplyr::filter(name==pt)
   
   # Compute Event base cost map
   idx <- function(str) {as.numeric(factor(str, levels=levels(arrivals$resource)))}
